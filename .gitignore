@@ -1,0 +1,63 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+.idea/modules.xml
+.idea/workspace.xml
+.idea/dbnavigator.xml
+.idea/dataSources.ids
+.idea/dataSources.xml
+
+### VS Code ###
+.vscode/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Build Maven
+target/
+!mvnw*
+!mvnw.cmd
+*.jar
+*.war
+*.nar
+*.ear
+
+# Fichiers de données
+*.h2.db
+*.db
+*.log
+/logs
+
+# Rapport de tests
+**/surefire-reports/
+**/failsafe-reports/
+**/test-output/
+
+# Configurations spécifiques
+application.properties
+application-*.properties
+
