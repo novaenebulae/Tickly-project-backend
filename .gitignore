@@ -39,6 +39,7 @@ build/
 
 # Build Maven
 target/
+.mvn/
 !mvnw*
 !mvnw.cmd
 *.jar

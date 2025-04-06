@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import edu.cda.project.ticklybackend.views.DisplayStructure;
 import jakarta.persistence.*;
@@ -29,9 +30,19 @@ public class Structure {
 
     @ManyToMany
     @JoinTable(
-            name="structure_structure_type",
-            joinColumns = @JoinColumn(name="structure_id"),
-            inverseJoinColumns = @JoinColumn(name ="type_id")
+            name = "structure_structure_type",
+            joinColumns = @JoinColumn(name = "structure_id"),
+            inverseJoinColumns = @JoinColumn(name = "type_id")
     )
     protected List<StructureType> types = new ArrayList<>();
+
+    @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
+    @JsonManagedReference
+    private Address address;
+
+    @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
+    @JsonManagedReference
+    private List<Area> areas = new ArrayList<>();
+
+
 }

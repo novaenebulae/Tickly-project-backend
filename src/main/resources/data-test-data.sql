@@ -71,25 +71,97 @@ VALUES
     (14, 3);  -- Stade Olympique -> Salle de concert (pour concerts)
 
 
-# INSERT INTO adresse (id, country, city, postal_code, street, number, stucture_id)
-# VALUES
-#     (1, 'France', 'Paris', 75001, 'Rue de Rivoli', NULL, 1),
-#     (2, 'France', 'Lyon', 69002, 'Place Bellecour', NULL, 2),
-#     (3, 'France', 'Marseille', 13001, 'Cours Julien', NULL, 3),
-#     (4, 'France', 'Bordeaux', 33000, 'Quai Louis XVIII', NULL, 4),
-#     (5, 'France', 'Toulouse', 31000, 'Allées Jean Jaurès', NULL, 5),
-#     (6, 'France', 'Nice', 06000, "Promenade des Anglais", NULL ,6),
-#     (7,'Belgique','Bruxelles','1000','Boulevard Anspach','32A ',7),
-#     (8,'Italie','Rome','00100','Via del Corso','15 ',8),
-#     (9,'Espagne','Madrid','28001','Gran Via','10 ',9),
-#     (10,'Allemagne','Berlin','10115','Unter den Linden ','22 ',10),
-#     (11,'Portugal','Lisbonne ','1100-038 ','Rua Augusta ','45 ',11),
-#     (12,'Suisse ','Genève ','1201 ','Rue du Rhône ','5 ',12 ),
-#     (13,'Pays-Bas ','Amsterdam ','1012AB ','Damstraat ','18 ',13 ),
-#     (14,'Autriche ','Vienne ','1010 ','Kärntner Straße ','30 ',14 ),
-#     (15,'Suède ','Stockholm ','11122 ','Drottninggatan ','25 ',15 ),
-#     (16,'Norvège ','Oslo ','0154 ','Karl Johans gate ','40 ',16 ),
-#     (17,'Danemark ','Copenhague ','1165 ','Strøget ','35 ',17 ),
-#     (18,'Finlande ','Helsinki ','00100 ','Aleksanterinkatu ','50 ',18 ),
-#     (19,'Irlande ','Dublin ','D02 X285','Grafton Street','55 ',19 ),
-#     (20,'Royaume-Uni','Londres','SW1A1AA','Buckingham Palace Road','60 ',20);
+INSERT INTO address (id, country, city, postal_code, street, number, structure_id)
+VALUES
+    (1, 'France', 'Paris', 75001, 'Rue de Rivoli', NULL, 1),
+    (2, 'France', 'Lyon', 69002, 'Place Bellecour', NULL, 2),
+    (3, 'France', 'Marseille', 13001, 'Cours Julien', NULL, 3),
+    (4, 'France', 'Bordeaux', 33000, 'Quai Louis XVIII', NULL, 4),
+    (5, 'France', 'Toulouse', 31000, 'Allées Jean Jaurès', NULL, 5),
+    (6, 'France', 'Nice', 06000, "Promenade des Anglais", NULL ,6),
+    (7,'Belgique','Bruxelles','1000','Boulevard Anspach','32A ',7),
+    (8,'Italie','Rome','00100','Via del Corso','15 ',8),
+    (9,'Espagne','Madrid','28001','Gran Via','10 ',9),
+    (10,'Allemagne','Berlin','10115','Unter den Linden ','22 ',10),
+    (11,'Portugal','Lisbonne ','1100-038 ','Rua Augusta ','45 ',11),
+    (12,'Suisse ','Genève ','1201 ','Rue du Rhône ','5 ',12 ),
+    (13,'Pays-Bas ','Amsterdam ','1012AB ','Damstraat ','18 ',13 ),
+    (14,'Autriche ','Vienne ','1010 ','Kärntner Straße ','30 ',14 ),
+    (15,'Suède ','Stockholm ','11122 ','Drottninggatan ','25 ',15 ),
+    (16,'Norvège ','Oslo ','0154 ','Karl Johans gate ','40 ',16 ),
+    (17,'Danemark ','Copenhague ','1165 ','Strøget ','35 ',17 ),
+    (18,'Finlande ','Helsinki ','00100 ','Aleksanterinkatu ','50 ',18 ),
+    (19,'Irlande ','Dublin ','D02 X285','Grafton Street','55 ',19 ),
+    (20,'Royaume-Uni','Londres','SW1A1AA','Buckingham Palace Road','60 ',20);
+
+INSERT INTO area (id, name, structure_id)
+VALUES
+    -- Zones pour le Théâtre des Lumières
+    (1, 'Salle 1', 1),
+    (2, 'Salle 2', 1),
+
+    -- Zones pour la Galerie d'Art Contemporain
+    (3, 'Exposition Principale', 2),
+    (4, 'Salle des Sculptures', 2),
+
+    -- Zones pour la Salle de Concert Harmonie
+    (5, 'Auditorium Principal', 3),
+    (6, 'Salle Acoustique', 3),
+
+    -- Zones pour le Cinéma Étoile
+    (7, 'Salle IMAX', 4),
+    (8, 'Salle Classique', 4),
+
+    -- Zones pour le Centre Culturel Horizon
+    (9, 'Théâtre Principal', 5),
+    (10, 'Petite Salle Polyvalente', 5),
+
+    -- Zones pour l'Auditorium Galaxy
+    (11, 'Auditorium High-Tech', 6),
+
+    -- Zones pour le Musée des Sciences
+    (12, 'Espace Interactif', 7),
+    (13, 'Planétarium', 7),
+
+    -- Zones pour l'Opéra Renaissance
+    (14, 'Grande Scène', 8),
+    (15, 'Balcon VIP', 8),
+
+    -- Zones pour le Studio Créatif Pixel
+    (16, 'Atelier Numérique', 9),
+    (17, 'Atelier Artistique', 9),
+
+    -- Zones pour la Bibliothèque Universelle
+    (18, 'Section Littérature', 10),
+    (19, 'Section Sciences Humaines', 10),
+
+    -- Zones pour le Parc des Expositions
+    (20, 'Pavillon A', 11),
+    (21, 'Pavillon B', 11),
+
+    -- Zones pour la Maison de la Danse
+    (22, 'Grande Salle de Danse', 12),
+
+    -- Zones pour le Cinéma Grand Écran
+    (23, 'Salle IMAX Premium', 13),
+
+    -- Zones pour le Stade Olympique
+    (24, 'Terrain Principal', 14),
+
+    -- Zones pour le Théâtre Antique
+    (25, 'Scène Extérieure', 15),
+
+    -- Zones pour la Galerie PhotoVision
+    (26, 'Exposition Permanente', 16),
+
+    -- Zones pour le Café Littéraire Écrivains
+    (27, 'Salon Lecture', 17),
+
+    -- Zones pour le Centre Musical Mélodie
+    (28, 'Salle de Répétition', 18),
+
+    -- Zones pour le Cinéma Lunaire
+    (29, 'Salle Science-Fiction', 19),
+
+    -- Zones pour le Complexe Sportif Élite
+    (30, 'Gymnase Principal', 20);
