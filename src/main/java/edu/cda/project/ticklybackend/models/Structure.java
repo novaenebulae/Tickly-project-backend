@@ -1,7 +1,7 @@
 package edu.cda.project.ticklybackend.models;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import edu.cda.project.ticklybackend.views.DisplayStructure;
+import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -21,7 +21,6 @@ public class Structure {
 
     @Column(nullable = false)
     @NotBlank
-    @JsonView(DisplayStructure.class)
     protected String name;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -33,5 +32,5 @@ public class Structure {
             joinColumns = @JoinColumn(name="structure_id"),
             inverseJoinColumns = @JoinColumn(name ="type_id")
     )
-    protected List<StructureType> types = new ArrayList<>();
+    protected List<StructureType> type = new ArrayList<>();
 }
