@@ -9,19 +9,30 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Area {
-
+public class Placement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Integer id;
 
-    @Column(nullable = false)
+    @Column
     @NotBlank
     protected String name;
 
+    @Column
+    protected Integer price;
+
+    @Column
+    protected Integer capacity;
+
+    @Enumerated (EnumType.STRING)
+    @Column(columnDefinition =
+            "ENUM('SEAT_PLACEMENT', 'FREE_PLACEMENT')")
+    private PlacementType placementType;
+
     @ManyToOne()
-    @JoinColumn(name = "structure_id", nullable = false)
+    @JoinColumn(name = "location_id", nullable = false)
     @JsonBackReference
-    private Structure structure;
+    private Location location;
 
 }
+

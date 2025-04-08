@@ -42,7 +42,6 @@ public class Structure {
 
     @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
     @JsonManagedReference
-    private List<Area> areas = new ArrayList<>();
-
+    private List<Location> locations = new ArrayList<>();
 
 }

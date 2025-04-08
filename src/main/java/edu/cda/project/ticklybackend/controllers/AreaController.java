@@ -1,7 +1,7 @@
 package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dao.AreaDao;
-import edu.cda.project.ticklybackend.models.Area;
+import edu.cda.project.ticklybackend.models.Location;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,22 +23,22 @@ public class AreaController {
     }
 
     @GetMapping("/areas")
-    public List<Area> getAreas() {
+    public List<Location> getAreas() {
         return areaDao.findAll();
     }
 
     @PostMapping("/area")
-    public ResponseEntity<Area> save(@RequestBody @Valid Area area) {
+    public ResponseEntity<Location> save(@RequestBody @Valid Location location) {
 
-        area.setId(null);
-        areaDao.save(area);
-        return new ResponseEntity<>(area, HttpStatus.CREATED);
+        location.setId(null);
+        areaDao.save(location);
+        return new ResponseEntity<>(location, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/area/{id}")
-    public ResponseEntity<Area> delete(@PathVariable int id) {
+    public ResponseEntity<Location> delete(@PathVariable int id) {
 
-        Optional<Area> optionalArea = areaDao.findById(id);
+        Optional<Location> optionalArea = areaDao.findById(id);
 
         if (optionalArea.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -51,19 +51,19 @@ public class AreaController {
     }
 
     @PutMapping("/area/{id}")
-    public ResponseEntity<Area> update(
+    public ResponseEntity<Location> update(
             @PathVariable int id,
-            @RequestBody @Valid Area area) {
+            @RequestBody @Valid Location location) {
 
-        Optional<Area> optionalArea = areaDao.findById(id);
+        Optional<Location> optionalArea = areaDao.findById(id);
 
         if (optionalArea.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        area.setId(id);
+        location.setId(id);
 
-        areaDao.save(area);
+        areaDao.save(location);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

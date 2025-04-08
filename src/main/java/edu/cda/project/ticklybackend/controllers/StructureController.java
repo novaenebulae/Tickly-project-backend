@@ -27,6 +27,11 @@ public class StructureController {
         return structureDao.findAll();
     }
 
+    @GetMapping("/structure/{id}")
+    public Structure getStructure(@PathVariable int id) {
+        return structureDao.findStructureById(id);
+    }
+
     @PostMapping("/structure")
     public ResponseEntity<Structure> save(@RequestBody @Valid Structure structure) {
 
