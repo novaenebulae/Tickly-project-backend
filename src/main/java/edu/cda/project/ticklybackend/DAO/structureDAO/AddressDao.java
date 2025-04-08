@@ -1,6 +1,6 @@
-package edu.cda.project.ticklybackend.dao;
+package edu.cda.project.ticklybackend.DAO.structureDAO;
 
-import edu.cda.project.ticklybackend.models.Address;
+import edu.cda.project.ticklybackend.models.structure.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

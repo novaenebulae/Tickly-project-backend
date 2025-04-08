@@ -1,7 +1,7 @@
-package edu.cda.project.ticklybackend.controllers;
+package edu.cda.project.ticklybackend.controllers.structure;
 
-import edu.cda.project.ticklybackend.dao.AddressDao;
-import edu.cda.project.ticklybackend.models.Address;
+import edu.cda.project.ticklybackend.DAO.structureDAO.AddressDao;
+import edu.cda.project.ticklybackend.models.structure.Address;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
