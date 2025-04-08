@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.models;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.views.DisplayStructure;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -34,4 +35,9 @@ public class Structure {
             inverseJoinColumns = @JoinColumn(name ="type_id")
     )
     protected List<StructureType> types = new ArrayList<>();
+
+    @OneToMany
+    @JoinColumn(name="staff")
+    protected List<User> staff = new ArrayList<>();
+
 }
