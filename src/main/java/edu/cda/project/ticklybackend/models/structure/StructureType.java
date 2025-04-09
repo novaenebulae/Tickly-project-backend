@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.models;
+package edu.cda.project.ticklybackend.models.structure;
 
 
 import jakarta.persistence.*;

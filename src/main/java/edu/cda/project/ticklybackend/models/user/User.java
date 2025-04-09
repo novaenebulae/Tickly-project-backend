@@ -1,7 +1,6 @@
 package edu.cda.project.ticklybackend.models.user;
 
-import edu.cda.project.ticklybackend.models.Structure;
-import edu.cda.project.ticklybackend.models.StructureType;
+import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

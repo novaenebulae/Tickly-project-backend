@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.models;
+package edu.cda.project.ticklybackend.models.structure;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import edu.cda.project.ticklybackend.models.user.User;
@@ -36,8 +36,7 @@ public class Structure {
     )
     protected List<StructureType> types = new ArrayList<>();
 
-    @OneToMany
-    @JoinColumn(name="staff")
+    @OneToMany(mappedBy="structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     protected List<User> staff = new ArrayList<>();
 
 }

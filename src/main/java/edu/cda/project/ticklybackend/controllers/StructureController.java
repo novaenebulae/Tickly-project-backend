@@ -1,7 +1,7 @@
 package edu.cda.project.ticklybackend.controllers;
 
-import edu.cda.project.ticklybackend.dao.StructureDao;
-import edu.cda.project.ticklybackend.models.Structure;
+import edu.cda.project.ticklybackend.daos.StructureDao;
+import edu.cda.project.ticklybackend.models.structure.Structure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
