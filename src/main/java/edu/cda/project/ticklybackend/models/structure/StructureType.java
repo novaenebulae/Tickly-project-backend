@@ -1,6 +1,8 @@
 package edu.cda.project.ticklybackend.models.structure;
 
 
+import com.fasterxml.jackson.annotation.JsonView;
+import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -17,5 +19,6 @@ public class StructureType {
 
     @Column
     @NotBlank
+    @JsonView(Views.Public.class)
     protected String type;
 }

@@ -2,7 +2,7 @@ package edu.cda.project.ticklybackend.models.structure;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
-import edu.cda.project.ticklybackend.views.DisplayStructure;
+import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -21,19 +21,21 @@ public class Structure {
     protected Integer id;
 
     @Column(nullable = false)
+    @JsonView(Views.Public.class)
     @NotBlank
-    @JsonView(DisplayStructure.class)
     protected String name;
 
     @Column(nullable = false, columnDefinition = "TEXT")
+    @JsonView(Views.Public.class)
     protected String description;
 
     @ManyToMany
     @JoinTable(
-            name = "structure_structure_type",
-            joinColumns = @JoinColumn(name = "structure_id"),
-            inverseJoinColumns = @JoinColumn(name = "type_id")
+            name="structure_structure_type",
+            joinColumns = @JoinColumn(name="structure_id"),
+            inverseJoinColumns = @JoinColumn(name ="type_id")
     )
+    @JsonView(Views.Public.class)
     protected List<StructureType> types = new ArrayList<>();
 
     @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
