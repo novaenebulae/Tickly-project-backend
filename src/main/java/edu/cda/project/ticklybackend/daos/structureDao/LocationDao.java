@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.DAO.structureDAO;
+package edu.cda.project.ticklybackend.daos.structureDao;
 
 import edu.cda.project.ticklybackend.models.structure.Location;
 import org.springframework.data.jpa.repository.JpaRepository;

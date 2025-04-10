@@ -1,6 +1,6 @@
 package edu.cda.project.ticklybackend.controllers.structure;
 
-import edu.cda.project.ticklybackend.DAO.structureDAO.StructureDao;
+import edu.cda.project.ticklybackend.daos.structureDao.StructureDao;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
