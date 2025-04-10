@@ -1,9 +1,9 @@
-package security;
+package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dao.UserDao;
 import edu.cda.project.ticklybackend.models.User;
-import edu.cda.project.ticklybackend.security.AppUserDetails;
-import edu.cda.project.ticklybackend.security.JwtUtils;
+import edu.cda.project.ticklybackend.security.user.AppUserDetails;
+import edu.cda.project.ticklybackend.security.jwt.JwtUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

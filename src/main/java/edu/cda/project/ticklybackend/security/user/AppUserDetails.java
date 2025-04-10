@@ -1,4 +1,4 @@
-package security;
+package edu.cda.project.ticklybackend.security.user;
 
 import edu.cda.project.ticklybackend.models.User;
 import org.springframework.security.core.GrantedAuthority;

@@ -20,10 +20,12 @@ public class Structure {
     protected Integer id;
 
     @Column(nullable = false)
+    @JsonView(Views.Public.class)
     @NotBlank
     protected String name;
 
     @Column(nullable = false, columnDefinition = "TEXT")
+    @JsonView(Views.Public.class)
     protected String description;
 
     @ManyToMany
@@ -32,5 +34,6 @@ public class Structure {
             joinColumns = @JoinColumn(name="structure_id"),
             inverseJoinColumns = @JoinColumn(name ="type_id")
     )
+    @JsonView(Views.Public.class)
     protected List<StructureType> type = new ArrayList<>();
 }

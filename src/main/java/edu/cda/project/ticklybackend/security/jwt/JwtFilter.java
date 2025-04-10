@@ -1,4 +1,4 @@
-package security;
+package edu.cda.project.ticklybackend.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

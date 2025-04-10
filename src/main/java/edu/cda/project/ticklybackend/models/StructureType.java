@@ -19,5 +19,6 @@ public class StructureType {
 
     @Column
     @NotBlank
+    @JsonView(Views.Public.class)
     protected String type;
 }

@@ -1,4 +1,4 @@
-package security;
+package edu.cda.project.ticklybackend.security.user;
 
 import edu.cda.project.ticklybackend.dao.UserDao;
 import edu.cda.project.ticklybackend.models.User;
