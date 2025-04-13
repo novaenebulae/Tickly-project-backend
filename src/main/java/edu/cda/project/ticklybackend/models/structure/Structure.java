@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.models.structure;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import edu.cda.project.ticklybackend.models.user.User;
@@ -38,6 +39,7 @@ public class Structure {
     protected List<StructureType> types = new ArrayList<>();
 
     @OneToMany(mappedBy="structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JsonIgnore
     protected List<User> staff = new ArrayList<>();
 
     @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address

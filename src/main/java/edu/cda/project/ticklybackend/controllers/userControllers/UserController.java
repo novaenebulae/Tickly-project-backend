@@ -1,7 +1,8 @@
 package edu.cda.project.ticklybackend.controllers.userControllers;
 
-import edu.cda.project.ticklybackend.daos.userDao.UserDao;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.UserRoleChangeRequest;
+import edu.cda.project.ticklybackend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,40 +12,68 @@ import java.util.List;
 
 @CrossOrigin
 @RestController
+@RequestMapping("/api/users")
 public class UserController {
 
-    protected UserDao userDao;
+    private final UserService userService;
 
     @Autowired
-    public UserController(UserDao userDao) {
-        this.userDao = userDao;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        return userDao.findAll();
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.findAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @GetMapping("/user/{id}")
-    public User getUser (@PathVariable Integer id) {
-        return userDao.findUserById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+        User user = userService.findUserById(id);
+        if (user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @PostMapping("/user")
-    public ResponseEntity<User> addUser (@RequestBody User user) {
-        userDao.save(user);
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+    @PostMapping("/register")
+    public ResponseEntity<User> registerUser(@RequestBody User user) {
+        // Check if email already exists
+        if (userService.findUserByEmail(user.getEmail()).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+
+        // Create a new spectator user by default
+        User newUser = userService.createSpectatorUser(user);
+        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/user/{id}")
-    public ResponseEntity<User> deleteUser (@PathVariable Integer id) {
-        userDao.deleteById(id);
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User user) {
+        User updatedUser = userService.updateUser(id, user);
+        if (updatedUser != null) {
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/{id}/role")
+    public ResponseEntity<User> changeUserRole(@PathVariable Integer id, @RequestBody UserRoleChangeRequest roleChangeRequest) {
+        User updatedUser = userService.changeUserRole(id, roleChangeRequest.getNewRole());
+        if (updatedUser != null) {
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    @PutMapping("/user/{id}")
-    public ResponseEntity<User> updateUser (@PathVariable Integer id, @RequestBody User user) {
-        userDao.save(user);
-        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 }
