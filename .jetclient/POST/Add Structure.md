@@ -1,9 +1,9 @@
 ```toml
-name = 'Locations'
-method = 'GET'
+name = 'Add Structure'
+method = 'POST'
 url = 'http://localhost:8080/api/structures'
-sortWeight = 500000
-id = 'c5b9c637-f9cb-4b39-a6c4-138273e13c45'
+sortWeight = 1000000
+id = '7c356aff-7591-4a67-a14a-791177bd99e3'
 
 [body]
 type = 'JSON'
@@ -19,7 +19,7 @@ raw = '''
 "address": {
 "country": "France",
 "city": "Nice",
-"postalCode": "06000",
+"postal_code": "06000",
 "street": "Avenue des Fleurs",
 "number": "123"
 }
