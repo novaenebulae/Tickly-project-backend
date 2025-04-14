@@ -1,8 +1,5 @@
 package edu.cda.project.ticklybackend.models.user;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import edu.cda.project.ticklybackend.models.structure.Structure;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -14,7 +11,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 
 @Entity
-@Getter @Setter
+@Getter
+@Setter
 @EntityListeners(AuditingEntityListener.class)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
@@ -44,9 +42,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     protected UserRole role;
 
-
     @CreatedDate
-    @Column(name= "registration_date", nullable = false, updatable = false)
+    @Column(name = "registration_date", nullable = false, updatable = false)
     private Instant registrationDate;
 
     @LastModifiedDate
