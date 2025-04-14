@@ -1,7 +1,7 @@
 package edu.cda.project.ticklybackend.security.user;
 
-import edu.cda.project.ticklybackend.dao.UserDao;
-import edu.cda.project.ticklybackend.models.User;
+import edu.cda.project.ticklybackend.daos.userDao.UserDao;
+import edu.cda.project.ticklybackend.models.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,7 +23,7 @@ public class AppUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String mail) throws UsernameNotFoundException {
 
-        Optional<User> optionalUser = userDao.findByMail(mail);
+        Optional<User> optionalUser = userDao.findByEmail(mail);
 
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException(mail);

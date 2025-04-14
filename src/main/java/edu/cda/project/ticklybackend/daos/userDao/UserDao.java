@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.repositories;
+package edu.cda.project.ticklybackend.daos.userDao;
 
 import edu.cda.project.ticklybackend.models.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,6 @@
 package edu.cda.project.ticklybackend.security.user;
 
-import edu.cda.project.ticklybackend.models.User;
+import edu.cda.project.ticklybackend.models.user.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +19,7 @@ public class AppUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        return List.of(new SimpleGrantedAuthority(user.isAdmin() ? "ROLE_ADMIN" : "ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_".concat(user.getRole())));
     }
 
     @Override
@@ -29,6 +29,6 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getMail();
+        return user.getEmail();
     }
 }

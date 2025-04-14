@@ -4,7 +4,7 @@ import edu.cda.project.ticklybackend.models.user.roles.OrganizationServiceUser;
 import edu.cda.project.ticklybackend.models.user.roles.ReservationServiceUser;
 import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.roles.StructureAdministratorUser;
-import edu.cda.project.ticklybackend.repositories.UserDao;
+import edu.cda.project.ticklybackend.daos.userDao.UserDao;
 import edu.cda.project.ticklybackend.models.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,8 @@ public class UserService {
     public User createSpectatorUser(User user) {
         SpectatorUser spectatorUser = new SpectatorUser();
         copyUserDetails(user, spectatorUser);
-        spectatorUser.setRegistrationDate(new Date());
-        spectatorUser.setLastConnection(new Date());
+        spectatorUser.setRegistrationDate(new Date().toInstant());
+        spectatorUser.setLastConnectionDate(new Date().toInstant());
         spectatorUser.setPassword(user.getPassword());
         return userDao.save(spectatorUser);
     }
@@ -63,7 +63,7 @@ public class UserService {
     public User updateUserLastConnection(Integer id) {
         User user = userDao.findUserById(id);
         if (user != null) {
-            user.setLastConnection(new Date());
+            user.setLastConnectionDate(new Date().toInstant());
             return userDao.save(user);
         }
         return null;
@@ -101,9 +101,9 @@ public class UserService {
         newUser.setFirstName(existingUser.getFirstName());
         newUser.setLastName(existingUser.getLastName());
         newUser.setRegistrationDate(existingUser.getRegistrationDate());
-        newUser.setLastConnection(new Date()); // Update last connection
+        newUser.setLastConnectionDate(new Date().toInstant()); // Update last connection
         newUser.setStructure(existingUser.getStructure());
-        newUser.setCreatedAt(existingUser.getCreatedAt());
+        newUser.setRegistrationDate(existingUser.getRegistrationDate());
 
         // Save the new user with the updated role
         return userDao.save(newUser);

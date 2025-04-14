@@ -1,8 +1,6 @@
 package edu.cda.project.ticklybackend.models.structure;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonView;
-import edu.cda.project.ticklybackend.views.DisplayStructure;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -19,7 +17,6 @@ public class Address {
 
     @Column(nullable = false)
     @NotBlank
-    @JsonView(DisplayStructure.class)
     protected String country;
 
     @Column(nullable = false)

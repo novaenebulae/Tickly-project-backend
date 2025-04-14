@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.models.user;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -47,24 +48,19 @@ public abstract class User {
     @Column(name = "first_name", nullable = false)
     protected String firstName;
 
-    @Column(name = "last_connection", nullable = false)
-    protected Date lastConnection;
-
-    @Column(name = "registration_date", nullable = false)
-    protected Date registrationDate;
-
     @Column(name = "role", nullable = false, insertable = false, updatable = false)
     protected String role;
 
     @ManyToOne
-    @JsonIgnore
     @JoinColumn(name = "structure_id")
+    @JsonBackReference("structure-users")
     protected Structure structure;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+    @Column(name= "registration_date", nullable = false, updatable = false)
+    private Instant registrationDate;
 
     @LastModifiedDate
-    private Instant updatedAt;
+    @Column(name = "last_connection", nullable = false)
+    private Instant lastConnectionDate;
 }
