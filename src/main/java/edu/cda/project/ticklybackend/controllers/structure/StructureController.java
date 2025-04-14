@@ -2,10 +2,19 @@ package edu.cda.project.ticklybackend.controllers.structure;
 
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
+import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.security.user.IsSpectator;
+import edu.cda.project.ticklybackend.security.user.IsStructureAdministrator;
+import edu.cda.project.ticklybackend.security.user.IsStructureOwner;
 import edu.cda.project.ticklybackend.services.StructureService;
+import edu.cda.project.ticklybackend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,10 +25,12 @@ import java.util.List;
 public class StructureController {
 
     private final StructureService structureService;
+    private final UserService userService;
 
     @Autowired
-    public StructureController(StructureService structureService) {
+    public StructureController(StructureService structureService, UserService userService) {
         this.structureService = structureService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -38,13 +49,32 @@ public class StructureController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<Structure> createStructure(@RequestBody Structure structure) {
-        Structure newStructure = structureService.saveStructure(structure);
-        return new ResponseEntity<>(newStructure, HttpStatus.CREATED);
+    @PostMapping("/structure")
+    @IsStructureAdministrator
+    public ResponseEntity<?> createStructure(@RequestBody Structure structure) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        StructureAdministratorUser adminUser = (StructureAdministratorUser) userService.findUserByEmail(email);
+
+        if (adminUser.getStructure() != null) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Vous êtes déjà administrateur d'une structure. Vous ne pouvez pas en créer une nouvelle.");
+        }
+
+        Structure savedStructure = structureService.saveStructure(structure);
+
+        adminUser.setStructure(savedStructure);
+        userService.saveUser(adminUser);
+
+        return ResponseEntity.ok(savedStructure);
     }
 
     @PutMapping("/{id}")
+    @IsStructureAdministrator
+    @IsStructureOwner
     public ResponseEntity<Structure> updateStructure(@PathVariable Integer id, @RequestBody Structure structure) {
         Structure existingStructure = structureService.findStructureById(id);
         if (existingStructure != null) {
@@ -57,14 +87,12 @@ public class StructureController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStructure(@PathVariable Integer id) {
-        Structure existingStructure = structureService.findStructureById(id);
-        if (existingStructure != null) {
-            structureService.deleteStructure(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @IsStructureAdministrator
+    @IsStructureOwner
+    public ResponseEntity<?> deleteStructure(@PathVariable Integer id) {
+        // La vérification des autorisations est maintenant gérée par l'aspect
+        structureService.deleteStructure(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/types")

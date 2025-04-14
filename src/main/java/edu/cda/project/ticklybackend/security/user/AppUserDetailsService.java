@@ -21,12 +21,12 @@ public class AppUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String mail) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        Optional<User> optionalUser = userDao.findByEmail(mail);
+        Optional<User> optionalUser = userDao.findUserByEmail(email);
 
         if (optionalUser.isEmpty()) {
-            throw new UsernameNotFoundException(mail);
+            throw new UsernameNotFoundException(email);
         }
 
         return new AppUserDetails(optionalUser.get());

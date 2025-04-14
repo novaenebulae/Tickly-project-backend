@@ -2,6 +2,7 @@ package edu.cda.project.ticklybackend.controllers.userControllers;
 
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserRoleChangeRequest;
+import edu.cda.project.ticklybackend.security.user.IsUser;
 import edu.cda.project.ticklybackend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,13 +23,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.findAllUsers();
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
+//    @GetMapping
+//    public ResponseEntity<List<User>> getAllUsers() {
+//        List<User> users = userService.findAllUsers();
+//        return new ResponseEntity<>(users, HttpStatus.OK);
+//    }
 
     @GetMapping("/{id}")
+    @IsUser
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
         User user = userService.findUserById(id);
         if (user != null) {
@@ -38,19 +40,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user) {
-        // Check if email already exists
-        if (userService.findUserByEmail(user.getEmail()).isPresent()) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-
-        // Create a new spectator user by default
-        User newUser = userService.createSpectatorUser(user);
-        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
-    }
-
     @PutMapping("/{id}")
+    @IsUser
     public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User user) {
         User updatedUser = userService.updateUser(id, user);
         if (updatedUser != null) {
@@ -60,18 +51,18 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{id}/role")
-    public ResponseEntity<User> changeUserRole(@PathVariable Integer id, @RequestBody UserRoleChangeRequest roleChangeRequest) {
-        User updatedUser = userService.changeUserRole(id, roleChangeRequest.getNewRole());
-        if (updatedUser != null) {
-            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
+//    @PutMapping("/{id}/role")
+//    public ResponseEntity<User> changeUserRole(@PathVariable Integer id, @RequestBody UserRoleChangeRequest roleChangeRequest) {
+//        User updatedUser = userService.changeUserRole(id, roleChangeRequest.getNewRole());
+//        if (updatedUser != null) {
+//            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+//        } else {
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        }
+//    }
 
     @DeleteMapping("/{id}")
+    @IsUser
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

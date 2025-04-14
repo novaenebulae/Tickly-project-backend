@@ -2,10 +2,10 @@ package edu.cda.project.ticklybackend.services;
 
 import edu.cda.project.ticklybackend.daos.structureDao.StructureDao;
 import edu.cda.project.ticklybackend.daos.structureDao.StructureTypeDao;
-import edu.cda.project.ticklybackend.daos.userDao.UserDao;
+import edu.cda.project.ticklybackend.daos.userDao.StaffUserDao;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
-import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +16,13 @@ public class StructureService {
 
     private final StructureDao structureDao;
     private final StructureTypeDao structureTypeDao;
+    private final StaffUserDao staffUserDao;
 
     @Autowired
-    public StructureService(StructureDao structureDao, StructureTypeDao structureTypeDao) {
+    public StructureService(StructureDao structureDao, StructureTypeDao structureTypeDao, StaffUserDao staffUserDao) {
         this.structureDao = structureDao;
         this.structureTypeDao = structureTypeDao;
+        this.staffUserDao = staffUserDao;
     }
 
     public List<Structure> findAllStructures() {
@@ -35,20 +37,14 @@ public class StructureService {
         return structureDao.save(structure);
     }
 
-    @Autowired
-    private UserDao userDao; // Assurez-vous d'injecter ce repository
-
     public void deleteStructure(Integer id) {
-        // 1. Récupérer tous les utilisateurs associés à cette structure
-        List<User> usersWithStructure = userDao.findByStructureId(id);
+        List<StaffUser> StaffUsers = staffUserDao.findByStructureId(id);
 
-        // 2. Détacher les utilisateurs de la structure (mettre structure_id à NULL)
-        for (User user : usersWithStructure) {
+        for (StaffUser user : StaffUsers) {
             user.setStructure(null);
-            userDao.save(user);
+            staffUserDao.save(user);
         }
 
-        // 3. Maintenant que les utilisateurs sont détachés, supprimer la structure
         structureDao.deleteById(id);
     }
 
@@ -59,4 +55,5 @@ public class StructureService {
     public List<Structure> findStructuresByTypeId(Integer typeId) {
         return structureDao.findByTypesId(typeId);
     }
+
 }

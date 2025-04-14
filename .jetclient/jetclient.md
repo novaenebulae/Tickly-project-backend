@@ -7,7 +7,20 @@ name = 'Default'
 
 [[apis]]
 name = 'API'
+```
 
-[[apis]]
-name = 'API'
+#### Variables
+
+```json5
+{
+  globals: {
+    baseUrl: "https://{{host}}/api"
+  },
+  local: {
+    host: "localhost:8080"
+  },
+  prod: {
+    host: "example.com"
+  }
+}
 ```

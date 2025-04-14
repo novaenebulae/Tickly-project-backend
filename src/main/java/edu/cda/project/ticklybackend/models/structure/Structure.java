@@ -1,8 +1,10 @@
 package edu.cda.project.ticklybackend.models.structure;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -48,7 +50,7 @@ public class Structure {
     private List<Location> locations = new ArrayList<>();
 
     @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonManagedReference("structure-users")
-    private List<User> users = new ArrayList<>();
+    @JsonBackReference("structure-users")
+    private List<StaffUser> users = new ArrayList<>();
 
 }

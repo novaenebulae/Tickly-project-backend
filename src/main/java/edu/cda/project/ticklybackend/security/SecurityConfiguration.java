@@ -51,6 +51,10 @@ public class SecurityConfiguration {
         return http
                 .csrf(c -> c.disable())
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/register", "/login").permitAll()
+//                        .anyRequest().authenticated()
+//                )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

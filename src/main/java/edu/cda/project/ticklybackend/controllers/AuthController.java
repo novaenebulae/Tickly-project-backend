@@ -3,14 +3,13 @@ package edu.cda.project.ticklybackend.controllers;
 import edu.cda.project.ticklybackend.daos.userDao.UserDao;
 import edu.cda.project.ticklybackend.dtos.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.UserRegistrationDto;
-import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.user.User;
-import edu.cda.project.ticklybackend.models.user.roles.OrganizationServiceUser;
-import edu.cda.project.ticklybackend.models.user.roles.ReservationServiceUser;
+import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
-import edu.cda.project.ticklybackend.models.user.roles.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.security.user.AppUserDetails;
 import edu.cda.project.ticklybackend.security.jwt.JwtUtils;
+import edu.cda.project.ticklybackend.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,37 +30,45 @@ import java.util.Date;
 public class AuthController {
 
 
+    private final UserService userService;
     protected UserDao userDao;
     protected PasswordEncoder passwordEncoder;
     protected AuthenticationProvider authenticationProvider;
     protected JwtUtils jwtUtils;
 
     @Autowired
-    public AuthController(UserDao userDao, PasswordEncoder passwordEncoder, AuthenticationProvider authenticationProvider, JwtUtils jwtUtils) {
+    public AuthController(UserDao userDao, PasswordEncoder passwordEncoder, AuthenticationProvider authenticationProvider, JwtUtils jwtUtils, UserService userService) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.authenticationProvider = authenticationProvider;
         this.jwtUtils = jwtUtils;
+        this.userService = userService;
     }
 
-    @PostMapping("/sign-up")
-    public ResponseEntity<User> signUp(@RequestBody @Valid UserRegistrationDto userDTO) {
+    @PostMapping("/register")
+    public ResponseEntity<User> register(@RequestBody @Valid UserRegistrationDto userDto) {
+        if (userDto.isCreateStructure()) {
 
-        User user = new SpectatorUser();
+            StructureAdministratorUser adminUser = new StructureAdministratorUser();
+            adminUser.setEmail(userDto.getEmail());
+            adminUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            adminUser.setFirstName(userDto.getFirstName());
+            adminUser.setLastName(userDto.getLastName());
+            adminUser.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
+            adminUser.setStructure(null);
 
-        // Copier les propriétés
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
-        user.setRegistrationDate(new Date().toInstant());
-        user.setLastConnectionDate(new Date().toInstant());
+            return new ResponseEntity<>(userService.saveUser(adminUser), HttpStatus.CREATED);
+        } else {
+            SpectatorUser spectator = new SpectatorUser();
+            spectator.setEmail(userDto.getEmail());
+            spectator.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            spectator.setFirstName(userDto.getFirstName());
+            spectator.setLastName(userDto.getLastName());
 
-        userDao.save(user);
-        user.setPassword(null); // Pour ne pas renvoyer le mot de passe
-
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
+            return new ResponseEntity<>(userService.saveUser(spectator), HttpStatus.CREATED);
+        }
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid UserLoginDto loginDto) {

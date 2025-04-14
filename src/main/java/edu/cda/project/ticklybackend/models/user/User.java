@@ -1,15 +1,8 @@
 package edu.cda.project.ticklybackend.models.user;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 
-import edu.cda.project.ticklybackend.models.user.roles.OrganizationServiceUser;
-import edu.cda.project.ticklybackend.models.user.roles.ReservationServiceUser;
-import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
-import edu.cda.project.ticklybackend.models.user.roles.StructureAdministratorUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -19,7 +12,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.Date;
 
 @Entity
 @Getter @Setter
@@ -27,7 +19,7 @@ import java.util.Date;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
 @Table(name = "user")
-public abstract class User {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,12 +41,9 @@ public abstract class User {
     protected String firstName;
 
     @Column(name = "role", nullable = false, insertable = false, updatable = false)
-    protected String role;
+    @Enumerated(EnumType.STRING)
+    protected UserRole role;
 
-    @ManyToOne
-    @JoinColumn(name = "structure_id")
-    @JsonBackReference("structure-users")
-    protected Structure structure;
 
     @CreatedDate
     @Column(name= "registration_date", nullable = false, updatable = false)
@@ -63,4 +52,5 @@ public abstract class User {
     @LastModifiedDate
     @Column(name = "last_connection", nullable = false)
     private Instant lastConnectionDate;
+
 }

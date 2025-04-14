@@ -1,9 +1,9 @@
 package edu.cda.project.ticklybackend.services;
 
-import edu.cda.project.ticklybackend.models.user.roles.OrganizationServiceUser;
-import edu.cda.project.ticklybackend.models.user.roles.ReservationServiceUser;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.OrganizationServiceUser;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.ReservationServiceUser;
 import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
-import edu.cda.project.ticklybackend.models.user.roles.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.daos.userDao.UserDao;
 import edu.cda.project.ticklybackend.models.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,15 +23,6 @@ public class UserService {
         this.userDao = userDao;
     }
 
-    public User createSpectatorUser(User user) {
-        SpectatorUser spectatorUser = new SpectatorUser();
-        copyUserDetails(user, spectatorUser);
-        spectatorUser.setRegistrationDate(new Date().toInstant());
-        spectatorUser.setLastConnectionDate(new Date().toInstant());
-        spectatorUser.setPassword(user.getPassword());
-        return userDao.save(spectatorUser);
-    }
-
     public List<User> findAllUsers() {
         return userDao.findAll();
     }
@@ -40,20 +31,19 @@ public class UserService {
         return userDao.findUserById(id);
     }
 
-    public Optional<User> findUserByEmail(String email) {
-        return userDao.findByEmail(email);
-    }
-
     public User updateUser(Integer id, User updatedUser) {
         User existingUser = userDao.findUserById(id);
         if (existingUser != null) {
             existingUser.setEmail(updatedUser.getEmail());
             existingUser.setFirstName(updatedUser.getFirstName());
             existingUser.setLastName(updatedUser.getLastName());
-            existingUser.setStructure(updatedUser.getStructure());
             return userDao.save(existingUser);
         }
         return null;
+    }
+
+    public User saveUser(User user) {
+        return userDao.save(user);
     }
 
     public void deleteUser(Integer id) {
@@ -75,8 +65,8 @@ public class UserService {
             return null;
         }
 
-        // Create new user instance based on the target role
         User newUser;
+
         switch (newRole) {
             case SPECTATOR:
                 newUser = new SpectatorUser();
@@ -102,17 +92,28 @@ public class UserService {
         newUser.setLastName(existingUser.getLastName());
         newUser.setRegistrationDate(existingUser.getRegistrationDate());
         newUser.setLastConnectionDate(new Date().toInstant()); // Update last connection
-        newUser.setStructure(existingUser.getStructure());
-        newUser.setRegistrationDate(existingUser.getRegistrationDate());
 
         // Save the new user with the updated role
         return userDao.save(newUser);
     }
-    
+
     private void copyUserDetails(User source, User target) {
         target.setEmail(source.getEmail());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
-        target.setStructure(source.getStructure());
     }
+
+
+    // Ajoutez cette méthode si elle n'existe pas déjà
+    public User findUserByEmail(String email) {
+        return userDao.findUserByEmail(email).orElse(null);
+    }
+
+    public boolean hasRole(User user, UserRole role) {
+        if (user == null) {
+            return false;
+        }
+        return user.getRole() == role;
+    }
+
 }
