@@ -1,15 +1,12 @@
 package edu.cda.project.ticklybackend.controllers.userControllers;
 
 import edu.cda.project.ticklybackend.models.user.User;
-import edu.cda.project.ticklybackend.models.user.UserRoleChangeRequest;
-import edu.cda.project.ticklybackend.security.user.IsUser;
+import edu.cda.project.ticklybackend.security.user.annotations.IsUser;
 import edu.cda.project.ticklybackend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @CrossOrigin
 @RestController

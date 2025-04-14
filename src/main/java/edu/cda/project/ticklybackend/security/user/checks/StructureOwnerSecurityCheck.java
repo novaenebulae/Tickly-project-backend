@@ -1,9 +1,10 @@
-package edu.cda.project.ticklybackend.security.user;
+package edu.cda.project.ticklybackend.security.user.checks;
 
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.security.user.annotations.IsStructureOwner;
 import edu.cda.project.ticklybackend.services.StructureService;
 import edu.cda.project.ticklybackend.services.UserService;
 import org.aspectj.lang.JoinPoint;

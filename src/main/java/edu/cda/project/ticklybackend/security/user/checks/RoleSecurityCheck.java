@@ -1,19 +1,18 @@
-package edu.cda.project.ticklybackend.security.user;
+package edu.cda.project.ticklybackend.security.user.checks;
 
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.security.SecurityConfiguration;
+import edu.cda.project.ticklybackend.security.user.annotations.IsSpectator;
+import edu.cda.project.ticklybackend.security.user.annotations.IsStructureAdministrator;
 import edu.cda.project.ticklybackend.services.UserService;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Aspect
 @Component
