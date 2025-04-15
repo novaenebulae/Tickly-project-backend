@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import edu.cda.project.ticklybackend.models.event.Event;
-import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -48,11 +47,16 @@ public class Structure {
     @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
     private Address address;
 
-    @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
+    @OneToMany
+    @JoinTable(
+            name = "structure_location",
+            joinColumns = @JoinColumn(name = "structure_id"),
+            inverseJoinColumns = @JoinColumn(name = "location_id")
+    )
     private List<Location> locations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<StaffUser> staffUsers = new ArrayList<>();
+//    @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+//    private List<StaffUser> staffUsers = new ArrayList<>();
 
     @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL)
     private List<Event> events = new ArrayList<>();

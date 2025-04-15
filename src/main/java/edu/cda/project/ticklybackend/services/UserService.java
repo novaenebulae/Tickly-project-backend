@@ -1,17 +1,17 @@
 package edu.cda.project.ticklybackend.services;
 
+import edu.cda.project.ticklybackend.daos.userDao.UserDao;
+import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.UserRole;
+import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.OrganizationServiceUser;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.ReservationServiceUser;
-import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
-import edu.cda.project.ticklybackend.daos.userDao.UserDao;
-import edu.cda.project.ticklybackend.models.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -104,7 +104,6 @@ public class UserService {
     }
 
 
-    // Ajoutez cette méthode si elle n'existe pas déjà
     public User findUserByEmail(String email) {
         return userDao.findUserByEmail(email).orElse(null);
     }

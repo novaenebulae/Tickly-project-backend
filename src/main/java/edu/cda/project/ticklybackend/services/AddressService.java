@@ -15,7 +15,7 @@ public class AddressService {
         Address address = new Address();
         address.setCountry(dto.getCountry());
         address.setCity(dto.getCity());
-        address.setPostalCode(dto.getPostalCode());
+        address.setZipCode(dto.getPostalCode());
         address.setStreet(dto.getStreet());
         address.setNumber(dto.getNumber());
         return address;
