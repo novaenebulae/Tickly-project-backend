@@ -1,9 +1,9 @@
 package edu.cda.project.ticklybackend.models.structure;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
-import edu.cda.project.ticklybackend.models.user.User;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
@@ -17,6 +17,10 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id"
+)
 public class Structure {
 
     @Id
@@ -34,23 +38,23 @@ public class Structure {
 
     @ManyToMany
     @JoinTable(
-            name="structure_structure_type",
-            joinColumns = @JoinColumn(name="structure_id"),
-            inverseJoinColumns = @JoinColumn(name ="type_id")
+            name = "structure_structure_type",
+            joinColumns = @JoinColumn(name = "structure_id"),
+            inverseJoinColumns = @JoinColumn(name = "type_id")
     )
     @JsonView(Views.Public.class)
     protected List<StructureType> types = new ArrayList<>();
 
     @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
-    @JsonManagedReference
     private Address address;
 
     @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
-    @JsonManagedReference
     private List<Location> locations = new ArrayList<>();
 
     @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonBackReference("structure-users")
-    private List<StaffUser> users = new ArrayList<>();
+    private List<StaffUser> staffUsers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL)
+    private List<Event> events = new ArrayList<>();
 
 }

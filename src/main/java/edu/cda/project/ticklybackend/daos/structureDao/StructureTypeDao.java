@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StructureTypeDao extends JpaRepository<StructureType, Integer> {
+    StructureType findStructureTypeById(Integer typeId);
 }

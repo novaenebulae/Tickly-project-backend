@@ -1,20 +1,28 @@
-package edu.cda.project.ticklybackend.controllers.structure;
+package edu.cda.project.ticklybackend.controllers.structureControllers;
 
+import edu.cda.project.ticklybackend.daos.structureDao.StructureTypeDao;
+import edu.cda.project.ticklybackend.dtos.StructureCreationDto;
+import edu.cda.project.ticklybackend.models.structure.Address;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureAdministrator;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureOwner;
+import edu.cda.project.ticklybackend.services.AddressService;
 import edu.cda.project.ticklybackend.services.StructureService;
 import edu.cda.project.ticklybackend.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @CrossOrigin
 @RestController
@@ -22,11 +30,15 @@ import java.util.List;
 public class StructureController {
 
     private final StructureService structureService;
+    private final StructureTypeDao structureTypeDao;
+    private final AddressService addressService;
     private final UserService userService;
 
     @Autowired
-    public StructureController(StructureService structureService, UserService userService) {
+    public StructureController(StructureService structureService, StructureTypeDao structureTypeDao, AddressService addressService, UserService userService) {
         this.structureService = structureService;
+        this.structureTypeDao = structureTypeDao;
+        this.addressService = addressService;
         this.userService = userService;
     }
 
@@ -46,10 +58,9 @@ public class StructureController {
         }
     }
 
-    @PostMapping("/structure")
+    @PostMapping(path = "/structure", consumes = MediaType.APPLICATION_JSON_VALUE)
     @IsStructureAdministrator
-    public ResponseEntity<?> createStructure(@RequestBody Structure structure) {
-
+    public ResponseEntity<Structure> createStructure(@RequestBody @Valid StructureCreationDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
 
@@ -58,15 +69,29 @@ public class StructureController {
         if (adminUser.getStructure() != null) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body("Vous êtes déjà administrateur d'une structure. Vous ne pouvez pas en créer une nouvelle.");
+                    .body(null);
         }
+
+        Address address = addressService.convertToAddress(dto.getAddress());
+
+        Structure structure = new Structure();
+        structure.setName(dto.getName());
+        structure.setDescription(dto.getDescription());
+        structure.setAddress(address);
+
+        List<StructureType> types = dto.getTypeIds().stream()
+                .map(id -> structureTypeDao.findStructureTypeById(id))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        structure.setTypes(types);
 
         Structure savedStructure = structureService.saveStructure(structure);
 
         adminUser.setStructure(savedStructure);
         userService.saveUser(adminUser);
 
-        return ResponseEntity.ok(savedStructure);
+        return new ResponseEntity<>(savedStructure, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")

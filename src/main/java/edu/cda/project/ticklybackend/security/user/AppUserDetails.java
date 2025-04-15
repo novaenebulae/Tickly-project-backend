@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.security.user;
 
 import edu.cda.project.ticklybackend.models.user.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
 public class AppUserDetails implements UserDetails {
 
     protected User user;
@@ -30,5 +32,9 @@ public class AppUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return user.getEmail();
+    }
+
+    public String getRole() {
+        return user.getRole().name();
     }
 }

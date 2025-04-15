@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.controllers.structure;
+package edu.cda.project.ticklybackend.controllers.structureControllers;
 
 import edu.cda.project.ticklybackend.daos.structureDao.StructureTypeDao;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
