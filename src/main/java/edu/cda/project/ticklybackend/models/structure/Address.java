@@ -22,8 +22,8 @@ public class Address {
     @Column(nullable = false)
     protected String city;
 
-    @Column(nullable = false)
-    protected String postal_code;
+    @Column(nullable = false, name = "postal_code")
+    protected String postalCode;
 
     @Column(nullable = false)
     protected String street;

@@ -57,7 +57,7 @@ public class Event {
     private Structure structure;
 
     @OneToMany(mappedBy = "event")
-    @JsonManagedReference
+    @JsonManagedReference("event-locations")
     Set<EventLocation> locationSet;
 
 }

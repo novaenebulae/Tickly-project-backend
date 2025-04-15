@@ -6,6 +6,7 @@ import edu.cda.project.ticklybackend.daos.userDao.StaffUserDao;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class StructureService {
         return structureDao.findById(id).orElse(null);
     }
 
-    public Structure saveStructure(Structure structure) {
+    public Structure saveStructure(@Valid Structure structure) {
         return structureDao.save(structure);
     }
 
@@ -55,5 +56,6 @@ public class StructureService {
     public List<Structure> findStructuresByTypeId(Integer typeId) {
         return structureDao.findByTypesId(typeId);
     }
+
 
 }

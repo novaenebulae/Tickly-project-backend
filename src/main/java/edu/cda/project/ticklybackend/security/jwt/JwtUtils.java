@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Map;
 
 @Service
 public class JwtUtils {
@@ -13,6 +14,7 @@ public class JwtUtils {
     public String generateJwtToken(AppUserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .addClaims(Map.of("role", userDetails.getRole()))
                 .setIssuedAt(new Date())
                 .signWith(SignatureAlgorithm.HS256, "azerty")
                 .compact();

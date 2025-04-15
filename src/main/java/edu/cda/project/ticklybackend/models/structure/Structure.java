@@ -1,8 +1,8 @@
 package edu.cda.project.ticklybackend.models.structure;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.views.Views;
@@ -17,6 +17,10 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id"
+)
 public class Structure {
 
     @Id
@@ -42,19 +46,15 @@ public class Structure {
     protected List<StructureType> types = new ArrayList<>();
 
     @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
-    @JsonManagedReference
     private Address address;
 
     @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
-    @JsonBackReference("structure-locations")
     private List<Location> locations = new ArrayList<>();
 
     @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonBackReference("structure-staff")
     private List<StaffUser> staffUsers = new ArrayList<>();
 
     @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL)
-    @JsonManagedReference
     private List<Event> events = new ArrayList<>();
 
 }

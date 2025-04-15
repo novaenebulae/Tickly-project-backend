@@ -7,8 +7,8 @@ import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.models.user.roles.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
-import edu.cda.project.ticklybackend.security.user.AppUserDetails;
 import edu.cda.project.ticklybackend.security.jwt.JwtUtils;
+import edu.cda.project.ticklybackend.security.user.AppUserDetails;
 import edu.cda.project.ticklybackend.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Date;
 
 @CrossOrigin
 @RestController
@@ -46,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody @Valid UserRegistrationDto userDto) {
+    public ResponseEntity<User> register(@RequestBody UserRegistrationDto userDto) {
         if (userDto.isCreateStructure()) {
 
             StructureAdministratorUser adminUser = new StructureAdministratorUser();

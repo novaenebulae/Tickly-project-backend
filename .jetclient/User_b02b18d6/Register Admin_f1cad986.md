@@ -5,6 +5,9 @@ url = 'http://localhost:8080/register'
 sortWeight = 1000000
 id = 'f1cad986-7210-48e8-a323-4d5c340d6e6a'
 
+[auth]
+type = 'NO_AUTH'
+
 [body]
 type = 'JSON'
 raw = '''
