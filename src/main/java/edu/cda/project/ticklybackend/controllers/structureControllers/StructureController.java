@@ -58,7 +58,7 @@ public class StructureController {
         }
     }
 
-    @PostMapping(path = "/structure", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/create-structure", consumes = MediaType.APPLICATION_JSON_VALUE)
     @IsStructureAdministrator
     public ResponseEntity<Structure> createStructure(@RequestBody @Valid StructureCreationDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -115,12 +115,6 @@ public class StructureController {
         // La vérification des autorisations est maintenant gérée par l'aspect
         structureService.deleteStructure(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    @GetMapping("/types")
-    public ResponseEntity<List<StructureType>> getAllStructureTypes() {
-        List<StructureType> types = structureService.findAllStructureTypes();
-        return new ResponseEntity<>(types, HttpStatus.OK);
     }
 
     @GetMapping("/by-type/{typeId}")

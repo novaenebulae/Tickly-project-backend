@@ -31,7 +31,7 @@ public class Structure {
     @NotBlank
     protected String name;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     @JsonView(Views.Public.class)
     protected String description;
 
