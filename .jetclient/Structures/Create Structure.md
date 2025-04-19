@@ -1,12 +1,12 @@
 ```toml
 name = 'Create Structure'
 method = 'POST'
-url = 'http://localhost:8080/api/structures/structure'
+url = 'http://localhost:8080/api/structures/create-structure'
 sortWeight = 3000000
 id = '3e561937-f065-48b1-80c8-8b8d9d0d8ff5'
 
 [auth.bearer]
-token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFJVQ1RVUkVfQURNSU5JU1RSQVRPUiIsImlhdCI6MTc0NDcyMTExMH0.oY3A1pkcrZ1cxEE1WTiDZjWoB2sgup6rv6t-EJ0aoTI'
+token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzcGVjdGF0b2RyQGV4YW1wbGUuY29tIiwicm9sZSI6IlNQRUNUQVRPUiIsImlhdCI6MTc0NTA1MzM3N30.esqLONb14IVadDvjlQHu9Sm8Ms_6Xv5WS2MUhEhkkqA'
 
 [body]
 type = 'JSON'

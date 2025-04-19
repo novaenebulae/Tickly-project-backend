@@ -4,6 +4,7 @@ import edu.cda.project.ticklybackend.security.jwt.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -51,10 +52,11 @@ public class SecurityConfiguration {
         return http
                 .csrf(c -> c.disable())
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/register", "/login").permitAll()
-//                        .anyRequest().authenticated()
-//                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/register", "/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/structures", "/api/events", "/api/events/**", "/api/structures/**").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -67,7 +69,7 @@ public class SecurityConfiguration {
         corsConfiguration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
+        source.registerCorsConfiguration("/**", corsConfiguration); // LIGNE DE FILTRAGE
         return source;
     }
 }

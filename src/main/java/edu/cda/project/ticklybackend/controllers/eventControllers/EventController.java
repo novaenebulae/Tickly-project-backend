@@ -6,10 +6,7 @@ import edu.cda.project.ticklybackend.services.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,6 +26,16 @@ public class EventController {
     public ResponseEntity<List<Event>> getAllEvents() {
         List<Event> events = eventDao.findAll();
         return new ResponseEntity<>(events, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEvent(@PathVariable Integer id) {
+        Event event = eventDao.findEventById(id);
+
+        if (event == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(event, HttpStatus.OK);
     }
 
 }
