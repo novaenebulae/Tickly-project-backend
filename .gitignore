@@ -60,7 +60,3 @@ target/
 **/failsafe-reports/
 **/test-output/
 
-# Configurations spécifiques
-application.properties
-application-*.properties
-
