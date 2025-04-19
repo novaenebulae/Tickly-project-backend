@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EventDao extends JpaRepository<Event, Integer> {
 
+    Event findEventById(int id);
 }
