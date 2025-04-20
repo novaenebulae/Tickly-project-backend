@@ -1,12 +1,16 @@
 package edu.cda.project.ticklybackend.controllers.structureControllers;
 
 import edu.cda.project.ticklybackend.daos.structureDao.StructureTypeDao;
+import edu.cda.project.ticklybackend.daos.userDao.UserDao;
 import edu.cda.project.ticklybackend.dtos.StructureCreationDto;
+import edu.cda.project.ticklybackend.dtos.StructureCreationResponseDto;
 import edu.cda.project.ticklybackend.models.structure.Address;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
 import edu.cda.project.ticklybackend.models.user.UserRole;
+import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.security.jwt.JwtUtils;
 import edu.cda.project.ticklybackend.security.user.annotations.IsPendingStructureAdministrator;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureAdministrator;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureOwner;
@@ -35,13 +39,17 @@ public class StructureController {
     private final StructureTypeDao structureTypeDao;
     private final AddressService addressService;
     private final UserService userService;
+    private final UserDao userDao;
+    private final JwtUtils jwtUtils;
 
     @Autowired
-    public StructureController(StructureService structureService, StructureTypeDao structureTypeDao, AddressService addressService, UserService userService) {
+    public StructureController(StructureService structureService, StructureTypeDao structureTypeDao, AddressService addressService, UserService userService, UserDao userDao, JwtUtils jwtUtils) {
         this.structureService = structureService;
         this.structureTypeDao = structureTypeDao;
         this.addressService = addressService;
         this.userService = userService;
+        this.userDao = userDao;
+        this.jwtUtils = jwtUtils;
     }
 
     @GetMapping
@@ -62,10 +70,14 @@ public class StructureController {
 
     @PostMapping(path = "/create-structure", consumes = MediaType.APPLICATION_JSON_VALUE)
     @IsPendingStructureAdministrator
-    public ResponseEntity<Structure> createStructure(@RequestBody @Valid StructureCreationDto dto) {
+    public ResponseEntity<StructureCreationResponseDto> createStructure(@RequestBody @Valid StructureCreationDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        
+        StaffUser user = (StaffUser) userService.findUserByEmail(authentication.getName());
+
+        if (user == null || user.getStructure() != null) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+
         Address address = addressService.convertToAddress(dto.getAddress());
 
         Structure structure = new Structure();
@@ -82,13 +94,18 @@ public class StructureController {
 
         Structure savedStructure = structureService.saveStructure(structure);
 
-        StructureAdministratorUser adminUser = (StructureAdministratorUser) userService.changeUserRole(userService.findUserByEmail(email), UserRole.STRUCTURE_ADMINISTRATOR);
+        StructureAdministratorUser adminUser = (StructureAdministratorUser) user;
 
         adminUser.setStructure(savedStructure);
         adminUser.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
         userService.saveUser(adminUser);
 
-        return new ResponseEntity<>(savedStructure, HttpStatus.CREATED);
+        StructureCreationResponseDto response = new StructureCreationResponseDto(
+                jwtUtils.generateJwtToken(userService.findUserByEmail(adminUser.getEmail())),
+                structureService.findStructureById(savedStructure.getId())
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
