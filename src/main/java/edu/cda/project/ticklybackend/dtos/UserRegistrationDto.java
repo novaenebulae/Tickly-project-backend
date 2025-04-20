@@ -2,66 +2,29 @@ package edu.cda.project.ticklybackend.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.hibernate.validator.constraints.Length;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+// Retirer import org.hibernate.validator.constraints.Length;
 
-
+@Getter
+@Setter
 public class UserRegistrationDto {
-    @NotBlank
-    @Email
-    private String email;
 
-    @NotBlank
-    @Length(min = 8)
-    private String password;
-
-    @NotBlank
+    @NotBlank(message = "Le prénom est obligatoire") // OK pour String
     private String firstName;
 
-    @NotBlank
+    @NotBlank(message = "Le nom est obligatoire") // OK pour String
     private String lastName;
 
-    @NotBlank
-    private boolean createStructure;
+    @NotBlank(message = "L'email est obligatoire") // OK pour String
+    @Email(message = "Format de l'email invalide") // OK pour String
+    private String email;
 
-    public boolean isCreateStructure() {
-        return createStructure;
-    }
+    @NotBlank(message = "Le mot de passe est obligatoire") // OK pour String
+    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères") // Utiliser @Size
+    private String password;
 
-    public void setCreateStructure(boolean createStructure) {
-        this.createStructure = createStructure;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    // @NotBlank // <<<=== SUPPRIMER CETTE LIGNE
+    private boolean createStructure = false; // Garder la valeur par défaut est une bonne idée
 }
-
-

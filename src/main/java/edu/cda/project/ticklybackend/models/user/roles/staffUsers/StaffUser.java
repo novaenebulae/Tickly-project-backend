@@ -16,7 +16,7 @@ import lombok.Setter;
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id"
 )
-public abstract class StaffUser extends User {
+public class StaffUser extends User {
     @ManyToOne
     @JoinColumn(name = "structure_id")
     private Structure structure;

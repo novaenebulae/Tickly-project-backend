@@ -31,6 +31,10 @@ public class UserService {
         return userDao.findUserById(id);
     }
 
+    public User findUserByEmail(String email) {
+        return userDao.findUserByEmail(email);
+    }
+
     public User updateUser(Integer id, User updatedUser) {
         User existingUser = userDao.findUserById(id);
         if (existingUser != null) {
@@ -59,9 +63,8 @@ public class UserService {
         return null;
     }
 
-    public User changeUserRole(Integer userId, UserRole newRole) {
-        User existingUser = userDao.findUserById(userId);
-        if (existingUser == null) {
+    public User changeUserRole(User user, UserRole newRole) {
+        if (user == null) {
             return null;
         }
 
@@ -85,13 +88,15 @@ public class UserService {
         }
 
         // Copy user details from existing user
-        newUser.setId(existingUser.getId());
-        newUser.setEmail(existingUser.getEmail());
-        newUser.setPassword(existingUser.getPassword()); // Keep the hashed password
-        newUser.setFirstName(existingUser.getFirstName());
-        newUser.setLastName(existingUser.getLastName());
-        newUser.setRegistrationDate(existingUser.getRegistrationDate());
-        newUser.setLastConnectionDate(new Date().toInstant()); // Update last connection
+//        newUser.setId(user.getId());
+        newUser.setEmail(user.getEmail());
+        newUser.setPassword(user.getPassword()); // Keep the hashed password
+        newUser.setFirstName(user.getFirstName());
+        newUser.setLastName(user.getLastName());
+        newUser.setRegistrationDate(user.getRegistrationDate());
+        newUser.setLastConnectionDate(user.getLastConnectionDate()); // Update last connection
+
+        userDao.delete(user);
 
         // Save the new user with the updated role
         return userDao.save(newUser);
@@ -101,11 +106,6 @@ public class UserService {
         target.setEmail(source.getEmail());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
-    }
-
-
-    public User findUserByEmail(String email) {
-        return userDao.findUserByEmail(email).orElse(null);
     }
 
     public boolean hasRole(User user, UserRole role) {

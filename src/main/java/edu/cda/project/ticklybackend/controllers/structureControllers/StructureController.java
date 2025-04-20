@@ -5,7 +5,9 @@ import edu.cda.project.ticklybackend.dtos.StructureCreationDto;
 import edu.cda.project.ticklybackend.models.structure.Address;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
+import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StructureAdministratorUser;
+import edu.cda.project.ticklybackend.security.user.annotations.IsPendingStructureAdministrator;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureAdministrator;
 import edu.cda.project.ticklybackend.security.user.annotations.IsStructureOwner;
 import edu.cda.project.ticklybackend.services.AddressService;
@@ -59,19 +61,11 @@ public class StructureController {
     }
 
     @PostMapping(path = "/create-structure", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @IsStructureAdministrator
+    @IsPendingStructureAdministrator
     public ResponseEntity<Structure> createStructure(@RequestBody @Valid StructureCreationDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-
-        StructureAdministratorUser adminUser = (StructureAdministratorUser) userService.findUserByEmail(email);
-
-        if (adminUser.getStructure() != null) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(null);
-        }
-
+        
         Address address = addressService.convertToAddress(dto.getAddress());
 
         Structure structure = new Structure();
@@ -88,7 +82,10 @@ public class StructureController {
 
         Structure savedStructure = structureService.saveStructure(structure);
 
+        StructureAdministratorUser adminUser = (StructureAdministratorUser) userService.changeUserRole(userService.findUserByEmail(email), UserRole.STRUCTURE_ADMINISTRATOR);
+
         adminUser.setStructure(savedStructure);
+        adminUser.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
         userService.saveUser(adminUser);
 
         return new ResponseEntity<>(savedStructure, HttpStatus.CREATED);
