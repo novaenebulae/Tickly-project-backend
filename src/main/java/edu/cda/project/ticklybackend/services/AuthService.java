@@ -23,7 +23,7 @@ public class AuthService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
-    private final UserService userService; // Pour centraliser la sauvegarde
+    private final UserService userService;
 
     @Autowired
     public AuthService(UserDao userDao, PasswordEncoder passwordEncoder, JwtUtils jwtUtils, UserService userService) {
@@ -38,7 +38,6 @@ public class AuthService {
         logger.info("Attempting registration for email: {}", userDto.getEmail());
 
         // 1. Vérifier si l'email existe déjà
-        // Assurez-vous que userDao.existsByEmail est implémenté ou utilisez findUserByEmail
         if (userDao.findUserByEmail(userDto.getEmail()) != null) {
             logger.warn("Registration failed: Email {} already exists.", userDto.getEmail());
             throw new edu.cda.project.ticklybackend.exception.EmailAlreadyExistsException("L'adresse email '" + userDto.getEmail() + "' est déjà utilisée.");
@@ -51,25 +50,23 @@ public class AuthService {
         if (needsSetup) {
             logger.debug("Creating StructureAdministratorUser for {}", userDto.getEmail());
             StructureAdministratorUser adminUser = new StructureAdministratorUser();
-            // Utiliser les setters pour configurer l'entité
             adminUser.setEmail(userDto.getEmail());
-            adminUser.setPassword(passwordEncoder.encode(userDto.getPassword())); // Hachage ici
+            adminUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
             adminUser.setFirstName(userDto.getFirstName());
             adminUser.setLastName(userDto.getLastName());
             // Le rôle est implicitement STRUCTURE_ADMINISTRATOR via @DiscriminatorValue
-            adminUser.setRole(UserRole.STRUCTURE_ADMINISTRATOR); // Normalement non nécessaire
-            adminUser.setStructure(null); // Structure sera liée plus tard
+            adminUser.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
+            adminUser.setStructure(null);
             newUser = adminUser;
         } else {
             logger.debug("Creating SpectatorUser for {}", userDto.getEmail());
             SpectatorUser spectatorUser = new SpectatorUser();
-            // Utiliser les setters
             spectatorUser.setEmail(userDto.getEmail());
-            spectatorUser.setPassword(passwordEncoder.encode(userDto.getPassword())); // Hachage ici
+            spectatorUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
             spectatorUser.setFirstName(userDto.getFirstName());
             spectatorUser.setLastName(userDto.getLastName());
             // Le rôle est implicitement SPECTATOR via @DiscriminatorValue
-            spectatorUser.setRole(UserRole.SPECTATOR); // Normalement non nécessaire
+            spectatorUser.setRole(UserRole.SPECTATOR);
             newUser = spectatorUser;
         }
 

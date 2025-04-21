@@ -70,7 +70,6 @@ public class StructureService {
                 // Cette situation ne devrait pas arriver si l'utilisateur existe, mais logger au cas où.
                 logger.warn("Could not update discriminator column 'role' for user ID: {}. User might not exist?", user.getId());
             }
-            // /!\ L'objet 'user' en mémoire a toujours son ancien rôle ici !
         }
 
         // 3. Supprimer la structure

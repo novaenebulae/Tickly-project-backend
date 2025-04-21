@@ -20,12 +20,6 @@ public class UserController {
         this.userService = userService;
     }
 
-//    @GetMapping
-//    public ResponseEntity<List<User>> getAllUsers() {
-//        List<User> users = userService.findAllUsers();
-//        return new ResponseEntity<>(users, HttpStatus.OK);
-//    }
-
     @GetMapping("/{id}")
     @IsUser
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
@@ -47,16 +41,6 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-
-//    @PutMapping("/{id}/role")
-//    public ResponseEntity<User> changeUserRole(@PathVariable Integer id, @RequestBody UserRoleChangeRequest roleChangeRequest) {
-//        User updatedUser = userService.changeUserRole(id, roleChangeRequest.getNewRole());
-//        if (updatedUser != null) {
-//            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-//        } else {
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-//    }
 
     @DeleteMapping("/{id}")
     @IsUser

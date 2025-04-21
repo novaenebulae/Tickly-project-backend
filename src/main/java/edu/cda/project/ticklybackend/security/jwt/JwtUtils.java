@@ -22,10 +22,10 @@ public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${jwt.secret}")
-    private String jwtSecret; // Supposé être une chaîne simple, pas Base64
+    private String jwtSecret;
 
-    @Value("${jwt.expiration.s}") // Utilise la variable de votre fichier
-    private long jwtExpirationSeconds; // Renommé pour correspondre
+    @Value("${jwt.expiration.s}")
+    private long jwtExpirationSeconds;
 
     // Conversion du secret en bytes (une seule fois si possible, mais ici à la volée)
     private byte[] getSecretBytes() {
@@ -49,9 +49,9 @@ public class JwtUtils {
                 .setClaims(claims)
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationSeconds * 1000)) // Calcul avec secondes
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationSeconds * 1000))
                 // Utilisation directe des bytes du secret
-                .signWith(SignatureAlgorithm.HS256, getSecretBytes()) // C'est cette méthode qui est dépréciée
+                .signWith(SignatureAlgorithm.HS256, getSecretBytes())
                 .compact();
     }
 
@@ -75,7 +75,7 @@ public class JwtUtils {
     private Claims extractAllClaims(String token) {
         // Utilisation de Jwts.parser() et setSigningKey avec les bytes du secret
         return Jwts.parser()
-                .setSigningKey(getSecretBytes()) // C'est cette méthode qui est dépréciée
+                .setSigningKey(getSecretBytes())
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -95,11 +95,9 @@ public class JwtUtils {
      */
     public boolean isTokenValid(String token) {
         try {
-            // Le simple fait d'extraire les claims avec la bonne clé valide la signature et l'expiration
             extractAllClaims(token);
             return true;
-            // Les exceptions spécifiques peuvent être différentes ou moins granulaires dans les vieilles versions
-        } catch (MalformedJwtException e) { // Peut exister dans les vieilles versions
+        } catch (MalformedJwtException e) {
             logger.error("Invalid JWT token: {}", e.getMessage());
         } catch (ExpiredJwtException e) { // Devrait exister
             logger.error("JWT token is expired: {}", e.getMessage());
@@ -120,9 +118,8 @@ public class JwtUtils {
             Date expiration = extractClaim(token, Claims::getExpiration);
             return expiration != null && expiration.before(new Date());
         } catch (ExpiredJwtException e) {
-            return true; // Si l'extraction lève déjà cette exception, il est expiré
+            return true;
         } catch (Exception e) {
-            // Si une autre erreur survient, on ne peut pas le valider, considérons-le expiré/invalide
             logger.warn("Could not determine expiration due to error: {}", e.getMessage());
             return true;
         }
