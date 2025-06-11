@@ -5,11 +5,13 @@ import edu.cda.project.ticklybackend.models.user.UserRole;
 import edu.cda.project.ticklybackend.models.user.roles.staffUsers.StaffUser;
 import edu.cda.project.ticklybackend.security.user.AppUserDetails;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,12 +26,12 @@ public class JwtUtils {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration.s}")
-    private long jwtExpirationSeconds;
+    @Value("${jwt.expiration.access-token-ms}")
+    private long jwtExpirationMs;
 
-    // Conversion du secret en bytes (une seule fois si possible, mais ici à la volée)
-    private byte[] getSecretBytes() {
-        return jwtSecret.getBytes(StandardCharsets.UTF_8);
+    // Obtenir une clé secrète à partir de la chaîne de secret JWT
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateJwtToken(User user) {
@@ -44,14 +46,13 @@ public class JwtUtils {
             logger.debug("JWT Generation: Omitting needsStructureSetup claim for user ID {}", user.getId());
         }
 
-        // Utilisation de la méthode signWith dépréciée
+        // Utilisation de la nouvelle API JJWT 0.12.3
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationSeconds * 1000))
-                // Utilisation directe des bytes du secret
-                .signWith(SignatureAlgorithm.HS256, getSecretBytes())
+                .claims(claims)
+                .subject(user.getEmail())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -70,14 +71,14 @@ public class JwtUtils {
     }
 
     /**
-     * Extrait tous les claims en utilisant Jwts.parser() et setSigningKey avec les bytes.
+     * Extrait tous les claims en utilisant la nouvelle API JJWT 0.12.3
      */
     private Claims extractAllClaims(String token) {
-        // Utilisation de Jwts.parser() et setSigningKey avec les bytes du secret
         return Jwts.parser()
-                .setSigningKey(getSecretBytes())
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -91,23 +92,21 @@ public class JwtUtils {
     }
 
     /**
-     * Valide un token JWT (signature et expiration) en utilisant l'ancienne API.
+     * Valide un token JWT (signature et expiration) en utilisant la nouvelle API JJWT 0.12.3
      */
     public boolean isTokenValid(String token) {
         try {
             extractAllClaims(token);
-            return true;
+            return !isTokenExpired(token);
         } catch (MalformedJwtException e) {
             logger.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) { // Devrait exister
+        } catch (ExpiredJwtException e) {
             logger.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) { // Peut exister
+        } catch (UnsupportedJwtException e) {
             logger.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) { // Souvent pour token vide/null
+        } catch (IllegalArgumentException e) {
             logger.error("JWT claims string is empty or invalid: {}", e.getMessage());
-        } catch (io.jsonwebtoken.SignatureException e) { // Exception de signature
-            logger.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (Exception e) { // Catch générique pour d'autres erreurs potentielles
+        } catch (Exception e) {
             logger.error("JWT validation failed: {}", e.getMessage());
         }
         return false;
