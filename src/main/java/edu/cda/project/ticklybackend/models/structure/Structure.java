@@ -25,5 +25,9 @@ public class Structure {
 
     private String name; // Nom de la structure
 
+    @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     // D'autres champs seront ajoutés à l'Étape 2
 }

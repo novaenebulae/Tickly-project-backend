@@ -43,6 +43,7 @@ public class SecurityConfig {
             "/static/**",
             "/api/v1/events",
             "/api/v1/events/{id}", // Assurez-vous que les placeholders {id} sont gérés ou que ce sont des chemins exacts
+            "/api/v1/events/categories",
             "/api/v1/structures",
             "/api/v1/structures/{id}",
             "/api/v1/structure-types"
