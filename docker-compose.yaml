@@ -28,6 +28,9 @@ services:
       # Ces variables sont utilisées par application.properties pour se connecter à MySQL
       MYSQL_DATABASE_NAME: ${MYSQL_DATABASE_NAME}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      EXECUTE_SQL_DDL: ${EXECUTE_SQL_DDL}
+      EXECUTE_SQL_INSERT: ${EXECUTE_SQL_INSERT}
       # D'autres variables d'environnement pour l'application peuvent être ajoutées ici
       # Par exemple, pour activer un profil Spring spécifique :
       # SPRING_PROFILES_ACTIVE: dev

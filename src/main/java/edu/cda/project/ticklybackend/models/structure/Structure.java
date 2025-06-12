@@ -1,64 +1,29 @@
 package edu.cda.project.ticklybackend.models.structure;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import edu.cda.project.ticklybackend.models.event.Event;
-import edu.cda.project.ticklybackend.views.Views;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Getter
-@Setter
+// @Data génère getters, setters, toString, equals, hashCode
+@Data
+// @NoArgsConstructor génère un constructeur sans arguments (requis par JPA)
+@NoArgsConstructor
+// @AllArgsConstructor génère un constructeur avec tous les arguments
+@AllArgsConstructor
+// @Entity marque cette classe comme une entité JPA
 @Entity
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)
+// @Table spécifie le nom de la table dans la base de données
+@Table(name = "structures")
 public class Structure {
 
+    // @Id marque ce champ comme la clé primaire
     @Id
+    // @GeneratedValue spécifie que la valeur de la clé primaire est générée automatiquement
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Integer id;
+    private Long id;
 
-    @Column(nullable = false)
-    @JsonView(Views.Public.class)
-    @NotBlank
-    protected String name;
+    private String name; // Nom de la structure
 
-    @Column(columnDefinition = "TEXT")
-    @JsonView(Views.Public.class)
-    protected String description;
-
-    @ManyToMany
-    @JoinTable(
-            name = "structure_structure_type",
-            joinColumns = @JoinColumn(name = "structure_id"),
-            inverseJoinColumns = @JoinColumn(name = "type_id")
-    )
-    @JsonView(Views.Public.class)
-    protected List<StructureType> types = new ArrayList<>();
-
-    @OneToOne(mappedBy = "structure", cascade = CascadeType.ALL) // Référence le champ 'structure' dans Address
-    private Address address;
-
-    @OneToMany
-    @JoinTable(
-            name = "structure_location",
-            joinColumns = @JoinColumn(name = "structure_id"),
-            inverseJoinColumns = @JoinColumn(name = "location_id")
-    )
-    private List<Location> locations = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "structure", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-//    private List<StaffUser> staffUsers = new ArrayList<>();
-
-    @OneToMany(mappedBy = "structure", cascade = CascadeType.ALL)
-    private List<Event> events = new ArrayList<>();
-
+    // D'autres champs seront ajoutés à l'Étape 2
 }

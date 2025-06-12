@@ -1,53 +1,98 @@
 package edu.cda.project.ticklybackend.models.user;
 
+import edu.cda.project.ticklybackend.enums.UserRole;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Getter
-@Setter
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email") // Assure l'unicité de l'email
+})
+// Stratégie d'héritage : une seule table pour toutes les classes de la hiérarchie User
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
-@Table(name = "user")
-public class User {
+// Colonne utilisée pour différencier les types d'utilisateurs
+@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
+public abstract class User implements UserDetails { // Classe abstraite car on ne créera que des sous-classes
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Integer id;
+    private Long id;
 
-    @NotBlank
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @NotBlank
-    @Column(name = "password", nullable = false)
-    private String password;
+    @Column(nullable = false)
+    private String password; // Mot de passe haché
 
-    @Column(name = "last_name", nullable = false)
-    protected String lastName;
-
-    @Column(name = "first_name", nullable = false)
-    protected String firstName;
-
-    @Column(name = "role", nullable = false, insertable = false, updatable = false)
+    // Rôle principal de l'utilisateur, utilisé comme discriminateur
     @Enumerated(EnumType.STRING)
-    protected UserRole role;
+    @Column(name = "role", nullable = false)
+    private UserRole role;
 
-    @CreatedDate
-    @Column(name = "registration_date", nullable = false, updatable = false)
-    private Instant registrationDate;
+    // Indique si un administrateur de structure doit configurer sa structure
+    private Boolean needsStructureSetup;
 
-    @LastModifiedDate
-    @Column(name = "last_connection", nullable = false)
-    private Instant lastConnectionDate;
+    // Chemin vers le fichier avatar de l'utilisateur (sera géré plus tard)
+    private String avatarPath;
 
+    @CreationTimestamp // Géré automatiquement par Hibernate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp // Géré automatiquement par Hibernate
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    // Implémentation des méthodes de UserDetails pour Spring Security
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Retourne une collection d'autorisations basées sur le rôle de l'utilisateur
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        // L'email est utilisé comme nom d'utilisateur pour Spring Security
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Logique de compte expiré non implémentée pour le moment
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Logique de compte verrouillé non implémentée pour le moment
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Logique d'identifiants expirés non implémentée pour le moment
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true; // Logique de compte désactivé non implémentée pour le moment
+    }
 }
