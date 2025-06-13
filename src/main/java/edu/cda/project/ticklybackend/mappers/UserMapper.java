@@ -2,12 +2,21 @@ package edu.cda.project.ticklybackend.mappers;
 
 
 import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
+import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
+import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
+import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
 import edu.cda.project.ticklybackend.models.user.StaffUser;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
+import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 // @Mapper indique à MapStruct de générer une implémentation pour cette interface.
 // componentModel = "spring" permet d'injecter ce mapper comme un bean Spring.
@@ -17,35 +26,56 @@ public abstract class UserMapper {
     // Juste pour qu'il reste dans les imports car utilisé dans l'expression du mapping StructureId
     protected StaffUser staffUser;
 
-    // Injection de la base URL pour les fichiers statiques (définie dans application.properties)
-    // Cette approche nécessite que le mapper soit un bean Spring.
-    @Value("${file.static-base-url:}") // : pour une valeur par défaut si non trouvée
-    protected String staticBaseUrl;
-
+    @Autowired
+    protected FileStorageService fileStorageService;
 
     // Convertit une entité User en AuthResponseDto
     // Le mapping de 'expiresIn' et 'accessToken' se fera manuellement dans le service
     // car ils ne proviennent pas directement de l'entité User.
     @Mapping(target = "accessToken", ignore = true)
     @Mapping(target = "expiresIn", ignore = true)
-    @Mapping(target = "tokenType", ignore = true) // Sera "Bearer" par défaut
+    @Mapping(target = "tokenType", ignore = true)
     @Mapping(target = "userId", source = "id")
-    @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildAvatarUrl")
-    @Mapping(target = "structureId", expression = "java(user instanceof StaffUser? ((StaffUser) user).getStructure()!= null? ((StaffUser) user).getStructure().getId() : null : null)")
+    @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
+    @Mapping(target = "structureId", expression = "java(user instanceof StaffUser && ((StaffUser) user).getStructure()!= null? ((StaffUser) user).getStructure().getId() : null)")
     public abstract AuthResponseDto userToAuthResponseDto(User user);
 
-    // Méthode qualifiée pour construire l'URL de l'avatar
-    @Named("buildAvatarUrl")
-    protected String buildAvatarUrl(String avatarPath) {
-        if (avatarPath == null
-                || avatarPath.isBlank()
-                || staticBaseUrl == null
-                || staticBaseUrl.isBlank()) {
+    // Pour UserProfileResponseDto (Étape 3)
+    @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
+    @Mapping(target = "structureId", expression = "java(user instanceof StaffUser && ((StaffUser) user).getStructure()!= null? ((StaffUser) user).getStructure().getId() : null)")
+    public abstract UserProfileResponseDto userToUserProfileResponseDto(User user); // ERREUR LIGNES 51 & 88
+
+    // Pour UserSearchResponseDto (Étape 3)
+    @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
+    public abstract UserSearchResponseDto userToUserSearchResponseDto(User user); // Pour la référence de méthode à la LIGNE 123
+
+    public List<UserSearchResponseDto> usersToUserSearchResponseDtos(List<User> users) {
+        if (users == null) return null;
+        return users.stream().map(this::userToUserSearchResponseDto).collect(Collectors.toList());
+    }
+
+    // Pour UserFavoriteStructureDto (Étape 3)
+    @Mapping(target = "userId", source = "user.id")
+    // 'structure' sera mappé par StructureMapper via 'uses'
+    public abstract UserFavoriteStructureDto userFavoriteStructureToUserFavoriteStructureDto(UserFavoriteStructure favorite, @Context FileStorageService fsService); // ERREUR LIGNE 158
+
+    // Méthode pour la liste des favoris (Étape 3)
+    public List<UserFavoriteStructureDto> userFavoriteStructuresToUserFavoriteStructureDtos(List<UserFavoriteStructure> favorites, @Context FileStorageService fsService) { // ERREUR LIGNE 139
+        if (favorites == null) {
             return null;
         }
-        // Assure qu'il n'y a pas de double slash entre staticBaseUrl et avatarPath
-        String baseUrl = staticBaseUrl.endsWith("/") ? staticBaseUrl : staticBaseUrl + "/";
-        String path = avatarPath.startsWith("/") ? avatarPath.substring(1) : avatarPath;
-        return baseUrl + path;
+        return favorites.stream()
+                .map(fav -> this.userFavoriteStructureToUserFavoriteStructureDto(fav, fsService))
+                .collect(Collectors.toList());
+    }
+
+    @Named("buildUserAvatarUrl")
+    protected String buildUserAvatarUrl(String avatarPath) {
+        if (avatarPath == null ||
+                avatarPath.isBlank() ||
+                fileStorageService == null) {
+            return null;
+        }
+        return fileStorageService.getFileUrl(avatarPath, "avatars");
     }
 }

@@ -50,9 +50,9 @@ public class UserController {
 
     @Operation(summary = "Uploader ou mettre à jour l'avatar de l'utilisateur authentifié")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = FileUploadResponseDto.class)))
-    @PostMapping("/me/avatar")
+    @PostMapping(value = "/me/avatar", consumes = {"multipart/form-data"})
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<FileUploadResponseDto> uploadMyAvatar(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<FileUploadResponseDto> uploadMyAvatar(@RequestPart("file") MultipartFile file) {
         String fileUrl = userService.updateCurrentUserAvatar(file);
         return ResponseEntity.ok(new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Avatar mis à jour avec succès."));
     }

@@ -31,6 +31,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       EXECUTE_SQL_DDL: ${EXECUTE_SQL_DDL}
       EXECUTE_SQL_INSERT: ${EXECUTE_SQL_INSERT}
+      FILE_UPLOAD_DIR: /app/uploads # Chemin A L'INTERIEUR du conteneur app_java
+      FILE_STATIC_BASE_URL: http://localhost/static # Ou votre URL de production
       # D'autres variables d'environnement pour l'application peuvent être ajoutées ici
       # Par exemple, pour activer un profil Spring spécifique :
       # SPRING_PROFILES_ACTIVE: dev
@@ -39,6 +41,9 @@ services:
       # Ce mapping est optionnel si l'accès se fait uniquement via Nginx.
       # Cependant, il est utile pour le débogage direct de l'application sans passer par Nginx.
       - "8080:8080"
+    volumes:
+      # Monte le volume nommé 'tickly_uploads_data' dans /app/uploads à l'intérieur du conteneur app_java
+      - tickly_uploads_data:/app/uploads
     networks:
       - app_network
 
@@ -55,12 +60,17 @@ services:
       - "80:80"   # Mappe le port 80 de l'hôte au port 80 du conteneur Nginx (HTTP)
       # Pour HTTPS, vous mapperez également le port 443 :
       # - "443:443"
+    volumes:
+      # Monte le volume tickly_uploads_data en lecture seule pour Nginx
+      # La structure du volume doit être identique à celle utilisée par l'application Java
+      - tickly_uploads_data:/var/www/html/static:ro # 'ro' pour read-only
     networks:
       - app_network
 
 # Définition des volumes nommés
 volumes:
   mysql_data_volume: { } # Volume pour persister les données MySQL
+  tickly_uploads_data: { } # Déclaration du volume nommé pour les uploads
 
 # Définition des réseaux personnalisés
 networks:
