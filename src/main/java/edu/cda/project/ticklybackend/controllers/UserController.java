@@ -1,7 +1,10 @@
 package edu.cda.project.ticklybackend.controllers; // Adaptez si vous avez un sous-package 'user'
 
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
-import edu.cda.project.ticklybackend.dtos.user.*;
+import edu.cda.project.ticklybackend.dtos.user.FavoriteStructureRequestDto;
+import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
+import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
+import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
 import edu.cda.project.ticklybackend.services.interfaces.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,9 +15,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,25 +57,25 @@ public class UserController {
         return ResponseEntity.ok(new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Avatar mis à jour avec succès."));
     }
 
-    @Operation(summary = "Récupérer le profil d'un utilisateur par ID (Admin)",
-            description = "Nécessite le rôle SYSTEM_ADMINISTRATOR.")
-    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
-    @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('SYSTEM_ADMINISTRATOR')")
-    public ResponseEntity<UserProfileResponseDto> getUserProfileById(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getUserProfile(userId));
-    }
-
-    @Operation(summary = "Rechercher des utilisateurs")
-    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Page.class)))
-    // Page<UserSearchResponseDto>
-    @GetMapping("/search")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<UserSearchResponseDto>> searchUsers(
-            @RequestParam(required = false) String query,
-            @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(userService.searchUsers(query, pageable));
-    }
+//    @Operation(summary = "Récupérer le profil d'un utilisateur par ID (Admin)",
+//            description = "Nécessite le rôle SYSTEM_ADMINISTRATOR.")
+//    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
+//    @GetMapping("/{userId}")
+//    @PreAuthorize("hasRole('SYSTEM_ADMINISTRATOR')")
+//    public ResponseEntity<UserProfileResponseDto> getUserProfileById(@PathVariable Long userId) {
+//        return ResponseEntity.ok(userService.getUserProfile(userId));
+//    }
+//
+//    @Operation(summary = "Rechercher des utilisateurs")
+//    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Page.class)))
+//    // Page<UserSearchResponseDto>
+//    @GetMapping("/search")
+//    @PreAuthorize("isAuthenticated()")
+//    public ResponseEntity<Page<UserSearchResponseDto>> searchUsers(
+//            @RequestParam(required = false) String query,
+//            @ParameterObject Pageable pageable) {
+//        return ResponseEntity.ok(userService.searchUsers(query, pageable));
+//    }
 
     @Operation(summary = "Lister les structures favorites de l'utilisateur authentifié")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = List.class)))

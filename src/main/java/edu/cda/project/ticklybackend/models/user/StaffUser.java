@@ -9,6 +9,8 @@ import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -23,6 +25,7 @@ public abstract class StaffUser extends User { // Classe abstraite
     // Relation ManyToOne avec l'entité Structure
     @ManyToOne(fetch = FetchType.LAZY) // LAZY pour ne pas charger la structure systématiquement
     @JoinColumn(name = "structure_id") // Nom de la colonne de clé étrangère dans la table users
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Structure structure;
 
     // Constructeur pour les sous-classes
