@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -23,8 +23,8 @@ public class EventDetailResponseDto {
     private String shortDescription;
     private String fullDescription;
     private List<String> tags;
-    private Instant startDate;
-    private Instant endDate;
+    private ZonedDateTime startDate;
+    private ZonedDateTime endDate;
     private AddressDto address; // Adresse de la structure ou de l'événement
     private StructureSummaryDto structure; // Informations sur la structure organisatrice
     private boolean isFreeEvent;
@@ -33,7 +33,7 @@ public class EventDetailResponseDto {
     private EventStatus status;
     private boolean displayOnHomepage;
     private boolean isFeaturedEvent;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime updatedAt;
     // private UserSummaryDto creator; // Si vous voulez afficher les infos du créateur
 }

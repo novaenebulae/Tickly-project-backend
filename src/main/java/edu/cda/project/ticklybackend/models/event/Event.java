@@ -1,0 +1,102 @@
+package edu.cda.project.ticklybackend.models.event;
+
+import edu.cda.project.ticklybackend.enums.EventStatus;
+import edu.cda.project.ticklybackend.models.structure.Structure;
+import edu.cda.project.ticklybackend.models.user.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Entité centrale représentant un événement dans l'application.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "events")
+public class Event {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private EventCategory category;
+
+    @Column(columnDefinition = "TEXT")
+    private String shortDescription;
+
+    @Column(columnDefinition = "TEXT")
+    private String fullDescription;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "tag")
+    private List<String> tags = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Instant startDate;
+
+    @Column(nullable = false)
+    private Instant endDate;
+
+    @Embedded
+    private EventAddress address;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "structure_id", nullable = false)
+    private Structure structure;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<EventAudienceZone> audienceZones = new ArrayList<>();
+
+    @Column(nullable = false)
+    private boolean isFreeEvent;
+
+    @Column(nullable = false)
+    private boolean displayOnHomepage;
+
+    @Column(nullable = false)
+    private boolean isFeaturedEvent;
+
+    /**
+     * Chemin relatif ou nom du fichier de la photo principale de l'événement.
+     */
+    private String mainPhotoPath;
+
+    /**
+     * Liste des chemins relatifs ou noms des fichiers pour la galerie d'images de l'événement.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_gallery_images", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "image_path")
+    private List<String> eventPhotoPaths = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventStatus status = EventStatus.DRAFT;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id", nullable = false)
+    private User creator;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Instant updatedAt;
+}

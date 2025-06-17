@@ -1,6 +1,6 @@
 package edu.cda.project.ticklybackend.security;
 
-import edu.cda.project.ticklybackend.repositories.UserRepository;
+import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

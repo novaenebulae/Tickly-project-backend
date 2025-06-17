@@ -2,7 +2,7 @@ package edu.cda.project.ticklybackend.utils;
 
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.models.user.User;
-import edu.cda.project.ticklybackend.repositories.UserRepository;
+import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

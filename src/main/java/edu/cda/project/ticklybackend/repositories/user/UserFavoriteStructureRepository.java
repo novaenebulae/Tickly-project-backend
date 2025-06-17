@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.repositories;
+package edu.cda.project.ticklybackend.repositories.user;
 
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import org.springframework.data.jpa.repository.JpaRepository;

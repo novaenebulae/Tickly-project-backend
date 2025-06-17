@@ -8,7 +8,7 @@ import edu.cda.project.ticklybackend.mappers.UserMapper;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
-import edu.cda.project.ticklybackend.repositories.UserRepository;
+import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.AuthService;
 import lombok.RequiredArgsConstructor;

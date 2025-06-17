@@ -94,6 +94,7 @@ VALUES (1, 'L''Arsenal',
 -- Le hachage Bcrypt correspondant (cost factor 10) est utilisé pour tous les utilisateurs.
 -- Hachage : $2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG
 -- Les utilisateurs 'STRUCTURE_ADMINISTRATOR' sont liés à une structure via `structure_id`.
+-- La colonne `user_type` est définie à 'User' pour correspondre à la stratégie d'héritage de base.
 
 INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at,
                    needs_structure_setup, user_type, avatar_path)
@@ -286,6 +287,145 @@ VALUES (1, 9, 1, NOW()),  -- Inès Michel aime L'Arsenal
        (5, 11, 2, NOW()), -- Karine Lefebvre aime La BAM
        (6, 12, 10, NOW());
 -- Léo Roux aime le Centre Pompidou
+
+-- ##################################################
+-- # 11. PEUPLEMENT DE LA TABLE `event_categories`  #
+-- ##################################################
+-- Ces données sont nécessaires pour créer des événements.
+
+INSERT INTO event_categories (id, name)
+VALUES (1, 'Concert'),
+       (2, 'Théâtre'),
+       (3, 'Festival'),
+       (4, 'Sport'),
+       (5, 'Conférence'),
+       (6, 'Exposition'),
+       (7, 'Humour'),
+       (8, 'Opéra'),
+       (9, 'Danse'),
+       (10, 'Jeune public');
+
+-- ##################################################
+-- # 12. PEUPLEMENT DE LA TABLE `events`            #
+-- ##################################################
+-- Ajout d'événements variés pour peupler l'application.
+-- Les dates sont définies dynamiquement par rapport à la date d'exécution du script.
+
+INSERT INTO events (id, name, short_description, full_description, start_date, end_date, status, is_free_event,
+                    display_on_homepage, is_featured_event, structure_id, category_id, creator_id, created_at,
+                    updated_at, main_photo_path, street, city, zip_code, country, latitude, longitude)
+VALUES (1, 'Orchestre National de Metz - Saison Classique',
+        'Une soirée exceptionnelle avec l''Orchestre National de Metz.',
+        'L''Orchestre National de Metz Grand Est vous invite à une soirée inoubliable sous la direction de son chef principal. Au programme, des œuvres de Beethoven et Mozart qui raviront les amateurs de musique classique. Une expérience acoustique unique dans la Grande Salle de l''Arsenal.',
+        DATE_ADD(NOW(), INTERVAL 1 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 MONTH), INTERVAL 2 HOUR), 'PUBLISHED',
+        0, 1, 1, 1, 1, 1, NOW(), NOW(), '/static/images/events/event_orchestre.jpg', '3 Avenue Ney', 'Metz', '57000',
+        'France', 49.1156, 6.1720),
+
+       (2, 'Festival Rock en Scène', 'Trois jours de rock et de découvertes musicales à la BAM.',
+        'Le festival Rock en Scène revient pour une nouvelle édition explosive! Têtes d''affiches internationales et talents locaux se succéderont sur la scène de la BAM pour faire vibrer Metz au son du rock, du punk et de l''indie.',
+        DATE_ADD(NOW(), INTERVAL 2 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 MONTH), INTERVAL 3 DAY), 'PUBLISHED', 0,
+        1, 1, 2, 3, 2, NOW(), NOW(), '/static/images/events/event_rock.jpg', '20 Boulevard d''Alsace', 'Metz', '57070',
+        'France', 49.1172, 6.2033),
+
+       (3, 'FC Metz vs. Olympique de Marseille', 'Match de championnat de Ligue 1 au Stade Saint-Symphorien.',
+        'Vibrez pour les Grenats lors de cette rencontre au sommet face à l''Olympique de Marseille. Un match décisif pour le championnat, dans une ambiance électrique. Allez Metz!',
+        DATE_ADD(NOW(), INTERVAL 20 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 20 DAY), INTERVAL 2 HOUR), 'PUBLISHED', 0,
+        1, 0, 4, 4, 4, NOW(), NOW(), '/static/images/events/event_fcmetz_om.jpg', '3 Allée Saint-Symphorien',
+        'Longeville-lès-Metz', '57050', 'France', 49.1097, 6.1507),
+
+       (4, 'La Traviata de Verdi', 'Le chef-d''œuvre de Verdi sur la scène de l''Opéra-Théâtre de Metz.',
+        'Plongez dans le Paris du XIXe siècle avec l''histoire d''amour tragique de Violetta et Alfredo. Une production somptueuse avec des décors et costumes d''époque, portée par des voix exceptionnelles.',
+        DATE_ADD(NOW(), INTERVAL 45 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 45 DAY), INTERVAL 3 HOUR), 'PUBLISHED', 0,
+        0, 1, 3, 8, 3, NOW(), NOW(), '/static/images/events/event_traviata.jpg', '4-5 Place de la Comédie', 'Metz',
+        '57000', 'France', 49.1222, 6.1750),
+
+       (5, 'Salon de l''Habitat et de la Décoration', 'Toutes les tendances pour votre intérieur au Parc des Expos.',
+        'Constructeurs, artisans, décorateurs et paysagistes se réunissent pour vous présenter les dernières innovations pour votre maison et votre jardin. Profitez de conseils d''experts et d''offres exclusives.',
+        DATE_ADD(NOW(), INTERVAL 25 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 25 DAY), INTERVAL 3 DAY), 'PUBLISHED', 0,
+        0, 0, 5, 6, 5, NOW(), NOW(), '/static/images/events/event_salon_habitat.jpg', 'Rue de la Grange aux Bois',
+        'Metz', '57070', 'France', 49.0986, 6.2194),
+
+       (6, 'Exposition "Miroirs du Monde"', 'Une exploration de l''art contemporain au Centre Pompidou-Metz.',
+        'Cette exposition thématique rassemble des œuvres d''artistes internationaux qui interrogent notre perception du monde. Peintures, sculptures, installations et vidéos dialoguent dans un parcours immersif.',
+        DATE_ADD(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 3 MONTH), 'PUBLISHED', 0, 1, 1, 10, 6, 3, NOW(),
+        NOW(), '/static/images/events/event_pompidou_expo.jpg', '1 Parvis des Droits-de-l''Homme', 'Metz', '57000',
+        'France', 49.1099, 6.1821),
+
+       (7, 'Le Comte de Bouderbala - One Man Show', 'L''humoriste revient avec un nouveau spectacle hilarant.',
+        'Le Comte de Bouderbala passe au crible les absurdités de notre société avec son style unique, mêlant stand-up et observations fines. Une soirée de rires garantis à la Comédie de Metz.',
+        DATE_ADD(NOW(), INTERVAL 15 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 15 DAY), INTERVAL 90 MINUTE), 'PUBLISHED',
+        0, 0, 0, 7, 7, 7, NOW(), NOW(), '/static/images/events/event_bouderbala.jpg', '1/3 Rue du Pont Saint-Marcel',
+        'Metz', '57000', 'France', 49.1208, 6.1744),
+
+       (8, 'Concert International - Pop Star Live', 'La superstar mondiale de la pop en concert unique aux Arènes.',
+        'Un show spectaculaire avec des effets visuels époustouflants, des chorégraphies millimétrées et tous les tubes de l''artiste. L''événement musical de l''année à ne pas manquer!',
+        DATE_ADD(NOW(), INTERVAL 4 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 4 MONTH), INTERVAL 2 HOUR), 'PUBLISHED',
+        0, 1, 1, 11, 1, 8, NOW(), NOW(), '/static/images/events/event_popstar.jpg', '5 Avenue Louis le Débonnaire',
+        'Metz', '57000', 'France', 49.1083, 6.1808);
+
+-- ######################################################
+-- # 13. PEUPLEMENT DE LA TABLE `event_audience_zones`  #
+-- ######################################################
+-- Création des zones d'audience pour les événements.
+-- Certaines sont basées sur des modèles, d'autres sont spécifiques.
+
+INSERT INTO event_audience_zones (id, event_id, name, seating_type, max_capacity, is_active,
+                                  base_audience_zone_template_id)
+VALUES
+-- Zones pour l'Orchestre à l'Arsenal (Event 1)
+(1, 1, 'Parterre', 'SEATED', 800, 1, 1),
+(2, 1, 'Balcon', 'SEATED', 554, 1, 2),
+-- Zone pour le Festival Rock à la BAM (Event 2)
+(3, 2, 'Fosse Debout', 'STANDING', 1115, 1, 4),
+-- Zones pour le match au Stade (Event 3)
+(4, 3, 'Tribune Nord', 'SEATED', 7000, 1, 8),
+(5, 3, 'Tribune Sud', 'SEATED', 8000, 1, 10),
+(6, 3, 'Loges VIP', 'SEATED', 500, 1, 11),
+-- Zones pour le concert Pop aux Arènes (Event 8)
+(7, 8, 'Fosse Or', 'STANDING', 1500, 1, NULL),
+(8, 8, 'Fosse', 'STANDING', 2500, 1, NULL),
+(9, 8, 'Gradins Assis', 'SEATED', 3000, 1, NULL);
+
+-- ######################################################
+-- # 14. PEUPLEMENT DE LA TABLE `event_tags`            #
+-- ######################################################
+-- Ajout de tags pour faciliter la recherche d'événements.
+
+INSERT INTO event_tags (event_id, tag)
+VALUES (1, 'Classique'),
+       (1, 'Orchestre'),
+       (1, 'Beethoven'),
+       (2, 'Rock'),
+       (2, 'Festival'),
+       (2, 'Musiques Actuelles'),
+       (3, 'Football'),
+       (3, 'Ligue 1'),
+       (3, 'FC Metz'),
+       (4, 'Opéra'),
+       (4, 'Verdi'),
+       (4, 'Lyrique'),
+       (6, 'Art Contemporain'),
+       (6, 'Exposition'),
+       (6, 'Pompidou'),
+       (7, 'Humour'),
+       (7, 'Stand-up'),
+       (8, 'Pop'),
+       (8, 'Concert'),
+       (8, 'International');
+
+-- ######################################################
+-- # 15. PEUPLEMENT DE LA TABLE `event_gallery_images`  #
+-- ######################################################
+-- Ajout d'images de galerie pour certains événements.
+
+INSERT INTO event_gallery_images (event_id, image_path)
+VALUES (3, '/static/images/events/gallery/fcmetz_1.jpg'),
+       (3, '/static/images/events/gallery/fcmetz_2.jpg'),
+       (6, '/static/images/events/gallery/pompidou_gallery_1.jpg'),
+       (8, '/static/images/events/gallery/popstar_1.jpg'),
+       (8, '/static/images/events/gallery/popstar_2.jpg'),
+       (8, '/static/images/events/gallery/popstar_3.jpg');
+
 
 -- ##################################################
 -- #          FIN DU SCRIPT DE PEUPLEMENT           #
