@@ -105,4 +105,19 @@ public class UserController {
         userService.removeCurrentUserFavoriteStructure(structureId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/me")
+    @Operation(summary = "Demander la suppression de mon compte", description = "Lance le processus de suppression de compte en envoyant un e-mail de confirmation. La suppression n'est pas immédiate.")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> requestAccountDeletion() {
+        userService.requestAccountDeletion();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/confirm-deletion")
+    @Operation(summary = "Confirmer la suppression du compte", description = "Supprime définitivement le compte et les données associées en utilisant le token reçu par e-mail. Cette action est irréversible.")
+    public ResponseEntity<Void> confirmAccountDeletion(@RequestParam("token") String token) {
+        userService.confirmAccountDeletion(token);
+        return ResponseEntity.ok().build();
+    }
 }

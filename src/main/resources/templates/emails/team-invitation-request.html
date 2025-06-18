@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{:: #email-content-wrapper}, 'Invitation à rejoindre une équipe')}">
+<body>
+<div id="email-content-wrapper">
+    <h2>Bonjour,</h2>
+    <p>
+        <strong th:text="${inviterName}">Quelqu'un</strong> vous a invité à rejoindre l'équipe de
+        <strong th:text="${structureName}">sa structure</strong> sur Tickly.
+    </p>
+    <p>
+        En rejoignant cette équipe, vous pourrez collaborer à la gestion des événements et des billets.
+    </p>
+    <p style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+        <a th:href="${invitationLink}" class="button">Accepter l'invitation</a>
+    </p>
+    <p>
+        Si vous n'avez pas de compte Tickly, vous serez invité à en créer un.
+        Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :
+        <br>
+        <a th:href="${invitationLink}" th:text="${invitationLink}" style="word-break: break-all;"></a>
+    </p>
+</div>
+</body>
+</html>

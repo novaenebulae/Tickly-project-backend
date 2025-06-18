@@ -28,18 +28,17 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    // URLs publiques qui ne nécessitent pas d'authentification.
     private static final String[] PUBLIC_GET_URLS = {
-            "/api/v1/events",
-            "/api/v1/events/{eventId}",
+            "/api/v1/events/**",
             "/api/v1/event-categories",
-            "/api/v1/structures",
-            "/api/v1/structures/{structureId}",
-            "/api/v1/structure-types"
+            "/api/v1/structures/**",
+            "/api/v1/structure-types/**",
+            "/api/v1/auth/validate-email",
     };
 
     private static final String[] PUBLIC_POST_URLS = {
-            "/api/v1/auth/**"
+            "/api/v1/auth/**",
+            "/api/v1/users/confirm-deletion"
     };
 
     private static final String[] SWAGGER_URLS = new String[]{

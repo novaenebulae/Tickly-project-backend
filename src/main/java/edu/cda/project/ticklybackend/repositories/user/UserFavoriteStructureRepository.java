@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.repositories.user;
 
+import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,6 @@ public interface UserFavoriteStructureRepository extends JpaRepository<UserFavor
     boolean existsByUserIdAndStructureId(Long userId, Long structureId);
 
     void deleteByUserIdAndStructureId(Long userId, Long structureId);
+
+    void deleteAllByUser(User user);
 }

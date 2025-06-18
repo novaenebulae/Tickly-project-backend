@@ -15,6 +15,8 @@ import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import edu.cda.project.ticklybackend.services.interfaces.MailingService;
+import edu.cda.project.ticklybackend.services.interfaces.PdfService;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
     private final AuthUtils authUtils;
     private final FileStorageService fileStorageService;
+    private final PdfService pdfService;
+    private final MailingService mailingService;
 
     @Override
     @Transactional
@@ -89,6 +93,25 @@ public class TicketServiceImpl implements TicketService {
         Reservation savedReservation = reservationRepository.save(reservation);
         log.info("Réservation {} créée avec succès pour l'utilisateur {}.", savedReservation.getId(), currentUser.getEmail());
 
+        try {
+            byte[] pdfTickets = pdfService.generateTicketsPdf(savedReservation.getTickets());
+            if (pdfTickets.length > 0) {
+                mailingService.sendTickets(
+                        currentUser.getEmail(),
+                        currentUser.getFirstName(),
+                        event.getName(),
+                        pdfTickets
+                );
+                // Vous pourriez aussi boucler sur les participants et leur envoyer leur billet individuel
+                // si leurs e-mails sont différents de celui de l'acheteur.
+            } else {
+                log.warn("Le PDF généré pour la réservation {} est vide. L'e-mail ne sera pas envoyé.", savedReservation.getId());
+            }
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération ou de l'envoi du PDF pour la réservation {}. La réservation est confirmée mais l'e-mail a échoué.", savedReservation.getId(), e);
+            // Ne pas faire échouer la transaction, mais logger l'erreur est crucial.
+        }
+        
         ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
         confirmationDto.setReservationId(savedReservation.getId());
         confirmationDto.setTotalAmount(savedReservation.getTotalAmount());

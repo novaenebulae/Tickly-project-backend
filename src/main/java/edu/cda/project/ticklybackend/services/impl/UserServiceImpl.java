@@ -1,23 +1,31 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
+import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
+import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
+import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
+import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
+import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
+import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserFavoriteStructureRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import edu.cda.project.ticklybackend.services.interfaces.MailingService;
+import edu.cda.project.ticklybackend.services.interfaces.TokenService;
 import edu.cda.project.ticklybackend.services.interfaces.UserService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,11 +34,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -38,10 +49,15 @@ public class UserServiceImpl implements UserService {
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
     private final UserFavoriteStructureRepository favoriteRepository;
-    private final StructureRepository structureRepository; // Pour vérifier l'existence de la structure
-    private final AuthUtils authUtils; // Pour récupérer l'utilisateur courant
+    private final StructureRepository structureRepository;
+    private final AuthUtils authUtils;
+    private final TokenService tokenService;
+    private final MailingService mailingService;
+    private final VerificationTokenRepository tokenRepository; // Ajouté pour la suppression en cascade
+    private final TicketRepository ticketRepository;
 
     private static final String AVATAR_SUBDIRECTORY = "avatars";
+    private final ReservationRepository reservationRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -214,5 +230,63 @@ public class UserServiceImpl implements UserService {
     public void removeCurrentUserFavoriteStructure(Long structureId) {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
         removeFavoriteStructure(currentUser.getId(), structureId);
+    }
+
+    @Override
+    @Transactional
+    public void requestAccountDeletion() {
+        User currentUser = authUtils.getCurrentAuthenticatedUser();
+        VerificationToken deletionToken = tokenService.createToken(currentUser, TokenType.ACCOUNT_DELETION_CONFIRMATION, Duration.ofHours(1), null);
+        String deletionLink = "/users/confirm-deletion?token=" + deletionToken.getToken();
+
+        mailingService.sendAccountDeletionRequest(currentUser.getEmail(), currentUser.getFirstName(), deletionLink);
+    }
+
+    @Override
+    @Transactional
+    public void confirmAccountDeletion(String tokenString) {
+        VerificationToken token = tokenService.validateToken(tokenString, TokenType.ACCOUNT_DELETION_CONFIRMATION);
+        User user = token.getUser();
+
+        log.info("Début de l'anonymisation du compte pour l'utilisateur: {}", user.getEmail());
+
+        // Sauvegarde de l'email original pour l'envoi de la confirmation
+        String originalEmail = user.getEmail();
+        String originalFirstName = user.getFirstName();
+
+        // 1. Anonymiser les informations personnelles de l'utilisateur
+        user.setFirstName("Utilisateur");
+        user.setLastName("Supprimé");
+        user.setEmail(user.getId() + "@deleted.user.tickly"); // Garantit l'unicité
+        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Invalide le mot de passe
+        user.setAvatarPath(null);
+        user.setEmailValidated(false); // Invalide l'email
+
+        // 2. Anonymiser les billets associés
+        List<Ticket> ticketsToAnonymize = ticketRepository.findByUserId(user.getId());
+        if (ticketsToAnonymize != null && !ticketsToAnonymize.isEmpty()) {
+            log.debug("Anonymisation de {} billet(s) pour l'utilisateur ID: {}", ticketsToAnonymize.size(), user.getId());
+            for (Ticket ticket : ticketsToAnonymize) {
+                // On anonymise le nom du participant sur le billet
+                ticket.setParticipantFirstName("Participant");
+                ticket.setParticipantLastName("Anonyme");
+                ticket.setParticipantEmail("anonyme@tickly.app");
+            }
+            ticketRepository.saveAll(ticketsToAnonymize);
+        }
+
+        // 3. Supprimer les données purement personnelles (favoris, tokens)
+        log.debug("Suppression des favoris pour l'utilisateur ID: {}", user.getId());
+        favoriteRepository.deleteAllByUser(user);
+
+        log.debug("Suppression des tokens pour l'utilisateur ID: {}", user.getId());
+        tokenRepository.deleteAll(tokenRepository.findByUser(user));
+
+        // 4. Mettre à jour l'entité User avec les données anonymisées
+        userRepository.save(user);
+
+        // 5. Envoyer l'e-mail de confirmation final à l'adresse e-mail originale
+        mailingService.sendAccountDeletionConfirmation(originalEmail, originalFirstName);
+        log.info("Compte de l'utilisateur ID {} anonymisé avec succès.", user.getId());
     }
 }

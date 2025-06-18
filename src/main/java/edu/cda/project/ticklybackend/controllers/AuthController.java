@@ -1,8 +1,6 @@
 package edu.cda.project.ticklybackend.controllers;
 
-import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
-import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
-import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
+import edu.cda.project.ticklybackend.dtos.auth.*;
 import edu.cda.project.ticklybackend.services.interfaces.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth") // Chemin de base pour ce contrôleur
@@ -35,7 +30,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> registerAndLoginUser(
             @Valid @RequestBody UserRegistrationDto registrationDto) {
-        AuthResponseDto authResponse = authService.registerAndLogin(registrationDto);
+        AuthResponseDto authResponse = authService.registerUser(registrationDto);
         return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
     }
 
@@ -50,5 +45,25 @@ public class AuthController {
             @Valid @RequestBody UserLoginDto loginDto) {
         AuthResponseDto authResponse = authService.login(loginDto);
         return ResponseEntity.ok(authResponse);
+    }
+
+    @Operation(summary = "Valider l'e-mail d'un utilisateur", description = "Valide l'e-mail en utilisant le token reçu. En cas de succès, retourne un token JWT pour une connexion automatique.")
+    @GetMapping("/validate-email")
+    public ResponseEntity<AuthResponseDto> validateEmail(@RequestParam("token") String token) {
+        return ResponseEntity.ok(authService.validateEmail(token));
+    }
+
+    @Operation(summary = "Demander la réinitialisation du mot de passe", description = "Envoie un e-mail avec un lien de réinitialisation si l'adresse e-mail est associée à un compte.")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody PasswordResetRequestDto requestDto) {
+        authService.forgotPassword(requestDto.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Réinitialiser le mot de passe", description = "Met à jour le mot de passe de l'utilisateur en utilisant le token et le nouveau mot de passe fournis.")
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetDto resetDto) {
+        authService.resetPassword(resetDto);
+        return ResponseEntity.ok().build();
     }
 }

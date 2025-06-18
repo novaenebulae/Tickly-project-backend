@@ -36,4 +36,8 @@ public interface UserService {
     UserFavoriteStructureDto addCurrentUserFavoriteStructure(Long structureId); // Pour /users/me/favorites/structures
 
     void removeCurrentUserFavoriteStructure(Long structureId); // Pour /users/me/favorites/structures/{structureId}
+
+    void requestAccountDeletion();
+
+    void confirmAccountDeletion(String tokenString);
 }

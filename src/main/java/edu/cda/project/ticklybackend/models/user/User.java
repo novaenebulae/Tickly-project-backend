@@ -44,6 +44,9 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @Column(nullable = false)
     private String password; // Mot de passe haché
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isEmailValidated = false;
+
     // Rôle principal de l'utilisateur, utilisé comme discriminateur
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
@@ -62,6 +65,7 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @UpdateTimestamp // Géré automatiquement par Hibernate
     @Column(nullable = false)
     private Instant updatedAt;
+
 
     // Implémentation des méthodes de UserDetails pour Spring Security
     @Override

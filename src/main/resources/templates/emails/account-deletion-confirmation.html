@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{:: #email-content-wrapper}, 'Confirmation de suppression de compte')}">
+<body>
+<div id="email-content-wrapper">
+    <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
+    <p>
+        Nous vous confirmons que votre compte Tickly ainsi que toutes vos données personnelles associées ont été
+        supprimés avec succès.
+    </p>
+    <p>
+        Nous sommes désolés de vous voir partir. Si vous changez d'avis, vous serez toujours le bienvenu pour créer un
+        nouveau compte.
+    </p>
+    <p>
+        L'équipe Tickly.
+    </p>
+</div>
+</body>
+</html>

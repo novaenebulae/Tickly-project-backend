@@ -1,6 +1,5 @@
 package edu.cda.project.ticklybackend.models.user;
 
-import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,8 +28,8 @@ public abstract class StaffUser extends User { // Classe abstraite
     private Structure structure;
 
     // Constructeur pour les sous-classes
-    public StaffUser(String firstName, String lastName, String email, String password, UserRole role, Structure structure, Boolean needsStructureSetup) {
-        super(null, firstName, lastName, email, password, role, needsStructureSetup, null, null, null);
+    public StaffUser(Structure structure) {
+        super();
         this.structure = structure;
     }
 }

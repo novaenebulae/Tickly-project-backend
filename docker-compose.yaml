@@ -33,6 +33,9 @@ services:
       EXECUTE_SQL_INSERT: ${EXECUTE_SQL_INSERT}
       FILE_UPLOAD_DIR: /app/uploads # Chemin A L'INTERIEUR du conteneur app_java
       FILE_STATIC_BASE_URL: http://localhost/static # Ou votre URL de production
+      MAILTRAP_USERNAME: ${MAILTRAP_USERNAME}
+      MAILTRAP_PASSWORD: ${MAILTRAP_PASSWORD}
+
       # D'autres variables d'environnement pour l'application peuvent être ajoutées ici
       # Par exemple, pour activer un profil Spring spécifique :
       # SPRING_PROFILES_ACTIVE: dev

@@ -5,18 +5,25 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(callSuper = true) // Important pour inclure les champs de la classe parente dans equals/hashCode
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Entity
-// Valeur du discriminateur pour ce type d'utilisateur
 @DiscriminatorValue("SPECTATOR")
 public class SpectatorUser extends User {
 
-    // Constructeur spécifique si nécessaire, ou pour initialiser des champs
-    public SpectatorUser(String firstName, String lastName, String email, String password) {
-        super(null, firstName, lastName, email, password, UserRole.SPECTATOR, false, null, null, null);
+    // Constructeur pour création avec paramètres
+    public SpectatorUser(String firstName, String lastName, String email, String password, UserRole role) {
+        super();
+        this.setFirstName(firstName);
+        this.setLastName(lastName);
+        this.setEmail(email);
+        this.setPassword(password);
+        this.setRole(role);
+    }
+
+    // Constructeur par défaut requis par JPA
+    public SpectatorUser() {
+        super();
     }
 }

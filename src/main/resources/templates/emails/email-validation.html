@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{:: #email-content-wrapper}, 'Validez votre e-mail')}">
+
+<body>
+<div id="email-content-wrapper">
+    <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
+    <p>
+        Merci de vous être inscrit sur Tickly ! Pour finaliser la création de votre compte, veuillez cliquer sur le
+        bouton ci-dessous pour valider votre adresse e-mail.
+    </p>
+    <p style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+        <a th:href="${validationLink}" class="button">Valider mon compte</a>
+    </p>
+    <p>
+        Si le bouton ne fonctionne pas, vous pouvez copier-coller le lien suivant dans votre navigateur :
+        <br>
+        <a th:href="${validationLink}" th:text="${validationLink}" style="word-break: break-all;"></a>
+    </p>
+    <p>
+        Ce lien est valide pendant 24 heures.
+    </p>
+    <p>
+        À très bientôt sur Tickly !
+    </p>
+</div>
+</body>
+</html>

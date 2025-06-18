@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{:: #email-content-wrapper}, 'Vos billets sont arrivés !')}">
+<body>
+<div id="email-content-wrapper">
+    <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
+    <p>
+        Excellente nouvelle ! Vous trouverez en pièce jointe vos billets pour l'événement :
+        <strong><span th:text="${eventName}">Nom de l'événement</span></strong>.
+    </p>
+    <p>
+        Veuillez conserver ce PDF en lieu sûr. Vous devrez le présenter (imprimé ou sur votre smartphone) pour accéder à
+        l'événement.
+    </p>
+    <p>
+        Nous vous souhaitons de passer un excellent moment !
+    </p>
+</div>
+</body>
+</html>

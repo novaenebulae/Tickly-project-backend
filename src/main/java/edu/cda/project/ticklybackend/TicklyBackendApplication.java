@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-//import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.TimeZone;
 
@@ -16,17 +14,17 @@ import java.util.TimeZone;
 @EnableJpaAuditing
 public class TicklyBackendApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TicklyBackendApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TicklyBackendApplication.class, args);
+    }
 
-	@PostConstruct
-	public void init(){
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-	}
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    }
 
-	@Bean
-	public PasswordEncoder getPasswordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public PasswordEncoder getPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

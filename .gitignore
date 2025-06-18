@@ -4,7 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-.local.env
+.env
 
 ### STS ###
 .apt_generated
@@ -59,4 +59,5 @@ target/
 **/surefire-reports/
 **/failsafe-reports/
 **/test-output/
+
 

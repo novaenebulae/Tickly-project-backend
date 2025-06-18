@@ -64,7 +64,6 @@ public class Ticket {
     @Column(name = "participant_last_name", nullable = false)
     private String participantLastName;
 
-    @NotNull
     @Email
     @Column(name = "participant_email", nullable = false)
     private String participantEmail;

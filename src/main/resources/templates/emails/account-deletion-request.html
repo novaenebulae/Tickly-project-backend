@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{:: #email-content-wrapper}, 'Confirmez la suppression de votre compte')}">
+<body>
+<div id="email-content-wrapper">
+    <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
+    <p>
+        Nous avons reçu une demande de suppression pour votre compte Tickly.
+    </p>
+    <p>
+        Si vous êtes bien à l'origine de cette demande et que vous souhaitez supprimer définitivement votre compte ainsi
+        que toutes vos données, veuillez cliquer sur le bouton ci-dessous.
+    </p>
+    <p style="color: #d9534f; font-weight: bold;">
+        Attention, cette action est irréversible.
+    </p>
+    <p style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
+        <a th:href="${deletionLink}" class="button" style="background-color: #d9534f;">Confirmer la suppression</a>
+    </p>
+    <p>
+        Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité. Votre compte
+        ne sera pas supprimé.
+    </p>
+    <p>
+        Ce lien de confirmation expirera dans 1 heure.
+    </p>
+</div>
+</body>
+</html>

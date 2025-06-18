@@ -1,0 +1,81 @@
+<!-- FICHIER CORRIGÉ -->
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(content, pageTitle)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Titre de l'e-mail</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f7;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #6a5af9;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 30px;
+            line-height: 1.6;
+            color: #333333;
+        }
+
+        .content p {
+            margin: 0 0 15px 0;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #6a5af9;
+            color: #ffffff;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer {
+            background-color: #f4f4f7;
+            color: #888888;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 th:text="${pageTitle}">Sujet de l'e-mail</h1>
+    </div>
+    <div class="content" th:replace="${content}">
+        <!-- Le contenu spécifique sera injecté ici -->
+    </div>
+    <div class="footer">
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> Tickly. Tous droits réservés.</p>
+        <p>Cet e-mail est envoyé automatiquement, merci de ne pas y répondre.</p>
+    </div>
+</div>
+</body>
+</html>
