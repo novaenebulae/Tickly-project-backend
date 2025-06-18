@@ -7,7 +7,7 @@ import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
-import edu.cda.project.ticklybackend.mappers.UserMapper;
+import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;

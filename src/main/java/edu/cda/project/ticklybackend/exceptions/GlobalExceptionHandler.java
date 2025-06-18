@@ -116,6 +116,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // Gère les exceptions de type BadRequestException
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponseDto> handleBadRequestException(
+            BadRequestException ex, HttpServletRequest request) {
+        logger.warn("Requête invalide: {}", ex.getMessage());
+        ErrorResponseDto errorResponse = new ErrorResponseDto(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 
     // Gère toutes les autres exceptions non interceptées spécifiquement
     @ExceptionHandler(Exception.class)

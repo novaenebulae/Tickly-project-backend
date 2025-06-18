@@ -92,7 +92,7 @@ VALUES (1, 'L''Arsenal',
 -- Insertion des utilisateurs.
 -- Le mot de passe commun est 'Tickly123!'.
 -- Le hachage Bcrypt correspondant (cost factor 10) est utilisé pour tous les utilisateurs.
--- Hachage : $2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG
+-- Hachage : $2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii
 -- Les utilisateurs 'STRUCTURE_ADMINISTRATOR' sont liés à une structure via `structure_id`.
 -- La colonne `user_type` est définie à 'User' pour correspondre à la stratégie d'héritage de base.
 
@@ -100,32 +100,34 @@ INSERT INTO users (id, first_name, last_name, email, password, role, structure_i
                    needs_structure_setup, user_type, avatar_path)
 VALUES
 -- Administrateurs de structure
-(1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_1.png'),
-(2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_2.png'),
-(3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_3.png'),
-(4, 'Damien', 'Robert', 'damien.robert@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_4.png'),
-(5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_5.png'),
-(6, 'François', 'Petit', 'francois.petit@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_6.png'),
+(1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_1.png'),
+(2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_2.png'),
+(3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_3.png'),
+(4, 'Damien', 'Robert', 'damien.robert@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_4.png'),
+(5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_5.png'),
+(6, 'François', 'Petit', 'francois.petit@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_6.png'),
 (7, 'Gabrielle', 'Laurent', 'gabrielle.laurent@tickly.dev',
- '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(), 0, 'User',
+ '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(), 0,
+ 'STRUCTURE_ADMINISTRATOR',
  '/static/images/avatars/avatar_7.png'),
-(8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_8.png'),
+(8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_8.png'),
 -- Spectateurs
-(9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_9.png'),
-(10, 'Julien', 'Garcia', 'julien.garcia@email.com', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_10.png'),
-(11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_11.png'),
-(12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$3zZ.N1yOCD4Y0Y1QGvI4X.D.44v9b4nZf.c4nF5iE6sQ2gH3jK5uG', 'SPECTATOR',
- NULL, NOW(), NOW(), 0, 'User', '/static/images/avatars/avatar_12.png');
+(9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_9.png'),
+(10, 'Julien', 'Garcia', 'julien.garcia@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_10.png'),
+(11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_11.png'),
+(12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'SPECTATOR',
+ NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_12.png');
+
 
 -- ##################################################
 -- # 4. MISE À JOUR DE LA TABLE `structures`        #
@@ -425,6 +427,74 @@ VALUES (3, '/static/images/events/gallery/fcmetz_1.jpg'),
        (8, '/static/images/events/gallery/popstar_1.jpg'),
        (8, '/static/images/events/gallery/popstar_2.jpg'),
        (8, '/static/images/events/gallery/popstar_3.jpg');
+
+
+-- ######################################################
+-- # 16. PEUPLEMENT DE LA TABLE `reservations`          #
+-- ######################################################
+-- Création de réservations groupant plusieurs billets pour différents utilisateurs.
+
+INSERT INTO reservations (id, user_id, reservation_date, total_amount)
+VALUES
+-- Réservation d'Inès Michel (ID 9) pour le concert à l'Arsenal (Event 1)
+(1, 9, NOW() - INTERVAL 10 DAY, 0.00),
+-- Réservation de Julien Garcia (ID 10) pour le match du FC Metz (Event 3)
+(2, 10, NOW() - INTERVAL 5 DAY, 0.00),
+-- Réservation de Karine Lefebvre (ID 11) pour le festival à la BAM (Event 2)
+(3, 11, NOW() - INTERVAL 3 DAY, 0.00),
+-- Autre réservation d'Inès Michel (ID 9) pour le concert Pop aux Arènes (Event 8)
+(4, 9, NOW() - INTERVAL 2 DAY, 0.00),
+-- Réservation de Léo Roux (ID 12) pour l'exposition à Pompidou (Event 6)
+(5, 12, NOW() - INTERVAL 1 DAY, 0.00);
+
+
+-- ######################################################
+-- # 17. PEUPLEMENT DE LA TABLE `tickets`               #
+-- ######################################################
+-- Création des billets individuels associés aux réservations.
+-- Les UUIDs pour les ID de billets sont générés ici pour la démonstration.
+-- En pratique, la base de données ou l'application les générerait.
+
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+VALUES
+-- Billets pour la Réservation 1 (Inès Michel, Event 1, Zone 1 - Parterre)
+(UUID_TO_BIN(UUID()), 1, 1, 9, 1, UUID(), 'Inès', 'Michel', 'ines.michel@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 1)),
+(UUID_TO_BIN(UUID()), 1, 1, 9, 1, UUID(), 'Lucas', 'Petit', 'lucas.petit@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 1)),
+
+-- Billets pour la Réservation 2 (Julien Garcia, Event 3, Zone 5 - Tribune Sud)
+(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Julien', 'Garcia', 'julien.garcia@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 2)),
+(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Emma', 'Leroy', 'emma.leroy@email.com', 'USED',
+ (SELECT reservation_date FROM reservations WHERE id = 2)),
+(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Hugo', 'Martinez', 'hugo.martinez@email.com', 'CANCELLED',
+ (SELECT reservation_date FROM reservations WHERE id = 2)),
+
+
+-- Billets pour la Réservation 3 (Karine Lefebvre, Event 2, Zone 3 - Fosse Debout)
+(UUID_TO_BIN(UUID()), 2, 3, 11, 3, UUID(), 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 3)),
+
+-- Billets pour la Réservation 4 (Inès Michel, Event 8, Zone 7 - Fosse Or)
+(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Inès', 'Michel', 'ines.michel@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 4)),
+(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Paul', 'Roux', 'paul.roux@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 4)),
+(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Marie', 'Blanc', 'marie.blanc@email.com', 'VALID',
+ (SELECT reservation_date FROM reservations WHERE id = 4));
+-- Billet pour la Réservation 5 (Léo Roux, Event 6, Zone spécifique non définie, on suppose une zone générique pour l'expo)
+-- Note : Il faut s'assurer qu'une event_audience_zone existe pour l'event 6. Si non, il faut la créer.
+-- Ajoutons une zone d'audience pour l'événement 6.
+INSERT INTO event_audience_zones (id, event_id, name, seating_type, max_capacity, is_active,
+                                  base_audience_zone_template_id)
+VALUES (10, 6, 'Exposition Principale', 'MIXED', 400, 1, 12);
+
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+VALUES (UUID_TO_BIN(UUID()), 6, 10, 12, 5, UUID(), 'Léo', 'Roux', 'leo.roux@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 5));
 
 
 -- ##################################################

@@ -4,7 +4,7 @@ import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
-import edu.cda.project.ticklybackend.mappers.UserMapper;
+import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;

@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.mappers;
+package edu.cda.project.ticklybackend.mappers.user;
 
 
 import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
