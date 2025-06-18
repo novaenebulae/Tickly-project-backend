@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{::body}, 'Annulation événement')}">
+<body>
+<div th:fragment="email-content">
+    <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
+    <p>
+        Nous sommes au regret de vous informer de l'annulation de l'événement :
+        <strong><span th:text="${eventName}">Nom de l'événement</span></strong>.
+    </p>
+    <p>
+        Toutes les réservations pour cet événement ont été automatiquement annulées.
+        Puisque tous les événements sur Tickly sont gratuits, aucune action de votre part n'est requise.
+    </p>
+    <p>
+        Nous nous excusons pour la gêne occasionnée et espérons vous revoir bientôt pour un autre événement.
+    </p>
+    <p>
+        Cordialement,
+        <br>
+        L'équipe Tickly et les organisateurs.
+    </p>
+</div>
+</body>
+</html>

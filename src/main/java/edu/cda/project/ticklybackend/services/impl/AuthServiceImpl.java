@@ -5,7 +5,6 @@ import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
 import edu.cda.project.ticklybackend.enums.TokenType;
-import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
@@ -53,15 +52,19 @@ public class AuthServiceImpl implements AuthService {
         User newUser;
         if (Boolean.TRUE.equals(registrationDto.getCreateStructure())) {
             newUser = new StructureAdministratorUser(
-                    null
+                    registrationDto.getFirstName(),
+                    registrationDto.getLastName(),
+                    registrationDto.getEmail(),
+                    passwordEncoder.encode(registrationDto.getPassword()),
+                    null, // La structure est nulle lors de l'inscription initiale
+                    true  // L'utilisateur doit configurer sa structure
             );
         } else {
             newUser = new SpectatorUser(
                     registrationDto.getFirstName(),
                     registrationDto.getLastName(),
                     registrationDto.getEmail(),
-                    passwordEncoder.encode(registrationDto.getPassword()),
-                    UserRole.SPECTATOR
+                    passwordEncoder.encode(registrationDto.getPassword())
             );
         }
 

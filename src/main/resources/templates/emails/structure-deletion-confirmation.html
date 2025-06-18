@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{emails/fragments/email-layout :: layout(~{::body}, 'Confirmation de suppression de structure')}">
+<body>
+<div th:fragment="email-content">
+    <h2>Bonjour <span th:text="${adminName}">Administrateur</span>,</h2>
+    <p>
+        Ceci est une confirmation que votre structure,
+        <strong><span th:text="${structureName}">Nom de la structure</span></strong>,
+        a été supprimée avec succès de la plateforme Tickly.
+    </p>
+    <p>
+        Toutes les données associées (informations, fichiers, favoris) ont été nettoyées ou anonymisées. Votre compte
+        administrateur a été dissocié et vous pouvez désormais, si vous le souhaitez, configurer une nouvelle structure.
+    </p>
+    <p>
+        Cette action est irréversible.
+    </p>
+    <p>
+        Cordialement,
+        <br>
+        L'équipe Tickly.
+    </p>
+</div>
+</body>
+</html>

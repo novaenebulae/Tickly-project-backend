@@ -13,13 +13,14 @@ import lombok.EqualsAndHashCode;
 public class SpectatorUser extends User {
 
     // Constructeur pour création avec paramètres
-    public SpectatorUser(String firstName, String lastName, String email, String password, UserRole role) {
+    public SpectatorUser(String firstName, String lastName, String email, String password) {
         super();
         this.setFirstName(firstName);
         this.setLastName(lastName);
         this.setEmail(email);
         this.setPassword(password);
-        this.setRole(role);
+        this.setRole(UserRole.SPECTATOR);
+        this.setNeedsStructureSetup(false);
     }
 
     // Constructeur par défaut requis par JPA

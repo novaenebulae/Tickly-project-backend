@@ -2,6 +2,8 @@ package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
+import edu.cda.project.ticklybackend.enums.EventStatus;
+import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.event.EventAudienceZoneMapper;
@@ -10,14 +12,18 @@ import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
 import edu.cda.project.ticklybackend.models.event.EventCategory;
 import edu.cda.project.ticklybackend.models.structure.Structure;
+import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventCategoryRepository;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
+import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,10 +33,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
@@ -40,6 +48,8 @@ public class EventServiceImpl implements EventService {
     private final EventAudienceZoneMapper audienceZoneMapper;
     private final FileStorageService fileStorageService;
     private final AuthUtils authUtils;
+    private final MailingService mailingService; // Ajouté pour les notifications
+    private final TicketRepository ticketRepository; // Ajouté pour l'annulation
 
     private static final String MAIN_PHOTO_SUBDIR = "events/main";
     private static final String GALLERY_SUBDIR = "events/gallery";
@@ -121,20 +131,44 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public void deleteEvent(Long eventId) {
+        log.warn("Tentative d'annulation de l'événement ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
-        // Supprimer les images associées
-        if (StringUtils.hasText(event.getMainPhotoPath())) {
-            fileStorageService.deleteFile(event.getMainPhotoPath(), MAIN_PHOTO_SUBDIR);
-        }
-        if (event.getEventPhotoPaths() != null) {
-            for (String path : event.getEventPhotoPaths()) {
-                fileStorageService.deleteFile(path, GALLERY_SUBDIR);
-            }
+        // 1. Logique de protection : ne pas annuler un événement déjà terminé ou annulé
+        if (event.getStatus() == EventStatus.COMPLETED || event.getStatus() == EventStatus.CANCELLED) {
+            throw new BadRequestException("L'événement est déjà " + event.getStatus().toString().toLowerCase() + " et ne peut pas être annulé.");
         }
 
-        eventRepository.delete(event);
+        // 2. Changer le statut de l'événement
+        event.setStatus(EventStatus.CANCELLED);
+        eventRepository.save(event);
+        log.info("Le statut de l'événement ID: {} a été changé à CANCELLED.", eventId);
+
+        // 3. Traiter les billets existants
+        List<Ticket> tickets = ticketRepository.findAllByEventId(eventId);
+        if (!tickets.isEmpty()) {
+            log.info("Annulation de {} billet(s) pour l'événement ID: {}.", tickets.size(), eventId);
+            // Invalider tous les billets
+            for (Ticket ticket : tickets) {
+                ticket.setStatus(TicketStatus.CANCELLED);
+            }
+            ticketRepository.saveAll(tickets);
+
+            // Regrouper par e-mail de l'acheteur pour n'envoyer qu'un seul e-mail par réservation
+            Map<String, List<Ticket>> ticketsByBuyerEmail = tickets.stream()
+                    .collect(Collectors.groupingBy(ticket -> ticket.getUser().getEmail()));
+
+            // 4. Envoyer les notifications d'annulation
+            ticketsByBuyerEmail.forEach((email, userTickets) -> {
+                User user = userTickets.get(0).getUser();
+                mailingService.sendEventCancelledNotification(email, user.getFirstName(), event.getName());
+            });
+            log.info("Notifications d'annulation envoyées à {} acheteur(s).", ticketsByBuyerEmail.size());
+        }
+
+        // Note : la suppression physique des images n'est pas effectuée lors d'une annulation
+        // pour conserver l'historique. Elle pourrait l'être lors d'une suppression "hard" par un admin système.
     }
 
     @Override

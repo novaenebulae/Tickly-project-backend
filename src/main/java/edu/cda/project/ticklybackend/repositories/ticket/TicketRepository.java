@@ -37,4 +37,12 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
      * @return le nombre de billets.
      */
     long countByEventAudienceZoneId(Long zoneId);
+
+    /**
+     * Récupère tous les billets pour un ID d'événement donné.
+     *
+     * @param eventId L'ID de l'événement.
+     * @return Une liste de billets.
+     */
+    List<Ticket> findAllByEventId(Long eventId);
 }

@@ -2,24 +2,26 @@ package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.structure.*;
+import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.FileStorageException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.structure.*;
-import edu.cda.project.ticklybackend.models.structure.AudienceZoneTemplate;
-import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.structure.StructureArea;
-import edu.cda.project.ticklybackend.models.structure.StructureType;
+import edu.cda.project.ticklybackend.models.structure.*;
 import edu.cda.project.ticklybackend.models.user.StaffUser;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureAreaRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureTypeRepository;
+import edu.cda.project.ticklybackend.repositories.user.UserFavoriteStructureRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StructureService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class StructureServiceImpl implements StructureService {
 
     private static final Logger logger = LoggerFactory.getLogger(StructureServiceImpl.class);
@@ -47,6 +51,9 @@ public class StructureServiceImpl implements StructureService {
     private final StructureAreaRepository structureAreaRepository;
     private final AudienceZoneTemplateRepository audienceZoneTemplateRepository;
     private final UserRepository userRepository;
+    private final MailingService mailingService; // Injection pour la notification
+    private final EventRepository eventRepository; // Injection pour la vérification
+    private final UserFavoriteStructureRepository favoriteRepository;
 
     private final StructureMapper structureMapper;
     private final StructureTypeMapper structureTypeMapper;
@@ -140,42 +147,69 @@ public class StructureServiceImpl implements StructureService {
         return structureMapper.toDetailDto(updatedStructure, fileStorageService);
     }
 
-
     @Override
+    @Transactional
     public void deleteStructure(Long structureId) {
+        log.warn("Début de la tentative de suppression de la structure ID: {}", structureId);
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
 
-        // Clean up associated files before deleting the entity
-        try {
-            if (StringUtils.hasText(structure.getLogoPath())) {
-                fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
-            }
-            if (StringUtils.hasText(structure.getCoverPath())) {
-                fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
-            }
-            if (structure.getGalleryImagePaths() != null) {
-                for (String imagePath : structure.getGalleryImagePaths()) {
-                    fileStorageService.deleteFile(imagePath, GALLERY_SUBDIR);
-                }
-            }
-        } catch (FileStorageException e) {
-            logger.error("Erreur lors de la suppression des fichiers associés à la structure ID {}: {}", structureId, e.getMessage());
-            // Decide if this should be a critical failure or just a warning
+        // GARDE-FOU: Interdire la suppression si des événements sont encore actifs ou en brouillon.
+        if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT))) {
+            throw new BadRequestException("Suppression impossible : Veuillez d'abord annuler ou terminer tous les événements actifs ou en brouillon pour cette structure.");
         }
 
-        // Unlink from administrator if StaffUser
+        // Sauvegarde des informations pour la notification avant l'anonymisation
         User admin = structure.getAdministrator();
-        if (admin instanceof StaffUser && ((StaffUser) admin).getStructure() != null && ((StaffUser) admin).getStructure().getId().equals(structureId)) {
+        String originalStructureName = structure.getName();
+
+        // 1. Dissolution des relations
+        log.info("Suppression des favoris pour la structure ID: {}", structureId);
+        favoriteRepository.deleteByStructureId(structureId);
+        // TODO: Ajouter la logique de dissolution de l'équipe lorsque TeamManagementService existera
+
+        // 2. Nettoyage des fichiers physiques
+        log.info("Nettoyage des fichiers pour la structure ID: {}", structureId);
+        if (StringUtils.hasText(structure.getLogoPath()))
+            fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
+        if (StringUtils.hasText(structure.getCoverPath()))
+            fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
+        if (structure.getGalleryImagePaths() != null) {
+            structure.getGalleryImagePaths().forEach(path -> fileStorageService.deleteFile(path, GALLERY_SUBDIR));
+        }
+
+        // 3. Anonymisation de l'entité Structure (Soft Delete)
+        log.info("Anonymisation de la structure ID: {}", structureId);
+        structure.setName("Structure supprimée (" + structure.getId() + ")");
+        structure.setDescription("Cette structure a été supprimée le " + Instant.now());
+        structure.setAddress(new StructureAddress("Rue supprimée", "Ville supprimée", "0", "Pays supprimé"));
+        structure.setPhone(null);
+        structure.setEmail("anonymized+" + structure.getId() + "@tickly.app");
+        structure.setWebsiteUrl(null);
+        structure.setLogoPath(null);
+        structure.setCoverPath(null);
+        structure.getGalleryImagePaths().clear();
+        structure.getSocialMediaLinks().clear();
+        structure.setActive(false);
+        structure.setAdministrator(null); // Rompre le lien avec l'admin
+
+        structureRepository.save(structure);
+        log.info("Anonymisation de la structure ID: {} terminée.", structureId);
+
+        // 4. Dissociation de l'administrateur
+        if (admin instanceof StaffUser) {
+            log.info("Dissociation de l'administrateur ID: {} de la structure supprimée.", admin.getId());
             ((StaffUser) admin).setStructure(null);
-            // Potentially set needsStructureSetup back to true if business logic dictates
-            // admin.setNeedsStructureSetup(true);
+            admin.setNeedsStructureSetup(true);
             userRepository.save(admin);
         }
 
+        // 5. Communication finale
+        if (admin != null) {
+            mailingService.sendStructureDeletionConfirmation(admin.getEmail(), admin.getFirstName(), originalStructureName);
+        }
 
-        structureRepository.delete(structure);
-        logger.info("Structure {} (ID: {}) supprimée.", structure.getName(), structureId);
+        log.warn("Suppression de la structure ID: {} terminée avec succès.", structureId);
     }
 
     @Override

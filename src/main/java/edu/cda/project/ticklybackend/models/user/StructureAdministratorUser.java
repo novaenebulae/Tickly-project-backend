@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.models.user;
 
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -12,12 +13,18 @@ import lombok.EqualsAndHashCode;
 @DiscriminatorValue("STRUCTURE_ADMINISTRATOR")
 public class StructureAdministratorUser extends StaffUser {
 
-    // Constructeur avec structure - appelé explicitement
-    public StructureAdministratorUser(Structure structure) {
-        super(structure);
+
+    public StructureAdministratorUser(String firstName, String lastName, String email, String password, Structure structure, boolean needsStructureSetup) {
+        super();
+        this.setFirstName(firstName);
+        this.setLastName(lastName);
+        this.setEmail(email);
+        this.setPassword(password);
+        this.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
+        this.setStructure(structure);
+        this.setNeedsStructureSetup(needsStructureSetup);
     }
 
-    // Constructeur par défaut requis par JPA
     public StructureAdministratorUser() {
         super();
     }

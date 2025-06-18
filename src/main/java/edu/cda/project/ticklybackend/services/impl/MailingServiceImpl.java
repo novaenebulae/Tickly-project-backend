@@ -78,6 +78,26 @@ public class MailingServiceImpl implements MailingService {
         sendHtmlEmail(to, subject, "emails/account-deletion-confirmation.html", context, null, null);
     }
 
+    @Async
+    @Override
+    public void sendEventCancelledNotification(String to, String userName, String eventName) {
+        final String subject = "Annulation de l'événement : " + eventName;
+        Context context = new Context();
+        context.setVariable("userName", userName);
+        context.setVariable("eventName", eventName);
+        sendHtmlEmail(to, subject, "emails/event-cancellation.html", context, null, null);
+    }
+
+    @Async
+    @Override
+    public void sendStructureDeletionConfirmation(String to, String adminName, String structureName) {
+        final String subject = "Confirmation de la suppression de votre structure : " + structureName;
+        Context context = new Context();
+        context.setVariable("adminName", adminName);
+        context.setVariable("structureName", structureName);
+        sendHtmlEmail(to, subject, "emails/structure-deletion-confirmation.html", context, null, null);
+    }
+
     // TODO : Ajouter le flashcode + design des E-tickets
     @Async
     @Override

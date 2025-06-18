@@ -58,4 +58,9 @@ public interface MailingService {
      * @param pdfAttachment Le contenu du PDF des billets.
      */
     void sendTickets(String to, String userName, String eventName, byte[] pdfAttachment);
+
+    void sendEventCancelledNotification(String to, String userName, String eventName);
+
+    void sendStructureDeletionConfirmation(String to, String adminName, String structureName);
+
 }

@@ -11,6 +11,7 @@ import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
+import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
@@ -236,6 +237,25 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void requestAccountDeletion() {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+
+        // GARDE-FOU: Passation de pouvoir pour un administrateur de structure
+        if (currentUser instanceof StructureAdministratorUser admin) {
+            Structure managedStructure = admin.getStructure();
+            // Vérifie s'il gère une structure qui est toujours active
+            if (managedStructure != null && managedStructure.isActive()) {
+                // TODO: Remplacer la logique ci-dessous par un appel au futur TeamManagementService
+                // pour vérifier s'il existe d'autres administrateurs pour la structure.
+                // boolean isSoleAdmin = teamService.countAdminsForStructure(managedStructure.getId()) <= 1;
+                boolean isSoleAdmin = true; // Placeholder, on assume qu'il est le seul pour l'instant
+
+                if (isSoleAdmin) {
+                    throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
+                            + managedStructure.getName() + "'. Veuillez d'abord supprimer la structure ou transférer vos droits à un autre membre de l'équipe.");
+                }
+            }
+        }
+
+        // Si le garde-fou est passé, on continue le processus de demande de suppression
         VerificationToken deletionToken = tokenService.createToken(currentUser, TokenType.ACCOUNT_DELETION_CONFIRMATION, Duration.ofHours(1), null);
         String deletionLink = "/users/confirm-deletion?token=" + deletionToken.getToken();
 
