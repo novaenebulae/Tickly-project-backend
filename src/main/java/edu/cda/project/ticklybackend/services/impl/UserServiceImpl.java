@@ -56,6 +56,7 @@ public class UserServiceImpl implements UserService {
     private final MailingService mailingService;
     private final VerificationTokenRepository tokenRepository; // Ajouté pour la suppression en cascade
     private final TicketRepository ticketRepository;
+    private final TeamManagementServiceImpl teamService;
 
     private static final String AVATAR_SUBDIRECTORY = "avatars";
     private final ReservationRepository reservationRepository;
@@ -243,15 +244,14 @@ public class UserServiceImpl implements UserService {
             Structure managedStructure = admin.getStructure();
             // Vérifie s'il gère une structure qui est toujours active
             if (managedStructure != null && managedStructure.isActive()) {
-                // TODO: Remplacer la logique ci-dessous par un appel au futur TeamManagementService
-                // pour vérifier s'il existe d'autres administrateurs pour la structure.
-                // boolean isSoleAdmin = teamService.countAdminsForStructure(managedStructure.getId()) <= 1;
-                boolean isSoleAdmin = true; // Placeholder, on assume qu'il est le seul pour l'instant
+                long adminCount = teamService.countAdminsForStructure(managedStructure.getId());
 
-                if (isSoleAdmin) {
+                // S'il est le seul admin (ou si le compte est 0 pour une raison quelconque, on est prudent), on bloque.
+                if (adminCount <= 1) {
                     throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
                             + managedStructure.getName() + "'. Veuillez d'abord supprimer la structure ou transférer vos droits à un autre membre de l'équipe.");
                 }
+
             }
         }
 

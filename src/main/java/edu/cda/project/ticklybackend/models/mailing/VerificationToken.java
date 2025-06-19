@@ -8,10 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-/**
- * Entité représentant un token à usage unique utilisé pour des opérations sécurisées
- * telles que la validation d'e-mail, la réinitialisation de mot de passe, etc.
- */
 @Data
 @NoArgsConstructor
 @Entity
@@ -25,33 +21,43 @@ public class VerificationToken {
     @Column(nullable = false, unique = true)
     private String token;
 
-    @ManyToOne(targetEntity = User.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "user_id")
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TokenType tokenType;
 
-    /**
-     * Champ flexible pour stocker des données contextuelles au format JSON.
-     * Ex: {"teamId": 1, "role": "TEAM_MEMBER"} pour une invitation d'équipe.
-     */
-    @Column(columnDefinition = "TEXT")
-    private String payload;
-
     @Column(nullable = false)
     private Instant expiryDate;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
+    private String payload;
+
     private boolean isUsed = false;
 
+    /**
+     * Constructeur pour les tokens liés à un utilisateur existant.
+     * Le constructeur s'assure que si l'utilisateur est fourni, il ne peut pas être null.
+     */
     public VerificationToken(String token, User user, TokenType tokenType, Instant expiryDate, String payload) {
+        if (user == null) {
+            throw new IllegalArgumentException("L'utilisateur ne peut pas être nul lors de l'utilisation de ce constructeur.");
+        }
         this.token = token;
         this.user = user;
         this.tokenType = tokenType;
         this.expiryDate = expiryDate;
         this.payload = payload;
-        this.isUsed = false;
+    }
+
+    public VerificationToken(String token, TokenType tokenType, Instant expiryDate, String payload) {
+        this.token = token;
+        this.user = null; // L'utilisateur est explicitement null
+        this.tokenType = tokenType;
+        this.expiryDate = expiryDate;
+        this.payload = payload;
     }
 }

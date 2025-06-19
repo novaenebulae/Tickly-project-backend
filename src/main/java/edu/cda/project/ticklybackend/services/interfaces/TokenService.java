@@ -6,6 +6,7 @@ import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.user.User;
 
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * Service pour la gestion des tokens de vérification à usage unique.
@@ -39,4 +40,13 @@ public interface TokenService {
      * @param token Le token à marquer.
      */
     void markTokenAsUsed(VerificationToken token);
+
+    /**
+     * Analyse la chaîne de caractères JSON du payload d'un token et la retourne sous forme de Map.
+     *
+     * @param token Le token dont le payload doit être analysé.
+     * @return Une Map représentant le contenu du payload.
+     * @throws InvalidTokenException si le payload ne peut pas être analysé.
+     */
+    Map<String, Object> getPayload(VerificationToken token) throws InvalidTokenException;
 }

@@ -1,36 +1,37 @@
 package edu.cda.project.ticklybackend.dtos.auth;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class UserRegistrationDto {
 
-    @NotBlank(message = "Le prénom ne peut pas être vide.")
-    @Size(min = 2, message = "Le prénom doit contenir au moins 2 caractères.")
+    @NotBlank
+    @Size(min = 2, max = 50)
     private String firstName;
 
-    @NotBlank(message = "Le nom ne peut pas être vide.")
-    @Size(min = 2, message = "Le nom doit contenir au moins 2 caractères.")
+    @NotBlank
+    @Size(min = 2, max = 50)
     private String lastName;
 
-    @NotBlank(message = "L'email ne peut pas être vide.")
-    @Email(message = "Le format de l'email est invalide.")
+    @NotBlank
+    @Email
     private String email;
 
-    @NotBlank(message = "Le mot de passe ne peut pas être vide.")
+    @NotBlank
     @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères.")
-    // Ajouter d'autres contraintes de complexité si nécessaire (ex: @Pattern)
     private String password;
 
-    // Pas de champ confirmPassword ici, la validation se fait souvent côté client
-    // ou via une validation personnalisée côté serveur si nécessaire.
-    // Pour simplifier, nous l'omettons ici, en supposant que le client s'en charge.
+    @Schema(description = "Indique si l'utilisateur s'inscrit en tant qu'administrateur et doit créer une structure. Si non fourni, la valeur par défaut est false.")
+    private Boolean createStructure = false;
 
-    // Booléen pour différencier l'inscription d'un spectateur de celle d'un admin de structure.
-    @NotNull(message = "Le champ 'createStructure' est requis.")
-    private Boolean createStructure; // true si l'utilisateur veut créer une structure (devient admin)
+    /**
+     * Si un token d'invitation est fourni, le processus d'inscription
+     * validera l'email et acceptera l'invitation en une seule étape.
+     */
+    @Schema(description = "Token d'invitation optionnel pour rejoindre une équipe lors de l'inscription.")
+    private String invitationToken;
 }
