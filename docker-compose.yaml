@@ -3,12 +3,12 @@ services:
   mysql_db:
     image: mysql:8.0
     container_name: mysql_db_container
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # Mot de passe root de MySQL
       MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}      # Nom de la base de données à créer
     ports:
-      - "${MYSQL_PORT}:3306" # Mappe le port de l'hôte au port 3306 du conteneur MySQL
+      - "${MYSQL_PORT}:3306" # Mappe le port de l'hôte au port 3306 du conteneur MySQL, Uniquement Informatif
     volumes:
       - mysql_data_volume:/var/lib/mysql # Persistance des données MySQL
     networks:
@@ -20,7 +20,7 @@ services:
       context: . # Chemin vers le répertoire racine du projet (contenant le Dockerfile de l'app Java)
       dockerfile: Dockerfile # Nom du Dockerfile à utiliser (par défaut 'Dockerfile')
     container_name: app_java_container
-    restart: unless-stopped
+    restart: always
     depends_on:
       - mysql_db # S'assure que le service 'mysql_db' est démarré avant 'app_java'
       # Attention: 'depends_on' ne garantit pas que MySQL soit prêt à accepter des connexions.
@@ -80,3 +80,32 @@ networks:
   app_network:
     driver: bridge # Utilise le pilote de réseau 'bridge' par défaut,
     # créant un réseau isolé pour cette application.
+
+# ==============================
+# COMPOSE ALTERNATIF
+# ==============================
+
+#services:
+#  back:
+#    build: .
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - db
+#    volumes:
+#      - ${PUBLIC_UPLOAD_FOLDER}:/public-upload
+#      - ${PRIVATE_UPLOAD_FOLDER}:/private-upload
+#    environment:
+#      - PUBLIC_UPLOAD_FOLDER=${PUBLIC_UPLOAD_FOLDER}
+#      - PRIVATE_UPLOAD_VOLUME=${PRIVATE_UPLOAD_FOLDER}
+#  db:
+#    image: mysql:5.7
+#    restart: always
+#    environment:
+#      MYSQL_ROOT_PASSWORD: 'root'
+#    expose:
+#      - "3306"
+#    volumes:
+#      - data:/var/lib/mysql
+#  volumes:
+#    data:

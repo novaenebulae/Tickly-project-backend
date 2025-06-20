@@ -6,11 +6,11 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.1</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>edu.cda.project</groupId>
-    <artifactId>tickly-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>tickly-app-backend</artifactId>
+    <version>0.0.2</version>
     <name>tickly-backend</name>
     <description>tickly-backend</description>
     <url/>
@@ -27,7 +27,8 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
+        <final.jar.name>tickly-app-backend</final.jar.name>
         <jjwt.version>0.12.3</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -130,6 +131,7 @@
     </dependencies>
 
     <build>
+        <finalName>${final.jar.name}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -145,6 +147,12 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
                 <configuration>
@@ -152,6 +160,22 @@
                     <nonFilteredFileExtensions>
                         <nonFilteredFileExtension>properties</nonFilteredFileExtension>
                     </nonFilteredFileExtensions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.3</version>
+                <configuration>
+                    <!-- Inclure les tests unitaires -->
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <!-- Exclure les tests d'intégration -->
+                    <excludes>
+
+                        <exclude>**/*ApplicationTests.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
