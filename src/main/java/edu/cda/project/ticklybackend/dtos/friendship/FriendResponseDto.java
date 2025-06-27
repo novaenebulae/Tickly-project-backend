@@ -2,26 +2,24 @@ package edu.cda.project.ticklybackend.dtos.friendship;
 
 import edu.cda.project.ticklybackend.dtos.user.UserSummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@Schema(description = "DTO représentant un ami confirmé.")
-public class FriendResponseDto extends UserSummaryDto {
-    @Schema(description = "ID de l'enregistrement de la relation d'amitié.")
+@AllArgsConstructor
+@Schema(description = "DTO représentant un ami accepté.")
+public class FriendResponseDto {
+
+    @Schema(description = "ID de la relation d'amitié.", example = "42")
     private Long friendshipId;
 
-    @Schema(description = "Date à laquelle l'amitié a été confirmée.")
-    private Instant since;
+    @Schema(description = "Informations sur l'utilisateur qui est l'ami.")
+    private UserSummaryDto friend;
 
-    public FriendResponseDto(Long id, String firstName, String lastName, String avatarUrl, Long friendshipId, Instant since) {
-        super(id, firstName, lastName, avatarUrl);
-        this.friendshipId = friendshipId;
-        this.since = since;
-    }
+    @Schema(description = "Date à laquelle l'amitié a été acceptée (devenue effective).", example = "2025-06-25T10:30:00Z")
+    private Instant since;
 }

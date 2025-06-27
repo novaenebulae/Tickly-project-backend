@@ -40,6 +40,7 @@ public class AuthController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "Données de connexion invalides")
     @ApiResponse(responseCode = "401", description = "Identifiants incorrects")
+    @ApiResponse(responseCode = "403", description = "Email non validé")
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> loginUser(
             @Valid @RequestBody UserLoginDto loginDto) {

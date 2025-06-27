@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponseDto> handleEmailAlreadyExistsException(
             EmailAlreadyExistsException ex, HttpServletRequest request) {
-        logger.warn("Email déjà existant: {}", ex.getMessage());
+        logger.warn(ex.getMessage());
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
@@ -73,6 +73,20 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponseDto> handleInvalidTokenException(
+            InvalidTokenException ex, HttpServletRequest request) {
+        logger.warn("Token invalide : {}", ex.getMessage());
+        ErrorResponseDto errorResponse = new ErrorResponseDto(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
 
     // Gère les exceptions de type BadCredentialsException (identifiants incorrects)
     @ExceptionHandler(BadCredentialsException.class)
@@ -82,7 +96,7 @@ public class GlobalExceptionHandler {
         logger.warn("Tentative de connexion échouée (mauvais identifiants): {}", ex.getMessage());
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Identifiants invalides.", // Message générique pour la sécurité
+                "Identifiants invalides ou email non validé.", // Message générique pour la sécurité
                 request.getRequestURI()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);

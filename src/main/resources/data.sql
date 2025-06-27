@@ -96,6 +96,7 @@ VALUES (1, 'L''Arsenal',
 -- Les utilisateurs 'STRUCTURE_ADMINISTRATOR' sont liés à une structure via `structure_id`.
 -- La colonne `user_type` est définie à 'User' pour correspondre à la stratégie d'héritage de base.
 
+
 INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at,
                    needs_structure_setup, user_type, avatar_path)
 VALUES
@@ -126,7 +127,9 @@ VALUES
 (11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
  'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_11.png'),
 (12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'SPECTATOR',
- NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_12.png');
+ NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_12.png'),
+(13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '');
 
 
 -- ##################################################

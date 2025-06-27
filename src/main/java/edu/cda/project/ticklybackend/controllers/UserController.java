@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Tag(name = "Gestion des Utilisateurs", description = "Endpoints pour gérer les profils utilisateurs et les favoris.")
-@SecurityRequirement(name = "bearerAuth") // Indique que les endpoints ici nécessitent une authentification Bearer
 public class UserController {
 
     private final UserService userService;
@@ -114,7 +112,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/confirm-deletion")
+    @DeleteMapping("/confirm-deletion")
     @Operation(summary = "Confirmer la suppression du compte", description = "Supprime définitivement le compte et les données associées en utilisant le token reçu par e-mail. Cette action est irréversible.")
     public ResponseEntity<Void> confirmAccountDeletion(@RequestParam("token") String token) {
         userService.confirmAccountDeletion(token);

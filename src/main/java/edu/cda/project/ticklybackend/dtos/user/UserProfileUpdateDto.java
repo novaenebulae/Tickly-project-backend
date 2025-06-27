@@ -16,11 +16,4 @@ public class UserProfileUpdateDto {
     @Email(message = "Le format de l'email est invalide.")
     private String email; // La logique de vérification d'unicité sera dans le service
 
-    // Pour le changement de mot de passe
-    private String currentPassword;
-
-    @Size(min = 8, message = "Le nouveau mot de passe doit contenir au moins 8 caractères.")
-    private String newPassword;
-
-    private String confirmNewPassword; // Doit correspondre à newPassword (validation dans le service)
 }

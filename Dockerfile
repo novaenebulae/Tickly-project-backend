@@ -34,7 +34,7 @@ RUN ./mvnw package -DskipTests
 # --- Stage 2: Run ---
 # Utiliser une image JRE (Java Runtime Environment) plus légère pour l'exécution.
 # Eclipse Temurin JRE 21 sur Ubuntu Jammy est plus petite que l'image JDK complète.
-FROM eclipse-temurin:21-jre-jammy
+FROM openjdk:21
 # Commentaire: Cette étape utilise une image JRE, optimisée pour l'exécution et plus sécurisée
 # car elle ne contient pas les outils de compilation.
 

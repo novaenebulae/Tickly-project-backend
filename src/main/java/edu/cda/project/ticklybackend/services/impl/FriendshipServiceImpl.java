@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -52,17 +51,17 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     public void sendFriendRequest(SendFriendRequestDto requestDto) {
         Long senderId = authUtils.getCurrentAuthenticatedUserId();
-        Long receiverId = requestDto.getReceiverId();
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", senderId));
 
-        if (Objects.equals(senderId, receiverId)) {
+        if (sender.getEmail().equalsIgnoreCase(requestDto.getEmail())) {
             throw new BadRequestException("Vous ne pouvez pas vous ajouter vous-même comme ami.");
         }
 
-        User sender = userRepository.findById(senderId).orElseThrow();
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", receiverId));
+        User receiver = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email : " + requestDto.getEmail()));
 
-        friendshipRepository.findFriendshipBetweenUsers(senderId, receiverId).ifPresent(f -> {
+        friendshipRepository.findFriendshipBetweenUsers(senderId, receiver.getId()).ifPresent(f -> {
             throw new BadRequestException("Une relation d'amitié existe déjà ou est en attente avec cet utilisateur.");
         });
 
@@ -73,6 +72,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         friendshipRepository.save(newRequest);
     }
+
 
     @Override
     public void updateFriendshipStatus(Long friendshipId, UpdateFriendshipStatusDto updateDto) {
@@ -98,8 +98,13 @@ public class FriendshipServiceImpl implements FriendshipService {
                 throw new BadRequestException("Le statut fourni n'est pas valide pour cette action.");
         }
 
-        friendship.setStatus(newStatus);
-        friendshipRepository.save(friendship);
+        if (newStatus == FriendshipStatus.CANCELLED_BY_SENDER) {
+            friendshipRepository.delete(friendship);
+        } else {
+            friendship.setStatus(newStatus);
+            friendshipRepository.save(friendship);
+        }
+
     }
 
     @Override

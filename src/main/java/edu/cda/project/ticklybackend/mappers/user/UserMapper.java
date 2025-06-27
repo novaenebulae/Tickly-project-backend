@@ -5,6 +5,7 @@ import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
+import edu.cda.project.ticklybackend.mappers.structure.StructureMapper;
 import edu.cda.project.ticklybackend.models.user.StaffUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 // @Mapper indique à MapStruct de générer une implémentation pour cette interface.
 // componentModel = "spring" permet d'injecter ce mapper comme un bean Spring.
-@Mapper(componentModel = "spring", imports = {StaffUser.class})
+@Mapper(componentModel = "spring", uses = {StructureMapper.class}, imports = {StaffUser.class})
 public abstract class UserMapper {
 
     // Juste pour qu'il reste dans les imports car utilisé dans l'expression du mapping StructureId

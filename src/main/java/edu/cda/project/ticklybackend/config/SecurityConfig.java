@@ -38,8 +38,12 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_POST_URLS = {
             "/api/v1/auth/**",
+    };
+
+    private static final String[] PUBLIC_DELETE_URLS = {
             "/api/v1/users/confirm-deletion"
     };
+
 
     private static final String[] SWAGGER_URLS = new String[]{
             "/swagger-ui.html",
@@ -77,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers(SWAGGER_URLS).permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_URLS).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_URLS).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, PUBLIC_DELETE_URLS).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest()
                         .authenticated()

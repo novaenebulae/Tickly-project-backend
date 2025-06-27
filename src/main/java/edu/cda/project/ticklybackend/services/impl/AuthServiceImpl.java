@@ -22,6 +22,7 @@ import edu.cda.project.ticklybackend.services.interfaces.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDto registerUser(UserRegistrationDto registrationDto) throws EmailAlreadyExistsException {
         if (userRepository.existsByEmail(registrationDto.getEmail())) {
-            throw new EmailAlreadyExistsException("Un compte existe déjà avec l'adresse e-mail : " + registrationDto.getEmail());
+            throw new EmailAlreadyExistsException(registrationDto.getEmail());
         }
 
         // Si un token d'invitation est fourni, on le traite
@@ -131,6 +132,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponseDto login(UserLoginDto loginDto) {
+
+        User user = userRepository.findByEmail(loginDto.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", loginDto.getEmail()));
+
+        if (!user.isEmailValidated()) {
+            throw new BadCredentialsException("Veuillez validez votre e-mail avant de vous connecter.");
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginDto.getEmail(),
@@ -140,8 +149,6 @@ public class AuthServiceImpl implements AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        User user = userRepository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", loginDto.getEmail()));
 
         String jwtToken = jwtTokenProvider.generateToken(user);
 

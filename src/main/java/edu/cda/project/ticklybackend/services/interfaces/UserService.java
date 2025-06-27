@@ -19,8 +19,6 @@ public interface UserService {
 
     Page<UserSearchResponseDto> searchUsers(String query, Pageable pageable);
 
-    List<UserFavoriteStructureDto> getUserFavoriteStructures(Long userId);
-
     UserFavoriteStructureDto addFavoriteStructure(Long userId, Long structureId);
 
     void removeFavoriteStructure(Long userId, Long structureId);

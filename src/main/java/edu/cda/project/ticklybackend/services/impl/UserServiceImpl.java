@@ -88,19 +88,6 @@ public class UserServiceImpl implements UserService {
             user.setEmail(updateDto.getEmail());
         }
 
-        // Gestion du changement de mot de passe
-        if (StringUtils.hasText(updateDto.getNewPassword())) {
-            if (!StringUtils.hasText(updateDto.getCurrentPassword())) {
-                throw new BadRequestException("Le mot de passe actuel est requis pour changer le mot de passe.");
-            }
-            if (!passwordEncoder.matches(updateDto.getCurrentPassword(), user.getPassword())) {
-                throw new BadRequestException("Le mot de passe actuel est incorrect.");
-            }
-            if (!Objects.equals(updateDto.getNewPassword(), updateDto.getConfirmNewPassword())) {
-                throw new BadRequestException("Le nouveau mot de passe et sa confirmation ne correspondent pas.");
-            }
-            user.setPassword(passwordEncoder.encode(updateDto.getNewPassword()));
-        }
 
         User updatedUser = userRepository.save(user);
         return userMapper.userToUserProfileResponseDto(updatedUser);
@@ -149,13 +136,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserFavoriteStructureDto> getUserFavoriteStructures(Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("User", "id", userId);
-        }
+    public List<UserFavoriteStructureDto> getCurrentUserFavoriteStructures() {
+        Long userId = authUtils.getCurrentAuthenticatedUserId();
         List<UserFavoriteStructure> favorites = favoriteRepository.findByUserId(userId);
+        // On passe fileStorageService en contexte pour que MapStruct puisse l'utiliser dans les mappers imbriqués
         return userMapper.userFavoriteStructuresToUserFavoriteStructureDtos(favorites, fileStorageService);
     }
+
 
     @Override
     @Transactional
@@ -213,12 +200,6 @@ public class UserServiceImpl implements UserService {
         return updateUserAvatar(currentUser.getId(), file);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserFavoriteStructureDto> getCurrentUserFavoriteStructures() {
-        User currentUser = authUtils.getCurrentAuthenticatedUser();
-        return getUserFavoriteStructures(currentUser.getId());
-    }
 
     @Override
     @Transactional
