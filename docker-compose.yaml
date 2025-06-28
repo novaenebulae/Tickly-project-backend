@@ -4,6 +4,12 @@ services:
     image: mysql:8.0
     container_name: mysql_db_container
     restart: unless-stopped
+    healthcheck:
+      # Commande pour vérifier si MySQL est prêt
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s   # Vérifier toutes les 10 secondes
+      timeout: 5s     # Attendre 5 secondes pour une réponse
+      retries: 5      # Essayer 5 fois avant de déclarer l'échec
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # Mot de passe root de MySQL
       MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}      # Nom de la base de données à créer
@@ -22,7 +28,8 @@ services:
     container_name: app_java_container
     restart: unless-stopped
     depends_on:
-      - mysql_db # S'assure que le service 'mysql_db' est démarré avant 'app_java'
+      mysql_db:
+        condition: service_healthy
       # Attention: 'depends_on' ne garantit pas que MySQL soit prêt à accepter des connexions.
     environment:
       # Ces variables sont utilisées par application.properties pour se connecter à MySQL

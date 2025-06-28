@@ -47,6 +47,8 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 # Commentaire: Seul l'artefact compilé (le JAR) est copié dans l'image finale.
 
+COPY src/main/resources/seed-data/images /app/uploads
+
 # Exposer le port sur lequel l'application Spring Boot tourne (défini par server.port dans application.properties, par défaut 8080).
 # Ceci est une documentation ; la publication réelle du port se fait avec l'option -p de 'docker run' ou dans docker-compose.yml.
 EXPOSE 8080
