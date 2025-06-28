@@ -1,50 +1,64 @@
 package edu.cda.project.ticklybackend.models.structure;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import edu.cda.project.ticklybackend.enums.SeatingType;
+import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * Entité modélisant une configuration type de zone d'audience
- * qui peut être associée à une StructureArea.
- * (ex: Fosse Debout, Balcon Rangée A)
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.List;
+
 @Entity
-@Table(name = "audience_zone_templates")
+@Getter
+@Setter
+@NoArgsConstructor
+@Table(name = "audience_zone_template")
 public class AudienceZoneTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Le nom du modèle de zone ne peut pas être vide.")
-    @Size(max = 255, message = "Le nom du modèle de zone ne peut pas dépasser 255 caractères.")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @NotNull(message = "La capacité maximale ne peut pas être nulle.")
-    @Min(value = 0, message = "La capacité maximale doit être un nombre positif ou zéro.")
     @Column(nullable = false)
-    private Integer maxCapacity;
-
-    @NotNull(message = "Le type de placement ne peut pas être nul.")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SeatingType seatingType;
+    private int maxCapacity;
 
     @Column(nullable = false)
     private boolean isActive = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private SeatingType seatingType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_id", nullable = false)
+    @JsonBackReference // Prevents serialization loop
     private StructureArea area;
+
+    // RELATION AJOUTÉE
+    /**
+     * Represents all the event-specific configurations that use this template.
+     * This allows for tracking the usage of a template across different events.
+     * The mappedBy attribute points to the 'template' field in the EventAudienceZone entity.
+     * CascadeType.ALL means that if this template is deleted, all its associated event zones are also deleted.
+     * OrphanRemoval=true ensures that if an EventAudienceZone is removed from this list, it is also deleted from the database.
+     */
+    @OneToMany(mappedBy = "template", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<EventAudienceZone> eventAudienceZones;
+
+    @Override
+    public String toString() {
+        return "AudienceZoneTemplate{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", maxCapacity=" + maxCapacity +
+                ", isActive=" + isActive +
+                ", seatingType=" + seatingType +
+                ", areaId=" + (area != null ? area.getId() : "null") +
+                '}';
+    }
 }

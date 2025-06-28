@@ -68,7 +68,7 @@ public class TicketServiceImpl implements TicketService {
 
         // --- Vérification de la capacité ---
         long existingTickets = ticketRepository.countByEventAudienceZoneId(zone.getId());
-        if (existingTickets + requestDto.getParticipants().size() > zone.getMaxCapacity()) {
+        if (existingTickets + requestDto.getParticipants().size() > zone.getAllocatedCapacity()) {
             throw new BadRequestException("Capacité insuffisante dans la zone sélectionnée.");
         }
         // --- Fin de la vérification de la capacité ---
@@ -111,7 +111,7 @@ public class TicketServiceImpl implements TicketService {
             log.error("Erreur lors de la génération ou de l'envoi du PDF pour la réservation {}. La réservation est confirmée mais l'e-mail a échoué.", savedReservation.getId(), e);
             // Ne pas faire échouer la transaction, mais logger l'erreur est crucial.
         }
-        
+
         ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
         confirmationDto.setReservationId(savedReservation.getId());
         confirmationDto.setTotalAmount(savedReservation.getTotalAmount());

@@ -7,6 +7,9 @@
 -- Il doit être placé dans le répertoire `src/main/resources` et nommé `data.sql`.
 -- L'ordre des insertions est crucial pour respecter les contraintes de clés étrangères.
 
+-- Désactivation des contraintes de clés étrangères pour permettre l'insertion dans un ordre flexible
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ##################################################
 -- # 1. PEUPLEMENT DE LA TABLE `structure_types`    #
 -- ##################################################
@@ -98,38 +101,38 @@ VALUES (1, 'L''Arsenal',
 
 
 INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at,
-                   needs_structure_setup, user_type, avatar_path)
+                   needs_structure_setup, user_type, avatar_path, is_email_validated)
 VALUES
 -- Administrateurs de structure
 (1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_1.png'),
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_1.png', 1),
 (2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_2.png'),
+ 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_2.png', 1),
 (3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_3.png'),
+ 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_3.png', 1),
 (4, 'Damien', 'Robert', 'damien.robert@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_4.png'),
+ 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_4.png', 1),
 (5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_5.png'),
+ 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_5.png', 1),
 (6, 'François', 'Petit', 'francois.petit@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_6.png'),
+ 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_6.png', 1),
 (7, 'Gabrielle', 'Laurent', 'gabrielle.laurent@tickly.dev',
  '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(), 0,
  'STRUCTURE_ADMINISTRATOR',
- '/static/images/avatars/avatar_7.png'),
+ '/static/images/avatars/avatar_7.png', 1),
 (8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_8.png'),
+ 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '/static/images/avatars/avatar_8.png', 1),
 -- Spectateurs
 (9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_9.png'),
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_9.png', 1),
 (10, 'Julien', 'Garcia', 'julien.garcia@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_10.png'),
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_10.png', 1),
 (11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_11.png'),
+ 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_11.png', 1),
 (12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'SPECTATOR',
- NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_12.png'),
+ NULL, NOW(), NOW(), 0, 'SPECTATOR', '/static/images/avatars/avatar_12.png', 1),
 (13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '');
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '', 1);
 
 
 -- ##################################################
@@ -233,7 +236,7 @@ VALUES (1, 1, 'Grande Salle', 'La salle de concert principale de l''Arsenal.', 1
 -- ##########################################################
 -- Création des modèles de zones d'audience pour chaque espace physique.
 
-INSERT INTO audience_zone_templates (id, area_id, name, seating_type, max_capacity, is_active)
+INSERT INTO audience_zone_template (id, area_id, name, seating_type, max_capacity, is_active)
 VALUES
 -- Zones pour l'Arsenal (Area 1 & 2)
 (1, 1, 'Parterre', 'SEATED', 800, 1),
@@ -249,7 +252,7 @@ VALUES
 (8, 5, 'Tribune Nord - Basse', 'SEATED', 4000, 1),
 (9, 5, 'Tribune Nord - Haute', 'SEATED', 3000, 1),
 (10, 6, 'Tribune Sud - Basse', 'SEATED', 5000, 1),
-(11, 6, 'Tribune Sud - Loges VIP', 'SEATED', 500, 1),
+(11, 6, 'Loges VIP', 'SEATED', 500, 1),
 -- Zones pour Les Trinitaires (Area 9 & 10)
 (12, 9, 'Fosse Chapelle', 'STANDING', 350, 1),
 (13, 10, 'Placement libre Caveau', 'MIXED', 200, 1);
@@ -318,78 +321,73 @@ VALUES (1, 'Concert'),
 
 INSERT INTO events (id, name, short_description, full_description, start_date, end_date, status, is_free_event,
                     display_on_homepage, is_featured_event, structure_id, category_id, creator_id, created_at,
-                    updated_at, main_photo_path, street, city, zip_code, country, latitude, longitude)
+                    updated_at, main_photo_path, street, city, zip_code, country)
 VALUES (1, 'Orchestre National de Metz - Saison Classique',
         'Une soirée exceptionnelle avec l''Orchestre National de Metz.',
         'L''Orchestre National de Metz Grand Est vous invite à une soirée inoubliable sous la direction de son chef principal. Au programme, des œuvres de Beethoven et Mozart qui raviront les amateurs de musique classique. Une expérience acoustique unique dans la Grande Salle de l''Arsenal.',
         DATE_ADD(NOW(), INTERVAL 1 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 MONTH), INTERVAL 2 HOUR), 'PUBLISHED',
         0, 1, 1, 1, 1, 1, NOW(), NOW(), '/static/images/events/event_orchestre.jpg', '3 Avenue Ney', 'Metz', '57000',
-        'France', 49.1156, 6.1720),
+        'France'),
 
        (2, 'Festival Rock en Scène', 'Trois jours de rock et de découvertes musicales à la BAM.',
         'Le festival Rock en Scène revient pour une nouvelle édition explosive! Têtes d''affiches internationales et talents locaux se succéderont sur la scène de la BAM pour faire vibrer Metz au son du rock, du punk et de l''indie.',
         DATE_ADD(NOW(), INTERVAL 2 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 MONTH), INTERVAL 3 DAY), 'PUBLISHED', 0,
         1, 1, 2, 3, 2, NOW(), NOW(), '/static/images/events/event_rock.jpg', '20 Boulevard d''Alsace', 'Metz', '57070',
-        'France', 49.1172, 6.2033),
+        'France'),
 
        (3, 'FC Metz vs. Olympique de Marseille', 'Match de championnat de Ligue 1 au Stade Saint-Symphorien.',
         'Vibrez pour les Grenats lors de cette rencontre au sommet face à l''Olympique de Marseille. Un match décisif pour le championnat, dans une ambiance électrique. Allez Metz!',
         DATE_ADD(NOW(), INTERVAL 20 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 20 DAY), INTERVAL 2 HOUR), 'PUBLISHED', 0,
         1, 0, 4, 4, 4, NOW(), NOW(), '/static/images/events/event_fcmetz_om.jpg', '3 Allée Saint-Symphorien',
-        'Longeville-lès-Metz', '57050', 'France', 49.1097, 6.1507),
+        'Longeville-lès-Metz', '57050', 'France'),
 
        (4, 'La Traviata de Verdi', 'Le chef-d''œuvre de Verdi sur la scène de l''Opéra-Théâtre de Metz.',
         'Plongez dans le Paris du XIXe siècle avec l''histoire d''amour tragique de Violetta et Alfredo. Une production somptueuse avec des décors et costumes d''époque, portée par des voix exceptionnelles.',
         DATE_ADD(NOW(), INTERVAL 45 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 45 DAY), INTERVAL 3 HOUR), 'PUBLISHED', 0,
         0, 1, 3, 8, 3, NOW(), NOW(), '/static/images/events/event_traviata.jpg', '4-5 Place de la Comédie', 'Metz',
-        '57000', 'France', 49.1222, 6.1750),
+        '57000', 'France'),
 
        (5, 'Salon de l''Habitat et de la Décoration', 'Toutes les tendances pour votre intérieur au Parc des Expos.',
         'Constructeurs, artisans, décorateurs et paysagistes se réunissent pour vous présenter les dernières innovations pour votre maison et votre jardin. Profitez de conseils d''experts et d''offres exclusives.',
         DATE_ADD(NOW(), INTERVAL 25 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 25 DAY), INTERVAL 3 DAY), 'PUBLISHED', 0,
         0, 0, 5, 6, 5, NOW(), NOW(), '/static/images/events/event_salon_habitat.jpg', 'Rue de la Grange aux Bois',
-        'Metz', '57070', 'France', 49.0986, 6.2194),
+        'Metz', '57070', 'France'),
 
        (6, 'Exposition "Miroirs du Monde"', 'Une exploration de l''art contemporain au Centre Pompidou-Metz.',
         'Cette exposition thématique rassemble des œuvres d''artistes internationaux qui interrogent notre perception du monde. Peintures, sculptures, installations et vidéos dialoguent dans un parcours immersif.',
         DATE_ADD(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 3 MONTH), 'PUBLISHED', 0, 1, 1, 10, 6, 3, NOW(),
         NOW(), '/static/images/events/event_pompidou_expo.jpg', '1 Parvis des Droits-de-l''Homme', 'Metz', '57000',
-        'France', 49.1099, 6.1821),
+        'France'),
 
        (7, 'Le Comte de Bouderbala - One Man Show', 'L''humoriste revient avec un nouveau spectacle hilarant.',
         'Le Comte de Bouderbala passe au crible les absurdités de notre société avec son style unique, mêlant stand-up et observations fines. Une soirée de rires garantis à la Comédie de Metz.',
         DATE_ADD(NOW(), INTERVAL 15 DAY), DATE_ADD(DATE_ADD(NOW(), INTERVAL 15 DAY), INTERVAL 90 MINUTE), 'PUBLISHED',
         0, 0, 0, 7, 7, 7, NOW(), NOW(), '/static/images/events/event_bouderbala.jpg', '1/3 Rue du Pont Saint-Marcel',
-        'Metz', '57000', 'France', 49.1208, 6.1744),
+        'Metz', '57000', 'France'),
 
        (8, 'Concert International - Pop Star Live', 'La superstar mondiale de la pop en concert unique aux Arènes.',
         'Un show spectaculaire avec des effets visuels époustouflants, des chorégraphies millimétrées et tous les tubes de l''artiste. L''événement musical de l''année à ne pas manquer!',
         DATE_ADD(NOW(), INTERVAL 4 MONTH), DATE_ADD(DATE_ADD(NOW(), INTERVAL 4 MONTH), INTERVAL 2 HOUR), 'PUBLISHED',
         0, 1, 1, 11, 1, 8, NOW(), NOW(), '/static/images/events/event_popstar.jpg', '5 Avenue Louis le Débonnaire',
-        'Metz', '57000', 'France', 49.1083, 6.1808);
+        'Metz', '57000', 'France');
 
 -- ######################################################
--- # 13. PEUPLEMENT DE LA TABLE `event_audience_zones`  #
+-- # 13. PEUPLEMENT DE LA TABLE `event_audience_zone`  #
 -- ######################################################
 -- Création des zones d'audience pour les événements.
 -- Certaines sont basées sur des modèles, d'autres sont spécifiques.
 
-INSERT INTO event_audience_zones (id, event_id, name, seating_type, max_capacity, is_active,
-                                  base_audience_zone_template_id)
+INSERT INTO event_audience_zone (id, event_id, template_id, allocated_capacity)
 VALUES
 -- Zones pour l'Orchestre à l'Arsenal (Event 1)
-(1, 1, 'Parterre', 'SEATED', 800, 1, 1),
-(2, 1, 'Balcon', 'SEATED', 554, 1, 2),
+(1, 1, 1, 800),
+(2, 1, 2, 554),
 -- Zone pour le Festival Rock à la BAM (Event 2)
-(3, 2, 'Fosse Debout', 'STANDING', 1115, 1, 4),
+(3, 2, 4, 1115),
 -- Zones pour le match au Stade (Event 3)
-(4, 3, 'Tribune Nord', 'SEATED', 7000, 1, 8),
-(5, 3, 'Tribune Sud', 'SEATED', 8000, 1, 10),
-(6, 3, 'Loges VIP', 'SEATED', 500, 1, 11),
--- Zones pour le concert Pop aux Arènes (Event 8)
-(7, 8, 'Fosse Or', 'STANDING', 1500, 1, NULL),
-(8, 8, 'Fosse', 'STANDING', 2500, 1, NULL),
-(9, 8, 'Gradins Assis', 'SEATED', 3000, 1, NULL);
+(4, 3, 8, 7000),
+(5, 3, 10, 8000),
+(6, 3, 11, 500);
 
 -- ######################################################
 -- # 14. PEUPLEMENT DE LA TABLE `event_tags`            #
@@ -473,32 +471,65 @@ VALUES
 (UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Emma', 'Leroy', 'emma.leroy@email.com', 'USED',
  (SELECT reservation_date FROM reservations WHERE id = 2)),
 (UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Hugo', 'Martinez', 'hugo.martinez@email.com', 'CANCELLED',
- (SELECT reservation_date FROM reservations WHERE id = 2)),
+ (SELECT reservation_date FROM reservations WHERE id = 2));
 
 
--- Billets pour la Réservation 3 (Karine Lefebvre, Event 2, Zone 3 - Fosse Debout)
-(UUID_TO_BIN(UUID()), 2, 3, 11, 3, UUID(), 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 3)),
+-- ######################################################
+-- # 18. PEUPLEMENT DE LA TABLE `friendships`           #
+-- ######################################################
+-- Ajout de relations d'amitié entre les utilisateurs.
+INSERT INTO friendships (id, sender_id, receiver_id, status, created_at, updated_at)
+VALUES (1, 9, 10, 'ACCEPTED', NOW() - INTERVAL 20 DAY, NOW() - INTERVAL 19 DAY), -- Inès et Julien sont amis
+       (2, 9, 11, 'PENDING', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY),    -- Inès a envoyé une demande à Karine
+       (3, 12, 9, 'PENDING', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY),    -- Léo a envoyé une demande à Inès
+       (4, 10, 12, 'REJECTED', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 4 DAY);
+-- Julien a envoyé une demande à Léo, qui a refusé
 
--- Billets pour la Réservation 4 (Inès Michel, Event 8, Zone 7 - Fosse Or)
-(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Inès', 'Michel', 'ines.michel@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 4)),
-(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Paul', 'Roux', 'paul.roux@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 4)),
-(UUID_TO_BIN(UUID()), 8, 7, 9, 4, UUID(), 'Marie', 'Blanc', 'marie.blanc@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 4));
--- Billet pour la Réservation 5 (Léo Roux, Event 6, Zone spécifique non définie, on suppose une zone générique pour l'expo)
--- Note : Il faut s'assurer qu'une event_audience_zone existe pour l'event 6. Si non, il faut la créer.
--- Ajoutons une zone d'audience pour l'événement 6.
-INSERT INTO event_audience_zones (id, event_id, name, seating_type, max_capacity, is_active,
-                                  base_audience_zone_template_id)
-VALUES (10, 6, 'Exposition Principale', 'MIXED', 400, 1, 12);
 
-INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
-                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
-VALUES (UUID_TO_BIN(UUID()), 6, 10, 12, 5, UUID(), 'Léo', 'Roux', 'leo.roux@email.com', 'VALID',
-        (SELECT reservation_date FROM reservations WHERE id = 5));
+-- ##################################################
+-- # 19. PEUPLEMENT DE LA TABLE `teams` & `team_members` #
+-- ##################################################
+-- Création d'équipes pour les structures et ajout de membres.
+-- Chaque structure a une équipe par défaut. L'administrateur est le premier membre.
+INSERT INTO teams (id, structure_id, name)
+VALUES (1, 1, 'Équipe L''Arsenal'),
+       (2, 2, 'Équipe La BAM'),
+       (3, 3, 'Équipe Opéra-Théâtre');
 
+INSERT INTO team_members (id, team_id, user_id, email, role, status, invited_at, joined_at)
+VALUES
+-- Membres pour L'Arsenal (Team 1)
+(1, 1, 1, 'alice.martin@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
+ NOW() - INTERVAL 30 DAY),
+(2, 1, NULL, 'membre.orga@arsenal.fr', 'ORGANIZATION_SERVICE', 'PENDING_INVITATION', NOW() - INTERVAL 5 DAY, NULL),
+(3, 1, NULL, 'membre.reserv@arsenal.fr', 'RESERVATION_SERVICE', 'PENDING_INVITATION', NOW() - INTERVAL 5 DAY, NULL),
+
+-- Membres pour La BAM (Team 2)
+(4, 2, 2, 'baptiste.dubois@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
+ NOW() - INTERVAL 30 DAY),
+(5, 2, 10, 'julien.garcia@email.com', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 10 DAY,
+ NOW() - INTERVAL 9 DAY), -- Julien est aussi dans l'équipe de la BAM
+
+-- Membres pour Opéra-Théâtre (Team 3)
+(6, 3, 3, 'chloe.bernard@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
+ NOW() - INTERVAL 30 DAY);
+
+
+-- ##################################################
+-- # 20. PEUPLEMENT DE LA TABLE `verification_tokens` #
+-- ##################################################
+-- Ajout de quelques tokens de vérification pour illustrer différents cas.
+INSERT INTO verification_tokens (id, user_id, token, token_type, expiry_date, is_used, payload)
+VALUES (1, 11, UUID(), 'EMAIL_VALIDATION', NOW() + INTERVAL 1 DAY, 0, NULL), -- Token de validation d'email pour Karine
+       (2, 12, UUID(), 'PASSWORD_RESET', NOW() + INTERVAL 1 HOUR, 0, NULL),  -- Token de reset de mot de passe pour Léo
+       (3, NULL, UUID(), 'TEAM_INVITATION', NOW() + INTERVAL 7 DAY, 0,
+        '{"memberId": 2}'),                                                  -- Token d'invitation pour membre.orga@arsenal.fr
+       (4, 9, UUID(), 'ACCOUNT_DELETION_CONFIRMATION', NOW() - INTERVAL 2 HOUR, 1, NULL);
+-- Token de suppression de compte expiré et utilisé pour Inès
+
+
+-- Réactivation des contraintes de clés étrangères
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ##################################################
 -- #          FIN DU SCRIPT DE PEUPLEMENT           #

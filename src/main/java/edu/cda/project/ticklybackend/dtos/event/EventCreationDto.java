@@ -60,11 +60,7 @@ public class EventCreationDto {
     @Schema(description = "Configuration des zones d'audience pour l'événement.")
     @NotNull(message = "La configuration des zones d'audience est requise.")
     @Valid
-    private List<EventAudienceZoneDto> audienceZones;
-
-    @Schema(description = "Indique si l'événement est gratuit.", example = "false")
-    @NotNull(message = "Le champ 'isFreeEvent' est requis.")
-    private Boolean isFreeEvent;
+    private List<EventAudienceZoneConfigDto> audienceZones;
 
     @Schema(description = "Indique si l'événement doit être affiché sur la page d'accueil.", example = "true")
     @NotNull(message = "Le champ 'displayOnHomepage' est requis.")

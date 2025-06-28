@@ -45,7 +45,7 @@ public class PdfServiceImpl implements PdfService {
 
                 document.add(new Paragraph("Participant : " + ticket.getParticipantFirstName() + " " + ticket.getParticipantLastName(), headerFont));
                 document.add(new Paragraph("Email : " + ticket.getParticipantEmail(), contentFont));
-                document.add(new Paragraph("Zone : " + ticket.getEventAudienceZone().getName(), contentFont));
+                document.add(new Paragraph("Zone : " + ticket.getEventAudienceZone().getTemplate().getName(), contentFont));
                 document.add(new Paragraph(" "));
 
                 document.add(new Paragraph("ID Billet : " + ticket.getId(), contentFont));

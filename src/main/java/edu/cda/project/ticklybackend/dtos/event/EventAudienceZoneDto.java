@@ -24,13 +24,10 @@ public class EventAudienceZoneDto {
     @NotBlank(message = "Le nom de la zone ne peut pas être vide.")
     private String name;
 
-    @Schema(description = "ID optionnel du modèle de zone de la structure sur lequel cette zone est basée.", example = "102")
-    private Long baseAudienceZoneTemplateId;
-
     @Schema(description = "Capacité maximale de la zone pour cet événement.", example = "500")
     @NotNull(message = "La capacité maximale est requise.")
     @Min(value = 0, message = "La capacité maximale ne peut pas être négative.")
-    private Integer maxCapacity;
+    private Integer allocatedCapacity;
 
     @Schema(description = "Type de placement dans la zone.", example = "STANDING")
     @NotNull(message = "Le type de placement est requis.")
@@ -39,4 +36,11 @@ public class EventAudienceZoneDto {
     @Schema(description = "Indique si la zone est active pour la vente de billets.", example = "true")
     @NotNull(message = "Le statut actif est requis.")
     private Boolean isActive;
+
+    private Long areaId;
+
+    /**
+     * L'ID du modèle (template) sur lequel cette zone est basée.
+     */
+    private Long templateId;
 }

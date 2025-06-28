@@ -4,6 +4,7 @@ import edu.cda.project.ticklybackend.dtos.structure.AddressDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,12 +46,11 @@ public class EventUpdateDto {
     @Valid
     private AddressDto address;
 
+    @NotNull
     @Schema(description = "Nouvelle configuration des zones d'audience (remplace l'ancienne).")
+    @Size(min = 1, message = "An event must have at least one audience zone.")
     @Valid
-    private List<EventAudienceZoneDto> audienceZones;
-
-    @Schema(description = "Mettre à jour si l'événement est gratuit.", example = "true")
-    private Boolean isFreeEvent;
+    private List<EventAudienceZoneConfigDto> audienceZones;
 
     @Schema(description = "Mettre à jour l'affichage sur la page d'accueil.", example = "false")
     private Boolean displayOnHomepage;

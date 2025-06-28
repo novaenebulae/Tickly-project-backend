@@ -6,16 +6,17 @@ import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
-import edu.cda.project.ticklybackend.mappers.event.EventAudienceZoneMapper;
 import edu.cda.project.ticklybackend.mappers.event.EventMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
 import edu.cda.project.ticklybackend.models.event.EventCategory;
+import edu.cda.project.ticklybackend.models.structure.AudienceZoneTemplate;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventCategoryRepository;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
+import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,12 +46,12 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventCategoryRepository categoryRepository;
     private final StructureRepository structureRepository;
+    private final AudienceZoneTemplateRepository templateRepository; // DÉPENDANCE AJOUTÉE
     private final EventMapper eventMapper;
-    private final EventAudienceZoneMapper audienceZoneMapper;
     private final FileStorageService fileStorageService;
     private final AuthUtils authUtils;
-    private final MailingService mailingService; // Ajouté pour les notifications
-    private final TicketRepository ticketRepository; // Ajouté pour l'annulation
+    private final MailingService mailingService;
+    private final TicketRepository ticketRepository;
 
     private static final String MAIN_PHOTO_SUBDIR = "events/main";
     private static final String GALLERY_SUBDIR = "events/gallery";
@@ -71,18 +73,126 @@ public class EventServiceImpl implements EventService {
         event.setCreator(creator);
         event.setStructure(structure);
         event.setCategory(category);
+        event.setStatus(EventStatus.DRAFT); // Set default status
 
-
-        // Gérer les zones d'audience
-        if (creationDto.getAudienceZones() != null) {
-            List<EventAudienceZone> audienceZones = audienceZoneMapper.toEntityList(creationDto.getAudienceZones());
-            audienceZones.forEach(zone -> zone.setEvent(event)); // Lier chaque zone à l'événement
+        // NOUVELLE LOGIQUE POUR GÉRER LES ZONES D'AUDIENCE
+        if (creationDto.getAudienceZones() != null && !creationDto.getAudienceZones().isEmpty()) {
+            List<EventAudienceZone> audienceZones = processAudienceZoneConfigs(creationDto.getAudienceZones(), structure.getId());
+            audienceZones.forEach(zone -> zone.setEvent(event));
             event.setAudienceZones(audienceZones);
+        } else {
+            throw new BadRequestException("Un événement doit avoir au moins une zone d'audience configurée.");
         }
 
         Event savedEvent = eventRepository.save(event);
+        log.info("Événement '{}' (ID: {}) créé par l'utilisateur '{}'.", savedEvent.getName(), savedEvent.getId(), creator.getEmail());
         return eventMapper.toDetailDto(savedEvent);
     }
+
+
+    @Override
+    @Transactional
+    public EventDetailResponseDto updateEvent(Long eventId, EventUpdateDto updateDto) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        eventMapper.updateEventFromDto(updateDto, event);
+
+        if (updateDto.getCategoryId() != null) {
+            EventCategory category = categoryRepository.findById(updateDto.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("EventCategory", "id", updateDto.getCategoryId()));
+            event.setCategory(category);
+        }
+
+        // NOUVELLE LOGIQUE POUR LA MISE À JOUR DES ZONES
+        if (updateDto.getAudienceZones() != null && !updateDto.getAudienceZones().isEmpty()) {
+            updateEventAudienceZones(event, updateDto.getAudienceZones(), event.getStructure().getId());
+        } else {
+            throw new BadRequestException("Un événement doit avoir au moins une zone d'audience configurée.");
+        }
+
+
+        Event updatedEvent = eventRepository.save(event);
+        log.info("Événement '{}' (ID: {}) mis à jour.", updatedEvent.getName(), eventId);
+        return eventMapper.toDetailDto(updatedEvent);
+    }
+
+    /**
+     * Crée des entités EventAudienceZone à partir des DTOs de configuration.
+     */
+    private List<EventAudienceZone> processAudienceZoneConfigs(List<EventAudienceZoneConfigDto> zoneConfigs, Long structureId) {
+        List<EventAudienceZone> zones = new ArrayList<>();
+        for (EventAudienceZoneConfigDto configDto : zoneConfigs) {
+            AudienceZoneTemplate template = templateRepository.findById(configDto.getTemplateId())
+                    .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id", configDto.getTemplateId()));
+
+            // Validation de sécurité : s'assurer que le template appartient bien à la structure de l'événement
+            if (!template.getArea().getStructure().getId().equals(structureId)) {
+                throw new BadRequestException("Le modèle de zone " + template.getId() + " n'appartient pas à la structure " + structureId);
+            }
+
+            // Validation de la capacité
+            if (configDto.getAllocatedCapacity() > template.getMaxCapacity()) {
+                throw new BadRequestException("La capacité allouée (" + configDto.getAllocatedCapacity() + ") pour la zone '" + template.getName() + "' ne peut pas dépasser la capacité maximale du modèle (" + template.getMaxCapacity() + ").");
+            }
+
+            EventAudienceZone zone = new EventAudienceZone();
+            zone.setTemplate(template);
+            zone.setAllocatedCapacity(configDto.getAllocatedCapacity());
+            zones.add(zone);
+        }
+        return zones;
+    }
+
+
+    /**
+     * Gère la logique complexe de mise à jour des zones d'audience d'un événement.
+     * Ajoute les nouvelles zones, met à jour les existantes et supprime celles qui ne sont plus dans la liste.
+     */
+    private void updateEventAudienceZones(Event event, List<EventAudienceZoneConfigDto> configDtos, Long structureId) {
+        Map<Long, EventAudienceZone> existingZonesById = event.getAudienceZones().stream()
+                .collect(Collectors.toMap(EventAudienceZone::getId, zone -> zone));
+
+        List<EventAudienceZone> finalZones = new ArrayList<>();
+
+        for (EventAudienceZoneConfigDto configDto : configDtos) {
+            AudienceZoneTemplate template = templateRepository.findById(configDto.getTemplateId())
+                    .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id", configDto.getTemplateId()));
+
+            // Validations
+            if (!template.getArea().getStructure().getId().equals(structureId)) {
+                throw new BadRequestException("Le modèle de zone " + template.getId() + " n'appartient pas à la structure de l'événement.");
+            }
+            if (configDto.getAllocatedCapacity() > template.getMaxCapacity()) {
+                throw new BadRequestException("La capacité allouée pour la zone '" + template.getName() + "' dépasse la capacité maximale du modèle.");
+            }
+
+            EventAudienceZone zoneToUpdate;
+            if (configDto.getId() != null) { // C'est une mise à jour d'une zone existante
+                zoneToUpdate = existingZonesById.remove(configDto.getId());
+                if (zoneToUpdate == null) {
+                    throw new ResourceNotFoundException("EventAudienceZone", "id", configDto.getId());
+                }
+            } else { // C'est une nouvelle zone à ajouter
+                zoneToUpdate = new EventAudienceZone();
+                zoneToUpdate.setEvent(event);
+            }
+
+            zoneToUpdate.setTemplate(template);
+            zoneToUpdate.setAllocatedCapacity(configDto.getAllocatedCapacity());
+            finalZones.add(zoneToUpdate);
+        }
+
+        // À ce stade, `existingZonesById` ne contient que les zones qui n'étaient pas dans la liste de DTOs,
+        // ce sont donc celles à supprimer.
+        event.getAudienceZones().clear();
+        event.getAudienceZones().addAll(finalZones);
+    }
+
+
+    // ============================================================================================
+    // LES AUTRES MÉTHODES RESTENT INCHANGÉES...
+    // ============================================================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -103,72 +213,36 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventDetailResponseDto updateEvent(Long eventId, EventUpdateDto updateDto) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
-
-        eventMapper.updateEventFromDto(updateDto, event);
-
-        if (updateDto.getCategoryId() != null) {
-            EventCategory category = categoryRepository.findById(updateDto.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("EventCategory", "id", updateDto.getCategoryId()));
-            event.setCategory(category);
-        }
-
-        // Gérer la mise à jour des zones d'audience (remplacement complet pour simplifier)
-        if (updateDto.getAudienceZones() != null) {
-            event.getAudienceZones().clear();
-            List<EventAudienceZone> newZones = audienceZoneMapper.toEntityList(updateDto.getAudienceZones());
-            newZones.forEach(zone -> zone.setEvent(event));
-            event.getAudienceZones().addAll(newZones);
-        }
-
-
-        Event updatedEvent = eventRepository.save(event);
-        return eventMapper.toDetailDto(updatedEvent);
-    }
-
-    @Override
-    @Transactional
     public void deleteEvent(Long eventId) {
         log.warn("Tentative d'annulation de l'événement ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
-        // 1. Logique de protection : ne pas annuler un événement déjà terminé ou annulé
         if (event.getStatus() == EventStatus.COMPLETED || event.getStatus() == EventStatus.CANCELLED) {
             throw new BadRequestException("L'événement est déjà " + event.getStatus().toString().toLowerCase() + " et ne peut pas être annulé.");
         }
 
-        // 2. Changer le statut de l'événement
         event.setStatus(EventStatus.CANCELLED);
         eventRepository.save(event);
         log.info("Le statut de l'événement ID: {} a été changé à CANCELLED.", eventId);
 
-        // 3. Traiter les billets existants
         List<Ticket> tickets = ticketRepository.findAllByEventId(eventId);
         if (!tickets.isEmpty()) {
             log.info("Annulation de {} billet(s) pour l'événement ID: {}.", tickets.size(), eventId);
-            // Invalider tous les billets
             for (Ticket ticket : tickets) {
                 ticket.setStatus(TicketStatus.CANCELLED);
             }
             ticketRepository.saveAll(tickets);
 
-            // Regrouper par e-mail de l'acheteur pour n'envoyer qu'un seul e-mail par réservation
             Map<String, List<Ticket>> ticketsByBuyerEmail = tickets.stream()
                     .collect(Collectors.groupingBy(ticket -> ticket.getUser().getEmail()));
 
-            // 4. Envoyer les notifications d'annulation
             ticketsByBuyerEmail.forEach((email, userTickets) -> {
                 User user = userTickets.get(0).getUser();
                 mailingService.sendEventCancelledNotification(email, user.getFirstName(), event.getName());
             });
             log.info("Notifications d'annulation envoyées à {} acheteur(s).", ticketsByBuyerEmail.size());
         }
-
-        // Note : la suppression physique des images n'est pas effectuée lors d'une annulation
-        // pour conserver l'historique. Elle pourrait l'être lors d'une suppression "hard" par un admin système.
     }
 
     @Override

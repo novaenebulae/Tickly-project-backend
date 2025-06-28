@@ -31,12 +31,5 @@ public class EventAddress {
      * Pays.
      */
     private String country;
-    /**
-     * Latitude pour la géolocalisation (optionnel).
-     */
-    private Double latitude;
-    /**
-     * Longitude pour la géolocalisation (optionnel).
-     */
-    private Double longitude;
+
 }

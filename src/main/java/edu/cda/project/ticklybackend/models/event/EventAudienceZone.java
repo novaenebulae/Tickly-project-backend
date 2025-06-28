@@ -1,47 +1,64 @@
 package edu.cda.project.ticklybackend.models.event;
 
-import edu.cda.project.ticklybackend.enums.SeatingType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import edu.cda.project.ticklybackend.models.structure.AudienceZoneTemplate;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * Représente une zone d'audience spécifique configurée pour un événement particulier.
- * Cette entité permet de définir des capacités et des types de placement qui peuvent
- * différer des modèles par défaut de la structure.
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "event_audience_zones")
+@Getter
+@Setter
+@NoArgsConstructor
+@Table(name = "event_audience_zone")
 public class EventAudienceZone {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    // RELATION ACTIVÉE ET MODIFIÉE
+    /**
+     * Link to the template this zone is based on.
+     * This is a mandatory, non-nullable relationship.
+     * FetchType.LAZY is used for performance, so the template is only loaded when accessed.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "template_id", nullable = false)
+    private AudienceZoneTemplate template;
 
-    @Column(nullable = false)
-    private Integer maxCapacity;
 
-    @Enumerated(EnumType.STRING)
+    // CHAMP RENOMMÉ ET CONSERVÉ
+    /**
+     * The capacity allocated specifically for this event.
+     * This can be less than or equal to the template's maxCapacity.
+     */
     @Column(nullable = false)
-    private SeatingType seatingType;
+    private int allocatedCapacity;
 
-    @Column(nullable = false)
-    private boolean isActive = true;
 
+    // RELATION EXISTANTE
+    /**
+     * The event this zone configuration belongs to.
+     * JsonBackReference prevents serialization loops when fetching event data.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonBackReference
     private Event event;
 
-    /**
-     * ID optionnel du modèle de zone de la structure (AudienceZoneTemplate)
-     * sur lequel cette configuration est basée. Utile pour la traçabilité.
-     */
-    private Long baseAudienceZoneTemplateId;
+
+    // CHAMPS SUPPRIMÉS (name, isActive, seatingType) car ils seront lus depuis 'template'
+
+
+    @Override
+    public String toString() {
+        return "EventAudienceZone{" +
+                "id=" + id +
+                ", templateId=" + (template != null ? template.getId() : "null") +
+                ", allocatedCapacity=" + allocatedCapacity +
+                ", eventId=" + (event != null ? event.getId() : "null") +
+                '}';
+    }
 }

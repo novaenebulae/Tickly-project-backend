@@ -27,7 +27,6 @@ public class EventDetailResponseDto {
     private ZonedDateTime endDate;
     private AddressDto address; // Adresse de la structure ou de l'événement
     private StructureSummaryDto structure; // Informations sur la structure organisatrice
-    private boolean isFreeEvent;
     private String mainPhotoUrl;
     private List<String> eventPhotoUrls;
     private EventStatus status;
@@ -35,5 +34,6 @@ public class EventDetailResponseDto {
     private boolean isFeaturedEvent;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
-    // private UserSummaryDto creator; // Si vous voulez afficher les infos du créateur
+    private List<EventAreaSummaryDto> areas;
+    private List<EventAudienceZoneDto> audienceZones;
 }
