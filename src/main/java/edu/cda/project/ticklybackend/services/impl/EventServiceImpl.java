@@ -188,12 +188,7 @@ public class EventServiceImpl implements EventService {
         event.getAudienceZones().clear();
         event.getAudienceZones().addAll(finalZones);
     }
-
-
-    // ============================================================================================
-    // LES AUTRES MÉTHODES RESTENT INCHANGÉES...
-    // ============================================================================================
-
+    
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponseDto<EventSummaryDto> searchEvents(EventSearchParamsDto params, Pageable pageable) {

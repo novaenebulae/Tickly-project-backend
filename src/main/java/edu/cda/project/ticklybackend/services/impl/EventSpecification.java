@@ -38,10 +38,6 @@ public class EventSpecification {
             }
 
 
-            if (params.getIsFree() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("isFreeEvent"), params.getIsFree()));
-            }
-
             if (params.getStatus() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), params.getStatus()));
             }

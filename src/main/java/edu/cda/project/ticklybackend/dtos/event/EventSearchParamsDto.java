@@ -28,9 +28,6 @@ public class EventSearchParamsDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private ZonedDateTime startDateBefore;
 
-    @Parameter(description = "Filtrer par événements gratuits.")
-    private Boolean isFree;
-
     @Parameter(description = "Filtrer par statut de l'événement.")
     private EventStatus status;
 
@@ -48,4 +45,10 @@ public class EventSearchParamsDto {
 
     @Parameter(description = "Filtrer par tags (logique ET).")
     private List<String> tags;
+
+//    @Parameter(description = "Champ par lequel trier les résultats (ex: 'startDate', 'name').")
+//    private String sortBy;
+//
+//    @Parameter(description = "Direction du tri ('asc' ou 'desc').")
+//    private String sortDirection;
 }
