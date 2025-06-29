@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/structures")
@@ -67,9 +66,10 @@ public class StructureController {
     @PreAuthorize("permitAll()")
     public ResponseEntity<Page<StructureSummaryDto>> getAllStructures(
             @ParameterObject Pageable pageable,
-            @Parameter(description = "Filtres optionnels (non implémentés pour le moment). Ex: city=Paris&typeId=1")
-            @RequestParam(required = false) Map<String, String> filters) {
-        return ResponseEntity.ok(structureService.getAllStructures(pageable, filters));
+            @Parameter(description = "Filtres optionnels Ex: city=Paris&typeId=1")
+            @ParameterObject StructureSearchParamsDto params) {
+        Page<StructureSummaryDto> structures = structureService.getAllStructures(pageable, params);
+        return ResponseEntity.ok(structures);
     }
 
     @Operation(summary = "Récupérer les détails d'une structure",
@@ -83,6 +83,7 @@ public class StructureController {
     public ResponseEntity<StructureDetailResponseDto> getStructureById(@PathVariable Long structureId) {
         return ResponseEntity.ok(structureService.getStructureById(structureId));
     }
+
 
     @Operation(summary = "Mettre à jour une structure (partiel)",
             description = "Met à jour partiellement une structure existante. Seuls les champs fournis seront modifiés. " +

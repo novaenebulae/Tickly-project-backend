@@ -64,6 +64,7 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<EventAudienceZone> audienceZones = new ArrayList<>();
 
+    // TODO : A SUPPRIMER
     @Column(nullable = false)
     private boolean isFreeEvent;
 

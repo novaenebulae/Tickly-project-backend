@@ -7,14 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 public interface StructureService {
 
     // Structure Operations
     StructureCreationResponseDto createStructure(StructureCreationDto creationDto, String adminEmail);
 
-    Page<StructureSummaryDto> getAllStructures(Pageable pageable, Map<String, String> filters);
+    Page<StructureSummaryDto> getAllStructures(Pageable pageable, StructureSearchParamsDto params);
 
     StructureDetailResponseDto getStructureById(Long structureId);
 

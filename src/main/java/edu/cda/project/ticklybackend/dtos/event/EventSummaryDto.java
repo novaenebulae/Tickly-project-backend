@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 public class EventSummaryDto {
     private Long id;
     private String name;
-    private EventCategoryDto category;
+    private EventCategoryDto[] category;
     private String shortDescription;
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;

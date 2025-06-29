@@ -32,7 +32,7 @@ public class SecurityConfig {
             "/api/v1/events/**",
             "/api/v1/event-categories",
             "/api/v1/structures/**",
-            "/api/v1/structure-types/**",
+            "/api/v1/structure-types",
             "/api/v1/auth/validate-email",
     };
 

@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -107,10 +107,10 @@ public class StructureServiceImpl implements StructureService {
     }
 
     @Transactional(readOnly = true)
-    public Page<StructureSummaryDto> getAllStructures(Pageable pageable, Map<String, String> filters) {
-        // Basic implementation without filters for now.
-        // Filters can be implemented using JPA Specifications.
-        return structureRepository.findAll(pageable)
+    public Page<StructureSummaryDto> getAllStructures(Pageable pageable, StructureSearchParamsDto params) {
+
+        Specification<Structure> spec = StructureSpecification.getSpecification(params);
+        return structureRepository.findAll(spec, pageable)
                 .map(structure -> structureMapper.toSummaryDto(structure, fileStorageService));
     }
 
