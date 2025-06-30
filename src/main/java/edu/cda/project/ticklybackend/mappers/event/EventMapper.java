@@ -36,7 +36,6 @@ public abstract class EventMapper {
     @Mapping(target = "structureName", source = "structure.name")
     @Mapping(target = "structureId", source = "structure.id")
     @Mapping(target = "categories", source = "categories", qualifiedByName = "mapCategoriesToDtos")
-    // Ajout du mapping pour categories
     public abstract EventSummaryDto toSummaryDto(Event event);
 
     @Mapping(target = "mainPhotoUrl", source = "mainPhotoPath", qualifiedByName = "buildEventMainPhotoUrl")
@@ -44,7 +43,6 @@ public abstract class EventMapper {
     @Mapping(target = "audienceZones", source = "audienceZones")
     @Mapping(target = "areas", ignore = true)
     @Mapping(target = "categories", source = "categories", qualifiedByName = "mapCategoriesToDtos")
-    // Ajout du mapping pour categories
     public abstract EventDetailResponseDto toDetailDto(Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

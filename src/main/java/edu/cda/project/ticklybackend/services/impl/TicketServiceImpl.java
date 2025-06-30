@@ -85,7 +85,6 @@ public class TicketServiceImpl implements TicketService {
             ticket.setParticipantFirstName(participant.getFirstName());
             ticket.setParticipantLastName(participant.getLastName());
             ticket.setParticipantEmail(participant.getEmail());
-//            ticket.setPrice(BigDecimal.ZERO); // Gratuit
 
             reservation.addTicket(ticket);
         }
@@ -93,30 +92,56 @@ public class TicketServiceImpl implements TicketService {
         Reservation savedReservation = reservationRepository.save(reservation);
         log.info("Réservation {} créée avec succès pour l'utilisateur {}.", savedReservation.getId(), currentUser.getEmail());
 
+        // Conversion en DTOs pour l'envoi des emails
+        List<TicketResponseDto> ticketDtos = buildTicketResponseDtoList(savedReservation.getTickets());
+
         try {
-            byte[] pdfTickets = pdfService.generateTicketsPdf(savedReservation.getTickets());
-            if (pdfTickets.length > 0) {
+            // Envoi du PDF complet à l'acheteur principal
+            byte[] pdfAllTickets = pdfService.generateTicketsPdfFromDto(ticketDtos);
+            if (pdfAllTickets.length > 0) {
                 mailingService.sendTickets(
                         currentUser.getEmail(),
                         currentUser.getFirstName(),
                         event.getName(),
-                        pdfTickets
+                        pdfAllTickets
                 );
-                // Vous pourriez aussi boucler sur les participants et leur envoyer leur billet individuel
-                // si leurs e-mails sont différents de celui de l'acheteur.
-            } else {
-                log.warn("Le PDF généré pour la réservation {} est vide. L'e-mail ne sera pas envoyé.", savedReservation.getId());
+                log.info("PDF de tous les billets envoyé à l'acheteur principal : {}", currentUser.getEmail());
             }
+
+            // Envoi des billets individuels aux participants qui le souhaitent
+            for (int i = 0; i < requestDto.getParticipants().size(); i++) {
+                ParticipantInfoDto participant = requestDto.getParticipants().get(i);
+
+                // Vérifier si le participant veut recevoir son billet par email
+                if (Boolean.TRUE.equals(participant.getSendTicketByEmail()) &&
+                        !participant.getEmail().equals(currentUser.getEmail())) {
+
+                    TicketResponseDto individualTicket = ticketDtos.get(i);
+                    byte[] individualPdf = pdfService.generateSingleTicketPdfFromDto(individualTicket);
+
+                    if (individualPdf.length > 0) {
+                        String participantName = participant.getFirstName() + " " + participant.getLastName();
+                        mailingService.sendIndividualTicket(
+                                participant.getEmail(),
+                                participantName,
+                                event.getName(),
+                                individualPdf
+                        );
+                        log.info("Billet individuel envoyé à : {} pour l'événement {}",
+                                participant.getEmail(), event.getName());
+                    }
+                }
+            }
+
         } catch (Exception e) {
-            log.error("Erreur lors de la génération ou de l'envoi du PDF pour la réservation {}. La réservation est confirmée mais l'e-mail a échoué.", savedReservation.getId(), e);
-            // Ne pas faire échouer la transaction, mais logger l'erreur est crucial.
+            log.error("Erreur lors de la génération ou de l'envoi des PDFs pour la réservation {}. " +
+                    "La réservation est confirmée mais l'envoi des emails a échoué.", savedReservation.getId(), e);
         }
 
         ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
         confirmationDto.setReservationId(savedReservation.getId());
-        confirmationDto.setTotalAmount(savedReservation.getTotalAmount());
         confirmationDto.setReservationDate(savedReservation.getReservationDate());
-        confirmationDto.setTickets(buildTicketResponseDtoList(savedReservation.getTickets()));
+        confirmationDto.setTickets(ticketDtos);
 
         return confirmationDto;
     }
@@ -137,7 +162,6 @@ public class TicketServiceImpl implements TicketService {
         // Vérification de sécurité : l'utilisateur doit être le propriétaire
         boolean isOwner = ticket.getUser().getId().equals(currentUser.getId());
         if (!isOwner) {
-            // Un contrôle plus complexe serait nécessaire pour les administrateurs
             throw new BadRequestException("Vous n'avez pas la permission de voir ce billet.");
         }
 
@@ -154,7 +178,6 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Billet avec QR code " + validationDto.getScannedQrCodeValue() + " non trouvé."));
 
         // Vérification de sécurité : le validateur doit avoir les droits sur la structure de l'événement.
-        // Ceci est un placeholder pour une vérification de permission réelle.
         log.warn("RISQUE DE SÉCURITÉ : La vérification des permissions pour la validation des billets est actuellement désactivée.");
 
         if (ticket.getStatus() != TicketStatus.VALID) {

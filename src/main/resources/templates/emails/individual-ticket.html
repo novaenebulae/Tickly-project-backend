@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subject}">Votre billet</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h1 style="color: #2c3e50; text-align: center;">🎫 Votre billet Tickly</h1>
+
+    <p>Bonjour <span th:text="${participantName}">Participant</span>,</p>
+
+    <p>Vous trouverez en pièce jointe votre billet pour l'événement :</p>
+    <p><strong th:text="${eventName}">Nom de l'événement</strong></p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3>📋 Instructions importantes :</h3>
+        <ul>
+            <li>Présentez ce billet à l'entrée de l'événement</li>
+            <li>Le QR code sera scanné pour validation</li>
+            <li>Arrivez 30 minutes avant le début de l'événement</li>
+            <li>Conservez votre billet jusqu'à la fin de l'événement</li>
+        </ul>
+    </div>
+
+    <p>Nous vous souhaitons un excellent événement !</p>
+
+    <p style="margin-top: 30px;">
+        L'équipe Tickly<br>
+        <a href="mailto:contact@tickly.fr">contact@tickly.fr</a>
+    </p>
+</div>
+</body>
+</html>

@@ -24,11 +24,16 @@ public interface StructureService {
     // Structure File Operations
     FileUploadResponseDto updateStructureLogo(Long structureId, MultipartFile file);
 
+    void removeStructureLogo(Long structureId);
+
     FileUploadResponseDto updateStructureCover(Long structureId, MultipartFile file);
+
+    void removeStructureCover(Long structureId);
 
     FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file);
 
     void removeStructureGalleryImage(Long structureId, String imagePath);
+
 
     // StructureType Operations
     List<StructureTypeDto> getAllStructureTypes();

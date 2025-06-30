@@ -264,6 +264,46 @@ public class StructureServiceImpl implements StructureService {
     }
 
     @Override
+    public void removeStructureLogo(Long structureId) {
+        Structure structure = structureRepository.findById(structureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+
+        if (!StringUtils.hasText(structure.getLogoPath())) {
+            throw new ResourceNotFoundException("Logo", "structureId", structureId);
+        }
+
+        try {
+            fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
+            structure.setLogoPath(null);
+            structureRepository.save(structure);
+            logger.info("Logo supprimé avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
+        } catch (FileStorageException e) {
+            logger.error("Impossible de supprimer le fichier logo pour la structure ID {}: {}", structureId, e.getMessage());
+            throw new BadRequestException("Impossible de supprimer le fichier logo: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void removeStructureCover(Long structureId) {
+        Structure structure = structureRepository.findById(structureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+
+        if (!StringUtils.hasText(structure.getCoverPath())) {
+            throw new ResourceNotFoundException("Image de couverture", "structureId", structureId);
+        }
+
+        try {
+            fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
+            structure.setCoverPath(null);
+            structureRepository.save(structure);
+            logger.info("Image de couverture supprimée avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
+        } catch (FileStorageException e) {
+            logger.error("Impossible de supprimer le fichier image de couverture pour la structure ID {}: {}", structureId, e.getMessage());
+            throw new BadRequestException("Impossible de supprimer le fichier image de couverture: " + e.getMessage());
+        }
+    }
+
+    @Override
     public FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file) {
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));

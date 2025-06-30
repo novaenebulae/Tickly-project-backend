@@ -128,12 +128,40 @@ public class StructureController {
         return ResponseEntity.ok(structureService.updateStructureLogo(structureId, file));
     }
 
+    @Operation(summary = "Supprimer le logo d'une structure",
+            description = "Supprime le logo actuel de la structure. Nécessite d'être le propriétaire.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Logo supprimé avec succès"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé"),
+            @ApiResponse(responseCode = "404", description = "Structure non trouvée ou logo inexistant")
+    })
+    @DeleteMapping("/{structureId}/logo")
+    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    public ResponseEntity<Void> removeStructureLogo(@PathVariable Long structureId, Authentication authentication) {
+        structureService.removeStructureLogo(structureId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Mettre à jour l'image de couverture d'une structure",
             description = "Remplace l'image de couverture actuelle de la structure. Nécessite d'être le propriétaire.")
     @PostMapping(value = "/{structureId}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
     public ResponseEntity<FileUploadResponseDto> updateStructureCover(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
         return ResponseEntity.ok(structureService.updateStructureCover(structureId, file));
+    }
+
+    @Operation(summary = "Supprimer l'image de couverture d'une structure",
+            description = "Supprime l'image de couverture actuelle de la structure. Nécessite d'être le propriétaire.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Image de couverture supprimée avec succès"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé"),
+            @ApiResponse(responseCode = "404", description = "Structure non trouvée ou image de couverture inexistante")
+    })
+    @DeleteMapping("/{structureId}/cover")
+    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    public ResponseEntity<Void> removeStructureCover(@PathVariable Long structureId, Authentication authentication) {
+        structureService.removeStructureCover(structureId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Ajouter une image à la galerie d'une structure",

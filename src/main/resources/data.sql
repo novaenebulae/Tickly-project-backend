@@ -217,19 +217,46 @@ VALUES
 -- Création des espaces physiques (salles, scènes, tribunes) pour chaque structure.
 
 INSERT INTO structure_areas (id, structure_id, name, description, max_capacity, is_active)
-VALUES (1, 1, 'Grande Salle', 'La salle de concert principale de l''Arsenal.', 1354, 1),
-       (2, 1, 'Salle de l''Esplanade', 'Salle pour concerts de musique de chambre.', 350, 1),
-       (3, 2, 'Grande Salle BAM', 'Salle de concert principale de la BAM.', 1115, 1),
-       (4, 3, 'Salle principale', 'La salle historique de l''Opéra-Théâtre.', 750, 1),
-       (5, 4, 'Tribune Nord', 'Tribune officielle du stade.', 7000, 1),
-       (6, 4, 'Tribune Sud', 'Nouvelle tribune du stade.', 8000, 1),
-       (7, 4, 'Tribune Est', 'Tribune latérale.', 7000, 1),
-       (8, 5, 'Hall A', 'Hall d''exposition principal.', 5000, 1),
-       (9, 6, 'La Chapelle', 'Salle de concert dans l''ancienne chapelle.', 350, 1),
-       (10, 6, 'Le Caveau', 'Caveau voûté pour concerts de jazz.', 200, 1),
-       (11, 7, 'Scène principale', 'La scène de la Comédie de Metz.', 120, 1),
-       (12, 10, 'Galerie 1', 'Espace d''exposition principal au RDC.', 400, 1),
-       (13, 11, 'Arène centrale', 'Espace modulable pour concerts et sports.', 7000, 1);
+VALUES
+-- L'Arsenal (ID 1)
+(1, 1, 'Grande Salle', 'La salle de concert principale de l''Arsenal.', 1354, 1),
+(2, 1, 'Salle de l''Esplanade', 'Salle pour concerts de musique de chambre.', 350, 1),
+
+-- La BAM (ID 2)
+(3, 2, 'Grande Salle BAM', 'Salle de concert principale de la BAM.', 1115, 1),
+
+-- Opéra-Théâtre de Metz (ID 3)
+(4, 3, 'Salle principale', 'La salle historique de l''Opéra-Théâtre.', 750, 1),
+
+-- Stade Saint-Symphorien (ID 4)
+(5, 4, 'Tribune Nord', 'Tribune officielle du stade.', 7000, 1),
+(6, 4, 'Tribune Sud', 'Nouvelle tribune du stade.', 8000, 1),
+(7, 4, 'Tribune Est', 'Tribune latérale.', 7000, 1),
+
+-- Parc des Expositions (ID 5)
+(8, 5, 'Hall A', 'Hall d''exposition principal.', 5000, 1),
+(9, 5, 'Hall B', 'Hall d''exposition secondaire.', 3000, 1),
+
+-- Les Trinitaires (ID 6)
+(10, 6, 'La Chapelle', 'Salle de concert dans l''ancienne chapelle.', 350, 1),
+(11, 6, 'Le Caveau', 'Caveau voûté pour concerts de jazz.', 200, 1),
+
+-- Comédie de Metz (ID 7)
+(12, 7, 'Scène principale', 'La scène de la Comédie de Metz.', 120, 1),
+
+-- Salle Braun (ID 8) - MANQUAIT
+(13, 8, 'Salle Braun', 'Théâtre intimiste pour spectacles variés.', 80, 1),
+
+-- Metz Congrès Robert Schuman (ID 9) - MANQUAIT
+(14, 9, 'Auditorium principal', 'Grand auditorium pour conférences et congrès.', 500, 1),
+(15, 9, 'Salle de réunion A', 'Salle modulable pour séminaires.', 150, 1),
+
+-- Centre Pompidou-Metz (ID 10)
+(16, 10, 'Galerie 1', 'Espace d''exposition principal au RDC.', 400, 1),
+(17, 10, 'Galerie 2', 'Espace d''exposition à l''étage.', 300, 1),
+
+-- Les Arènes de Metz (ID 11)
+(18, 11, 'Arène centrale', 'Espace modulable pour concerts et sports.', 7000, 1);
 
 -- ##########################################################
 -- # 7. PEUPLEMENT DE LA TABLE `audience_zone_templates`    #
@@ -238,24 +265,69 @@ VALUES (1, 1, 'Grande Salle', 'La salle de concert principale de l''Arsenal.', 1
 
 INSERT INTO audience_zone_template (id, area_id, name, seating_type, max_capacity, is_active)
 VALUES
--- Zones pour l'Arsenal (Area 1 & 2)
+-- L'Arsenal - Grande Salle (Area 1)
 (1, 1, 'Parterre', 'SEATED', 800, 1),
 (2, 1, 'Balcon', 'SEATED', 554, 1),
+
+-- L'Arsenal - Salle de l'Esplanade (Area 2)
 (3, 2, 'Placement libre', 'SEATED', 350, 1),
--- Zones pour la BAM (Area 3)
+
+-- La BAM - Grande Salle (Area 3)
 (4, 3, 'Fosse', 'STANDING', 1115, 1),
--- Zones pour l'Opéra-Théâtre (Area 4)
+
+-- Opéra-Théâtre - Salle principale (Area 4)
 (5, 4, 'Orchestre', 'SEATED', 400, 1),
 (6, 4, 'Loges', 'SEATED', 150, 1),
 (7, 4, 'Balcons', 'SEATED', 200, 1),
--- Zones pour le Stade (Area 5, 6, 7)
+
+-- Stade - Tribune Nord (Area 5)
 (8, 5, 'Tribune Nord - Basse', 'SEATED', 4000, 1),
 (9, 5, 'Tribune Nord - Haute', 'SEATED', 3000, 1),
+
+-- Stade - Tribune Sud (Area 6)
 (10, 6, 'Tribune Sud - Basse', 'SEATED', 5000, 1),
-(11, 6, 'Loges VIP', 'SEATED', 500, 1),
--- Zones pour Les Trinitaires (Area 9 & 10)
-(12, 9, 'Fosse Chapelle', 'STANDING', 350, 1),
-(13, 10, 'Placement libre Caveau', 'MIXED', 200, 1);
+(11, 6, 'Tribune Sud - Haute', 'SEATED', 2500, 1),
+(12, 6, 'Loges VIP', 'SEATED', 500, 1),
+
+-- Stade - Tribune Est (Area 7)
+(13, 7, 'Tribune Est - Basse', 'SEATED', 4000, 1),
+(14, 7, 'Tribune Est - Haute', 'SEATED', 3000, 1),
+
+-- Parc Expo - Hall A (Area 8)
+(15, 8, 'Zone exposition A', 'STANDING', 5000, 1),
+
+-- Parc Expo - Hall B (Area 9)
+(16, 9, 'Zone exposition B', 'STANDING', 3000, 1),
+
+-- Trinitaires - La Chapelle (Area 10)
+(17, 10, 'Fosse Chapelle', 'STANDING', 350, 1),
+
+-- Trinitaires - Le Caveau (Area 11)
+(18, 11, 'Placement libre Caveau', 'MIXED', 200, 1),
+
+-- Comédie de Metz - Scène principale (Area 12)
+(19, 12, 'Salle spectacle', 'SEATED', 120, 1),
+
+-- Salle Braun - Salle Braun (Area 13)
+(20, 13, 'Parterre', 'SEATED', 60, 1),
+(21, 13, 'Balcon', 'SEATED', 20, 1),
+
+-- Metz Congrès - Auditorium principal (Area 14)
+(22, 14, 'Parterre auditorium', 'SEATED', 300, 1),
+(23, 14, 'Balcon auditorium', 'SEATED', 200, 1),
+
+-- Metz Congrès - Salle de réunion A (Area 15)
+(24, 15, 'Configuration théâtre', 'SEATED', 150, 1),
+
+-- Centre Pompidou - Galerie 1 (Area 16)
+(25, 16, 'Espace principal', 'STANDING', 400, 1),
+
+-- Centre Pompidou - Galerie 2 (Area 17)
+(26, 17, 'Espace secondaire', 'STANDING', 300, 1),
+
+-- Arènes de Metz - Arène centrale (Area 18)
+(27, 18, 'Parterre central', 'MIXED', 3500, 1),
+(28, 18, 'Gradins', 'SEATED', 3500, 1);
 
 -- ###############################################################
 -- # 8. PEUPLEMENT DE LA TABLE `structure_gallery_images`        #
@@ -453,15 +525,53 @@ VALUES
 
 INSERT INTO event_audience_zone (id, event_id, template_id, allocated_capacity)
 VALUES
--- Zones pour l'Orchestre à l'Arsenal (Event 1)
-(1, 1, 1, 800),
-(2, 1, 2, 554),
--- Zone pour le Festival Rock à la BAM (Event 2)
-(3, 2, 4, 1115),
--- Zones pour le match au Stade (Event 3)
-(4, 3, 8, 7000),
-(5, 3, 10, 8000),
-(6, 3, 11, 500);
+-- Événement 1: Orchestre National de Metz (Arsenal - Grande Salle)
+(1, 1, 1, 750),     -- Parterre avec capacité réduite
+(2, 1, 2, 500),     -- Balcon avec capacité réduite
+
+-- Événement 2: Festival Electronic Waves (BAM)
+(3, 2, 4, 1000),    -- Fosse avec capacité légèrement réduite
+
+-- Événement 3: La Traviata (Opéra-Théâtre)
+(4, 3, 5, 380),     -- Orchestre
+(5, 3, 6, 140),     -- Loges
+(6, 3, 7, 180),     -- Balcons
+
+-- Événement 4: FC Metz vs Olympique Lyonnais (Stade)
+(7, 4, 8, 3800),    -- Tribune Nord - Basse
+(8, 4, 9, 2800),    -- Tribune Nord - Haute
+(9, 4, 10, 4500),   -- Tribune Sud - Basse
+(10, 4, 11, 2200),  -- Tribune Sud - Haute
+
+-- Événement 5: Salon Habitat & Jardin (Parc Expo)
+(11, 5, 15, 4500),  -- Zone exposition A
+(12, 5, 16, 2800),  -- Zone exposition B
+
+-- Événement 6: Jazz Session (Trinitaires - Caveau)
+(13, 6, 18, 180),   -- Placement libre Caveau
+
+-- Événement 7: Jamel Comedy Club (Comédie de Metz)
+(14, 7, 19, 120),   -- Salle spectacle
+
+-- Événement 8: Congrès Cybersécurité (Metz Congrès)
+(15, 8, 22, 280),   -- Parterre auditorium
+(16, 8, 23, 180),   -- Balcon auditorium
+
+-- Événement 9: Exposition Art & IA (Centre Pompidou)
+(17, 9, 25, 350),   -- Espace principal
+(18, 9, 26, 250),   -- Espace secondaire
+
+-- Événement 10: Concert Nekfeu (Arènes de Metz)
+(19, 10, 27, 3200), -- Parterre central
+(20, 10, 28, 3000), -- Gradins
+
+-- Événement 11: Le Petit Prince (Salle Braun)
+(21, 11, 20, 50),   -- Parterre
+(22, 11, 21, 18),   -- Balcon
+
+-- Événement 12: Festival de Danse (Trinitaires - Chapelle)
+(23, 12, 17, 320);
+-- Fosse Chapelle
 
 -- ######################################################
 -- # 14. PEUPLEMENT DE LA TABLE `event_tags`            #

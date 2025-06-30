@@ -98,7 +98,6 @@ public class MailingServiceImpl implements MailingService {
         sendHtmlEmail(to, subject, "emails/structure-deletion-confirmation.html", context, null, null);
     }
 
-    // TODO : Ajouter le flashcode + design des E-tickets
     @Async
     @Override
     public void sendTickets(String to, String userName, String eventName, byte[] pdfAttachment) {
@@ -110,6 +109,16 @@ public class MailingServiceImpl implements MailingService {
         sendHtmlEmail(to, subject, "emails/ticket-receipt.html", context, pdfAttachment, attachmentName);
     }
 
+    @Async
+    @Override
+    public void sendIndividualTicket(String to, String participantName, String eventName, byte[] pdfAttachment) {
+        final String subject = "Votre billet pour l'événement : " + eventName;
+        Context context = new Context();
+        context.setVariable("participantName", participantName);
+        context.setVariable("eventName", eventName);
+        String attachmentName = "billet-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
+        sendHtmlEmail(to, subject, "emails/individual-ticket.html", context, pdfAttachment, attachmentName);
+    }
 
     private void sendHtmlEmail(String to, String subject, String templateName, Context context, byte[] attachment, String attachmentName) {
         try {
@@ -136,7 +145,6 @@ public class MailingServiceImpl implements MailingService {
 
         } catch (MessagingException e) {
             log.error("Échec de l'envoi de l'e-mail à {} avec le sujet '{}'", to, subject, e);
-            // Ici, vous pourriez ajouter une logique pour retenter l'envoi ou notifier un administrateur.
         }
     }
 }

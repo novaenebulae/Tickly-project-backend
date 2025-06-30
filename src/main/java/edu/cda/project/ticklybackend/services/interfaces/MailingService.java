@@ -63,4 +63,14 @@ public interface MailingService {
 
     void sendStructureDeletionConfirmation(String to, String adminName, String structureName);
 
+    /**
+     * Envoie un billet individuel par email à un participant.
+     *
+     * @param to              Email du destinataire
+     * @param participantName Nom complet du participant
+     * @param eventName       Nom de l'événement
+     * @param pdfAttachment   Fichier PDF du billet
+     */
+    void sendIndividualTicket(String to, String participantName, String eventName, byte[] pdfAttachment);
+
 }

@@ -25,4 +25,8 @@ ParticipantInfoDto {
     @Email(message = "L'email doit être valide.")
     @Schema(description = "Email du participant.", example = "jean.dupont@example.com")
     private String email;
+
+    @Schema(description = "Email du participant.", example = "jean.dupont@example.com")
+    private Boolean sendTicketByEmail = false;
+
 }
