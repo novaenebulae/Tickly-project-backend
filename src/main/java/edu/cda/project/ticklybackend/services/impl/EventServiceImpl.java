@@ -2,6 +2,8 @@ package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
+import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
+import edu.cda.project.ticklybackend.dtos.user.UserSummaryDto;
 import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
@@ -13,12 +15,14 @@ import edu.cda.project.ticklybackend.models.event.EventCategory;
 import edu.cda.project.ticklybackend.models.structure.AudienceZoneTemplate;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
+import edu.cda.project.ticklybackend.models.user.Friendship;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventCategoryRepository;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
+import edu.cda.project.ticklybackend.repositories.user.FriendshipRepository;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
@@ -33,9 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,12 +48,13 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventCategoryRepository categoryRepository;
     private final StructureRepository structureRepository;
-    private final AudienceZoneTemplateRepository templateRepository; // DÉPENDANCE AJOUTÉE
+    private final AudienceZoneTemplateRepository templateRepository;
     private final EventMapper eventMapper;
     private final FileStorageService fileStorageService;
     private final AuthUtils authUtils;
     private final MailingService mailingService;
     private final TicketRepository ticketRepository;
+    private final FriendshipRepository friendshipRepository;
 
     private static final String MAIN_PHOTO_SUBDIR = "events/main";
     private static final String GALLERY_SUBDIR = "events/gallery";
@@ -66,16 +69,19 @@ public class EventServiceImpl implements EventService {
         User creator = authUtils.getCurrentAuthenticatedUser();
         Structure structure = structureRepository.findById(creationDto.getStructureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", creationDto.getStructureId()));
-        EventCategory category = categoryRepository.findById(creationDto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("EventCategory", "id", creationDto.getCategoryId()));
+
+        Set<EventCategory> categories = new HashSet<>(categoryRepository.findAllById(creationDto.getCategoryIds()));
+        if (categories.size() != creationDto.getCategoryIds().size()) {
+            throw new BadRequestException("Une ou plusieurs catégories spécifiées n'existent pas.");
+        }
 
         Event event = eventMapper.toEntity(creationDto);
         event.setCreator(creator);
         event.setStructure(structure);
-        event.setCategory(category);
+        event.setCategories(categories);
+
         event.setStatus(EventStatus.DRAFT); // Set default status
 
-        // NOUVELLE LOGIQUE POUR GÉRER LES ZONES D'AUDIENCE
         if (creationDto.getAudienceZones() != null && !creationDto.getAudienceZones().isEmpty()) {
             List<EventAudienceZone> audienceZones = processAudienceZoneConfigs(creationDto.getAudienceZones(), structure.getId());
             audienceZones.forEach(zone -> zone.setEvent(event));
@@ -89,6 +95,75 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toDetailDto(savedEvent);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<FriendResponseDto> getFriendsAttendingEvent(Long eventId) {
+        // Vérifier que l'événement existe
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        Long currentUserId = authUtils.getCurrentAuthenticatedUserId();
+
+        // Récupérer tous les amis acceptés de l'utilisateur connecté
+        List<Friendship> acceptedFriendships = friendshipRepository.findAcceptedFriends(currentUserId);
+
+        // Extraire les IDs des amis
+        Set<Long> friendIds = acceptedFriendships.stream()
+                .map(friendship -> {
+                    if (friendship.getSender().getId().equals(currentUserId)) {
+                        return friendship.getReceiver().getId();
+                    } else {
+                        return friendship.getSender().getId();
+                    }
+                })
+                .collect(Collectors.toSet());
+
+        if (friendIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Récupérer les billets valides pour cet événement appartenant aux amis
+        List<Ticket> friendTickets = ticketRepository.findValidTicketsByEventAndUserIds(eventId, friendIds);
+
+        // Grouper par utilisateur pour éviter les doublons
+        Map<Long, User> attendingFriends = friendTickets.stream()
+                .collect(Collectors.toMap(
+                        ticket -> ticket.getUser().getId(),
+                        Ticket::getUser,
+                        (existing, replacement) -> existing // En cas de doublons, garder le premier
+                ));
+
+        // Mapper vers les DTOs de réponse
+        return acceptedFriendships.stream()
+                .filter(friendship -> {
+                    Long friendId = friendship.getSender().getId().equals(currentUserId)
+                            ? friendship.getReceiver().getId()
+                            : friendship.getSender().getId();
+                    return attendingFriends.containsKey(friendId);
+                })
+                .map(friendship -> {
+                    User friend = friendship.getSender().getId().equals(currentUserId)
+                            ? friendship.getReceiver()
+                            : friendship.getSender();
+
+                    UserSummaryDto friendSummary = new UserSummaryDto(
+                            friend.getId(),
+                            friend.getFirstName(),
+                            friend.getLastName(),
+                            StringUtils.hasText(friend.getAvatarPath())
+                                    ? fileStorageService.getFileUrl(friend.getAvatarPath(), "avatars")
+                                    : null
+                    );
+
+                    return new FriendResponseDto(
+                            friendship.getId(),
+                            friendSummary,
+                            friendship.getCreatedAt()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     @Transactional
@@ -98,11 +173,14 @@ public class EventServiceImpl implements EventService {
 
         eventMapper.updateEventFromDto(updateDto, event);
 
-        if (updateDto.getCategoryId() != null) {
-            EventCategory category = categoryRepository.findById(updateDto.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("EventCategory", "id", updateDto.getCategoryId()));
-            event.setCategory(category);
+        if (updateDto.getCategoryIds() != null && !updateDto.getCategoryIds().isEmpty()) {
+            Set<EventCategory> categories = new HashSet<>(categoryRepository.findAllById(updateDto.getCategoryIds()));
+            if (categories.size() != updateDto.getCategoryIds().size()) {
+                throw new BadRequestException("Une ou plusieurs catégories spécifiées n'existent pas.");
+            }
+            event.setCategories(categories);
         }
+
 
         // NOUVELLE LOGIQUE POUR LA MISE À JOUR DES ZONES
         if (updateDto.getAudienceZones() != null && !updateDto.getAudienceZones().isEmpty()) {
@@ -188,7 +266,7 @@ public class EventServiceImpl implements EventService {
         event.getAudienceZones().clear();
         event.getAudienceZones().addAll(finalZones);
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponseDto<EventSummaryDto> searchEvents(EventSearchParamsDto params, Pageable pageable) {

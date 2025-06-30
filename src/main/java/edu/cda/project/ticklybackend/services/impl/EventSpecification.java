@@ -26,7 +26,7 @@ public class EventSpecification {
             }
 
             if (!CollectionUtils.isEmpty(params.getCategoryIds())) {
-                predicates.add(root.get("category").get("id").in(params.getCategoryIds()));
+                predicates.add(root.join("categories").get("id").in(params.getCategoryIds()));
             }
 
             if (params.getStartDateAfter() != null) {

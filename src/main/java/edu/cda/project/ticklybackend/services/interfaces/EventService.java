@@ -2,6 +2,7 @@ package edu.cda.project.ticklybackend.services.interfaces;
 
 import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
+import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,6 +38,15 @@ public interface EventService {
      * @throws edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException si l'événement n'est pas trouvé.
      */
     EventDetailResponseDto getEventById(Long eventId);
+
+    /**
+     * Récupère la liste des amis de l'utilisateur authentifié qui participent à l'événement spécifié.
+     *
+     * @param eventId L'ID de l'événement
+     * @return Liste des amis qui participent à l'événement
+     */
+    List<FriendResponseDto> getFriendsAttendingEvent(Long eventId);
+
 
     /**
      * Met à jour un événement existant.

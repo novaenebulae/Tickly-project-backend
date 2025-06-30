@@ -19,9 +19,8 @@ public abstract class EventMapper {
     @Autowired
     protected FileStorageService fileStorageService;
 
-
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "categories", ignore = true) // Changé de "category" à "categories"
     @Mapping(target = "structure", ignore = true)
     @Mapping(target = "creator", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -30,25 +29,27 @@ public abstract class EventMapper {
     @Mapping(target = "eventPhotoPaths", ignore = true)
     @Mapping(target = "status", constant = "DRAFT")
     @Mapping(target = "audienceZones", ignore = true) // Géré manuellement dans le service
-//    @Mapping(target = "address.latitude", ignore = true) // Ignore les champs non mappés
-//    @Mapping(target = "address.longitude", ignore = true)
     public abstract Event toEntity(EventCreationDto dto);
 
     @Mapping(target = "mainPhotoUrl", source = "mainPhotoPath", qualifiedByName = "buildEventMainPhotoUrl")
     @Mapping(target = "city", source = "address.city")
     @Mapping(target = "structureName", source = "structure.name")
-    @Mapping(target = "structureId", source = "structure.id") // Ajout du mapping manquant
+    @Mapping(target = "structureId", source = "structure.id")
+    @Mapping(target = "categories", source = "categories", qualifiedByName = "mapCategoriesToDtos")
+    // Ajout du mapping pour categories
     public abstract EventSummaryDto toSummaryDto(Event event);
 
     @Mapping(target = "mainPhotoUrl", source = "mainPhotoPath", qualifiedByName = "buildEventMainPhotoUrl")
     @Mapping(target = "eventPhotoUrls", source = "eventPhotoPaths", qualifiedByName = "buildEventGalleryUrls")
     @Mapping(target = "audienceZones", source = "audienceZones")
     @Mapping(target = "areas", ignore = true)
+    @Mapping(target = "categories", source = "categories", qualifiedByName = "mapCategoriesToDtos")
+    // Ajout du mapping pour categories
     public abstract EventDetailResponseDto toDetailDto(Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "categories", ignore = true) // Changé de "category" à "categories"
     @Mapping(target = "structure", ignore = true)
     @Mapping(target = "creator", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -57,8 +58,6 @@ public abstract class EventMapper {
     @Mapping(target = "eventPhotoPaths", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "audienceZones", ignore = true) // Géré manuellement dans le service
-//    @Mapping(target = "address.latitude", ignore = true)
-//    @Mapping(target = "address.longitude", ignore = true)
     public abstract void updateEventFromDto(EventUpdateDto dto, @MappingTarget Event event);
 
     /**
@@ -104,4 +103,11 @@ public abstract class EventMapper {
                 .collect(Collectors.toList());
     }
 
+    @Named("mapCategoriesToDtos")
+    protected List<EventCategoryDto> mapCategoriesToDtos(java.util.Set<edu.cda.project.ticklybackend.models.event.EventCategory> categories) {
+        if (categories == null || categories.isEmpty()) return null;
+        return categories.stream()
+                .map(category -> new EventCategoryDto(category.getId(), category.getName()))
+                .collect(Collectors.toList());
+    }
 }

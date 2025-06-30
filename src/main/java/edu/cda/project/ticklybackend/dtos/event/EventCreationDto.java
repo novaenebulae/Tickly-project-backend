@@ -24,9 +24,11 @@ public class EventCreationDto {
     @Size(min = 3, max = 255, message = "Le nom doit contenir entre 3 et 255 caractères.")
     private String name;
 
-    @Schema(description = "ID de la catégorie de l'événement.", example = "1")
-    @NotNull(message = "L'ID de la catégorie est requis.")
-    private Long categoryId;
+    @Schema(description = "Liste des IDs des catégories de l'événement.", example = "[1, 3, 5]")
+    @NotNull(message = "Au moins une catégorie est requise.")
+    @Size(min = 1, message = "Au moins une catégorie doit être sélectionnée.")
+    private List<Long> categoryIds;
+
 
     @Schema(description = "Description courte de l'événement pour les aperçus.", example = "Une fusion unique entre musique classique et rock.")
     @Size(max = 500, message = "La description courte ne doit pas dépasser 500 caractères.")

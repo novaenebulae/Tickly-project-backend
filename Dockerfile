@@ -1,7 +1,7 @@
 # --- Stage 1: Build ---
 # Utiliser une image JDK complète (Eclipse Temurin JDK 21 sur Ubuntu Jammy) pour la compilation avec Maven.
 # 'builder' est un alias pour cette étape de construction.
-FROM eclipse-temurin:21-jdk-jammy AS builder
+FROM openjdk:21-jdk AS builder
 # Commentaire: Cette étape utilise un JDK complet nécessaire pour la compilation.
 
 # Définir le répertoire de travail dans le conteneur pour cette étape.

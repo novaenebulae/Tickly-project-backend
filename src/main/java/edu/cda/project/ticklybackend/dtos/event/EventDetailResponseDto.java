@@ -19,7 +19,7 @@ import java.util.List;
 public class EventDetailResponseDto {
     private Long id;
     private String name;
-    private EventCategoryDto category;
+    private List<EventCategoryDto> categories;
     private String shortDescription;
     private String fullDescription;
     private List<String> tags;

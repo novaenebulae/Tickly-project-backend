@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,7 @@ import java.time.ZonedDateTime;
 public class EventSummaryDto {
     private Long id;
     private String name;
-    private EventCategoryDto[] category;
+    private List<EventCategoryDto> categories;
     private String shortDescription;
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;

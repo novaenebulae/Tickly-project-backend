@@ -4,6 +4,7 @@ import edu.cda.project.ticklybackend.dtos.common.ErrorResponseDto;
 import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
+import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,6 +76,25 @@ public class EventController {
     public ResponseEntity<EventDetailResponseDto> getEventById(@Parameter(description = "ID de l'événement à récupérer") @PathVariable Long eventId) {
         return ResponseEntity.ok(eventService.getEventById(eventId));
     }
+
+    @Operation(
+            summary = "Récupérer les amis participant à un événement",
+            description = "Retourne la liste des amis de l'utilisateur connecté qui participent à l'événement spécifié. Nécessite une authentification.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Liste des amis participants", content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))),
+                    @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Événement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
+            }
+    )
+    @GetMapping("/events/{eventId}/friends")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<FriendResponseDto>> getFriendsAttendingEvent(
+            @Parameter(description = "ID de l'événement") @PathVariable Long eventId) {
+        List<FriendResponseDto> friendsAttending = eventService.getFriendsAttendingEvent(eventId);
+        return ResponseEntity.ok(friendsAttending);
+    }
+
 
     @Operation(
             summary = "Mettre à jour un événement existant",

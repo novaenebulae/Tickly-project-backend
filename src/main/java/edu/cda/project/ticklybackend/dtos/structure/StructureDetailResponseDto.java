@@ -55,9 +55,6 @@ public class StructureDetailResponseDto {
     @Schema(description = "Liste des URLs complètes des images composant la galerie de la structure.")
     private List<String> galleryImageUrls;
 
-    @Schema(description = "Liste des espaces physiques configurés au sein de la structure.")
-    private List<AreaResponseDto> areas;
-
     @Schema(description = "Indicateur du statut d'activité de la structure.", example = "true")
     private boolean isActive;
 

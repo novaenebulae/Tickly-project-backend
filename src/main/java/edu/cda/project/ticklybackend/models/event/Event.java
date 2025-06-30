@@ -13,7 +13,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Entité centrale représentant un événement dans l'application.
@@ -33,9 +35,13 @@ public class Event {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private EventCategory category;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "event_has_categories",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<EventCategory> categories = new HashSet<>();
 
     @Column(columnDefinition = "TEXT")
     private String shortDescription;
