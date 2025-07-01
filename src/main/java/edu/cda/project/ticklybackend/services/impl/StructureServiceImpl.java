@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -303,22 +304,75 @@ public class StructureServiceImpl implements StructureService {
         }
     }
 
+//    @Override
+//    public FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file) {
+//        Structure structure = structureRepository.findById(structureId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+//
+//        String newImagePath = fileStorageService.storeFile(file, GALLERY_SUBDIR);
+//        structure.getGalleryImagePaths().add(newImagePath);
+//        structureRepository.save(structure);
+//        logger.info("Image ajoutée à la galerie pour la structure {} (ID: {}). Chemin: {}", structure.getName(), structureId, newImagePath);
+//
+//
+//        return new FileUploadResponseDto(
+//                file.getOriginalFilename(),
+//                fileStorageService.getFileUrl(newImagePath, GALLERY_SUBDIR),
+//                "Image ajoutée à la galerie de la structure avec succès."
+//        );
+//    }
+
     @Override
-    public FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file) {
+    @Transactional
+    public List<FileUploadResponseDto> addStructureGalleryImages(Long structureId, MultipartFile[] files) {
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
 
-        String newImagePath = fileStorageService.storeFile(file, GALLERY_SUBDIR);
-        structure.getGalleryImagePaths().add(newImagePath);
-        structureRepository.save(structure);
-        logger.info("Image ajoutée à la galerie pour la structure {} (ID: {}). Chemin: {}", structure.getName(), structureId, newImagePath);
+        List<FileUploadResponseDto> results = new ArrayList<>();
+        List<String> successfulUploads = new ArrayList<>();
 
+        for (MultipartFile file : files) {
+            try {
+                // Validation du fichier
+                if (file.isEmpty()) {
+                    results.add(new FileUploadResponseDto(
+                            file.getOriginalFilename(),
+                            null,
+                            "Erreur: fichier vide"));
+                    continue;
+                }
 
-        return new FileUploadResponseDto(
-                file.getOriginalFilename(),
-                fileStorageService.getFileUrl(newImagePath, GALLERY_SUBDIR),
-                "Image ajoutée à la galerie de la structure avec succès."
-        );
+                // Stocker le fichier
+                String filename = fileStorageService.storeFile(file, GALLERY_SUBDIR);
+                String fileUrl = fileStorageService.getFileUrl(filename, GALLERY_SUBDIR);
+
+                // Ajouter à la liste des uploads réussis
+                successfulUploads.add(filename);
+
+                results.add(new FileUploadResponseDto(
+                        file.getOriginalFilename(),
+                        fileUrl,
+                        "Image ajoutée avec succès"));
+
+            } catch (Exception e) {
+                logger.error("Erreur lors de l'upload du fichier {}: {}",
+                        file.getOriginalFilename(), e.getMessage());
+                results.add(new FileUploadResponseDto(
+                        file.getOriginalFilename(),
+                        null,
+                        "Erreur: " + e.getMessage()));
+            }
+        }
+
+        // Ajouter tous les fichiers uploadés avec succès à la galerie
+        if (!successfulUploads.isEmpty()) {
+            structure.getGalleryImagePaths().addAll(successfulUploads);
+            structureRepository.save(structure);
+            logger.info("Ajout de {} images à la galerie de la structure {}",
+                    successfulUploads.size(), structureId);
+        }
+
+        return results;
     }
 
     @Override

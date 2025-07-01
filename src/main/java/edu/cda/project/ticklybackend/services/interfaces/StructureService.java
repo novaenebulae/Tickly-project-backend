@@ -30,7 +30,9 @@ public interface StructureService {
 
     void removeStructureCover(Long structureId);
 
-    FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file);
+//    FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file);
+
+    List<FileUploadResponseDto> addStructureGalleryImages(Long structureId, MultipartFile[] files);
 
     void removeStructureGalleryImage(Long structureId, String imagePath);
 

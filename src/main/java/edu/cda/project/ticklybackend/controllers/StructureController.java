@@ -164,12 +164,25 @@ public class StructureController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Ajouter une image à la galerie d'une structure",
-            description = "Ajoute une nouvelle image à la galerie de la structure. Nécessite d'être le propriétaire.")
+//    @Operation(summary = "Ajouter une image à la galerie d'une structure",
+//            description = "Ajoute une nouvelle image à la galerie de la structure. Nécessite d'être le propriétaire.")
+//    @PostMapping(value = "/{structureId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+//    public ResponseEntity<FileUploadResponseDto> addStructureGalleryImage(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
+//        return ResponseEntity.status(HttpStatus.CREATED).body(structureService.addStructureGalleryImage(structureId, file));
+//    }
+
+    @Operation(summary = "Ajouter plusieurs images à la galerie d'une structure",
+            description = "Ajoute plusieurs nouvelles images à la galerie de la structure en une seule fois.")
     @PostMapping(value = "/{structureId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
-    public ResponseEntity<FileUploadResponseDto> addStructureGalleryImage(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(structureService.addStructureGalleryImage(structureId, file));
+    public ResponseEntity<List<FileUploadResponseDto>> addMultipleStructureGalleryImages(
+            @PathVariable Long structureId,
+            @RequestParam("files") MultipartFile[] files,
+            Authentication authentication) {
+
+        List<FileUploadResponseDto> results = structureService.addStructureGalleryImages(structureId, files);
+        return ResponseEntity.ok(results);
     }
 
     @Operation(summary = "Supprimer une image de la galerie d'une structure",
