@@ -4,6 +4,7 @@ import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
 import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
+import edu.cda.project.ticklybackend.dtos.team.InvitationAcceptanceResponseDto;
 import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
@@ -67,29 +68,33 @@ public class AuthServiceImpl implements AuthService {
     private AuthResponseDto registerAndAcceptInvitation(UserRegistrationDto registrationDto) {
         log.info("Début du flux d'inscription optimisé pour l'invitation de {}", registrationDto.getEmail());
 
-        // 1. Valider le token d'invitation AVANT de créer l'utilisateur
-        VerificationToken invitationToken = tokenService.validateToken(registrationDto.getInvitationToken(), TokenType.TEAM_INVITATION);
-
-        // 2. Créer le compte utilisateur
-        // Pour une invitation, l'utilisateur est toujours un simple membre au départ (Spectator),
-        // son rôle sera mis à jour par le service d'invitation.
+        // 1. Créer le compte utilisateur basique (sera transformé par le service d'équipe)
         User newUser = new SpectatorUser(
                 registrationDto.getFirstName(),
                 registrationDto.getLastName(),
                 registrationDto.getEmail(),
                 passwordEncoder.encode(registrationDto.getPassword())
         );
-        // L'email est considéré comme validé car l'utilisateur a prouvé son accès via le token d'invitation
-        newUser.setEmailValidated(true);
+        newUser.setEmailValidated(true); // Email validé via invitation
         User savedUser = userRepository.save(newUser);
 
-        // 3. Accepter l'invitation
-        // Cette méthode va lier le nouveau compte à l'équipe et mettre à jour son rôle et sa structure
-        teamService.acceptInvitation(registrationDto.getInvitationToken(), savedUser);
-        log.info("Invitation acceptée et rôle mis à jour pour {}", savedUser.getEmail());
+        // 2. Accepter l'invitation (transforme l'utilisateur et retourne les infos complètes)
+        InvitationAcceptanceResponseDto invitationResponse = teamService.acceptInvitation(
+                registrationDto.getInvitationToken());
 
-        // 4. Connecter l'utilisateur et retourner un JWT
-        return generateAuthResponse(savedUser);
+        // 3. Convertir la réponse d'invitation en AuthResponseDto
+        // Recharger l'utilisateur transformé
+        User transformedUser = userRepository.findByEmail(savedUser.getEmail())
+                .orElseThrow(() -> new RuntimeException("Erreur lors de la transformation de l'utilisateur"));
+
+        AuthResponseDto authResponse = userMapper.userToAuthResponseDto(transformedUser);
+        authResponse.setAccessToken(invitationResponse.getAccessToken());
+        authResponse.setExpiresIn(invitationResponse.getExpiresIn());
+
+        log.info("Inscription et invitation complétées pour {} dans la structure {}",
+                transformedUser.getEmail(), invitationResponse.getStructureName());
+
+        return authResponse;
     }
 
     /**

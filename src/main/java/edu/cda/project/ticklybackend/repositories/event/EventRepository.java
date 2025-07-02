@@ -24,4 +24,15 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     Optional<Event> findByIdWithAudienceZones(@Param("id") Long id);
 
     boolean existsByStructureIdAndStatusIn(Long structureId, Set<EventStatus> published);
+
+    @Query("SELECT COUNT(e) > 0 FROM Event e " +
+            "JOIN e.audienceZones az " +
+            "JOIN az.template t " +
+            "WHERE t.area.id = :areaId AND e.status IN :statuses")
+    boolean existsByAreaIdAndStatusIn(@Param("areaId") Long areaId, @Param("statuses") Set<EventStatus> statuses);
+
+    @Query("SELECT COUNT(e) > 0 FROM Event e " +
+            "JOIN e.audienceZones az " +
+            "WHERE az.template.id = :templateId AND e.status IN :statuses")
+    boolean existsByTemplateIdAndStatusIn(@Param("templateId") Long templateId, @Param("statuses") Set<EventStatus> statuses);
 }

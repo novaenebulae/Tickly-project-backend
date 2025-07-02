@@ -20,6 +20,7 @@ import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StructureService;
+import edu.cda.project.ticklybackend.services.interfaces.TeamManagementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class StructureServiceImpl implements StructureService {
     private final AudienceZoneTemplateMapper audienceZoneTemplateMapper;
     private final AddressMapper addressMapper;
 
-
+    private final TeamManagementService teamService;
     private final FileStorageService fileStorageService;
 
     private static final String LOGO_SUBDIR = "structures/logos";
@@ -157,7 +158,12 @@ public class StructureServiceImpl implements StructureService {
 
         // GARDE-FOU: Interdire la suppression si des événements sont encore actifs ou en brouillon.
         if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT))) {
-            throw new BadRequestException("Suppression impossible : Veuillez d'abord annuler ou terminer tous les événements actifs ou en brouillon pour cette structure.");
+            throw new BadRequestException("Suppression impossible : Des événements actifs ou en brouillon existent pour cette structure. " +
+                    "Pour supprimer la structure, vous devez d'abord :\n" +
+                    "1. Accéder à la liste des événements de votre structure\n" +
+                    "2. Annuler tous les événements actifs (statut PUBLISHED)\n" +
+                    "3. Supprimer tous les brouillons (statut DRAFT)\n" +
+                    "Une fois tous les événements traités, vous pourrez supprimer la structure.");
         }
 
         // Sauvegarde des informations pour la notification avant l'anonymisation
@@ -167,7 +173,10 @@ public class StructureServiceImpl implements StructureService {
         // 1. Dissolution des relations
         log.info("Suppression des favoris pour la structure ID: {}", structureId);
         favoriteRepository.deleteByStructureId(structureId);
-        // TODO: Ajouter la logique de dissolution de l'équipe lorsque TeamManagementService existera
+
+        // Dissolution de l'équipe - conversion des membres en SPECTATOR
+        log.info("Dissolution de l'équipe pour la structure ID: {}", structureId);
+        teamService.dissolveTeam(structureId);
 
         // 2. Nettoyage des fichiers physiques
         log.info("Nettoyage des fichiers pour la structure ID: {}", structureId);
@@ -439,19 +448,63 @@ public class StructureServiceImpl implements StructureService {
     @Override
     public AreaResponseDto updateArea(Long structureId, Long areaId, AreaUpdateDto updateDto) {
         StructureArea area = structureAreaRepository.findByIdAndStructureId(areaId, structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Area", "id " + areaId + " for structure", structureId));
-        areaMapper.updateFromDto(updateDto, area);
-        StructureArea updatedArea = structureAreaRepository.save(area);
-        logger.info("Espace {} (ID: {}) mis à jour pour la structure {} (ID: {}).", updatedArea.getName(), areaId, area.getStructure().getName(), structureId);
-        return areaMapper.toDto(updatedArea);
+                .orElseThrow(() -> new ResourceNotFoundException("Area", "id", areaId));
+
+        // GARDE-FOU : Si l'area est utilisée par des événements actifs, limiter les modifications
+        Set<EventStatus> activeStatuses = Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT);
+        boolean isUsedByActiveEvents = eventRepository.existsByAreaIdAndStatusIn(areaId, activeStatuses);
+
+        if (isUsedByActiveEvents) {
+            // Seuls le nom et la description peuvent être modifiés
+            if (updateDto.getMaxCapacity() != null || updateDto.getIsActive() != null) {
+                throw new BadRequestException(
+                        "Modification restreinte : Cette area ('" + area.getName() + "') est utilisée par des événements actifs. " +
+                                "Seuls le nom et la description peuvent être modifiés. " +
+                                "Capacité maximale et statut d'activation sont protégés."
+                );
+            }
+        }
+
+        // Appliquer les modifications autorisées
+        if (StringUtils.hasText(updateDto.getName())) {
+            area.setName(updateDto.getName());
+        }
+        if (StringUtils.hasText(updateDto.getDescription())) {
+            area.setDescription(updateDto.getDescription());
+        }
+
+        // Modifications conditionnelles (seulement si pas d'événements actifs)
+        if (!isUsedByActiveEvents) {
+            if (updateDto.getMaxCapacity() != null) {
+                area.setMaxCapacity(updateDto.getMaxCapacity());
+            }
+            if (updateDto.getIsActive() != null) {
+                area.setActive(updateDto.getIsActive());
+            }
+        }
+
+        StructureArea savedArea = structureAreaRepository.save(area);
+        log.info("Area '{}' (ID: {}) mise à jour pour la structure ID: {}", savedArea.getName(), areaId, structureId);
+        return areaMapper.toDto(savedArea);
     }
 
     @Override
     public void deleteArea(Long structureId, Long areaId) {
+        // Vérifier que l'area appartient à la structure
         StructureArea area = structureAreaRepository.findByIdAndStructureId(areaId, structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Area", "id " + areaId + " for structure", structureId));
+                .orElseThrow(() -> new ResourceNotFoundException("Area", "id", areaId));
+
+        // GARDE-FOU : Interdire la suppression si l'area est utilisée par des événements actifs
+        Set<EventStatus> activeStatuses = Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT);
+        if (eventRepository.existsByAreaIdAndStatusIn(areaId, activeStatuses)) {
+            throw new BadRequestException(
+                    "Suppression impossible : Cette area ('" + area.getName() + "') est actuellement utilisée par des événements actifs ou en brouillon. " +
+                            "Veuillez d'abord annuler ou terminer ces événements."
+            );
+        }
+
+        log.info("Suppression de l'area '{}' (ID: {}) pour la structure ID: {}", area.getName(), areaId, structureId);
         structureAreaRepository.delete(area);
-        logger.info("Espace {} (ID: {}) supprimé de la structure {} (ID: {}).", area.getName(), areaId, area.getStructure().getName(), structureId);
     }
 
     // --- AudienceZoneTemplate Operations ---
@@ -491,25 +544,62 @@ public class StructureServiceImpl implements StructureService {
 
     @Override
     public AudienceZoneTemplateResponseDto updateAudienceZoneTemplate(Long structureId, Long areaId, Long templateId, AudienceZoneTemplateUpdateDto updateDto) {
-        AudienceZoneTemplate template = audienceZoneTemplateRepository.findByIdAndAreaId(templateId, areaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id " + templateId + " for area", areaId));
-        if (!template.getArea().getStructure().getId().equals(structureId)) { // Ensure area belongs to structure
-            throw new ResourceNotFoundException("AudienceZoneTemplate", "id " + templateId + " for structure", structureId);
+        AudienceZoneTemplate template = audienceZoneTemplateRepository.findByIdAndAreaIdAndAreaStructureId(templateId, areaId, structureId)
+                .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id", templateId));
+
+        // GARDE-FOU : Si le template est utilisé par des événements actifs, limiter les modifications
+        Set<EventStatus> activeStatuses = Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT);
+        boolean isUsedByActiveEvents = eventRepository.existsByTemplateIdAndStatusIn(templateId, activeStatuses);
+
+        if (isUsedByActiveEvents) {
+            // Seuls le nom et éventuellement la description peuvent être modifiés
+            if (updateDto.getMaxCapacity() != null || updateDto.getSeatingType() != null || updateDto.getIsActive() != null) {
+                throw new BadRequestException(
+                        "Modification restreinte : Cette zone d'audience ('" + template.getName() + "') est utilisée par des événements actifs. " +
+                                "Seuls le nom peut être modifié. " +
+                                "Capacité, type de placement et statut d'activation sont protégés."
+                );
+            }
         }
-        audienceZoneTemplateMapper.updateFromDto(updateDto, template);
-        AudienceZoneTemplate updatedTemplate = audienceZoneTemplateRepository.save(template);
-        logger.info("Modèle de zone {} (ID: {}) mis à jour pour l'espace {} (ID: {}).", updatedTemplate.getName(), templateId, template.getArea().getName(), areaId);
-        return audienceZoneTemplateMapper.toDto(updatedTemplate);
+
+        // Appliquer les modifications autorisées
+        if (StringUtils.hasText(updateDto.getName())) {
+            template.setName(updateDto.getName());
+        }
+
+        // Modifications conditionnelles (seulement si pas d'événements actifs)
+        if (!isUsedByActiveEvents) {
+            if (updateDto.getMaxCapacity() != null) {
+                template.setMaxCapacity(updateDto.getMaxCapacity());
+            }
+            if (updateDto.getSeatingType() != null) {
+                template.setSeatingType(updateDto.getSeatingType());
+            }
+            if (updateDto.getIsActive() != null) {
+                template.setActive(updateDto.getIsActive());
+            }
+        }
+
+        AudienceZoneTemplate savedTemplate = audienceZoneTemplateRepository.save(template);
+        log.info("Template de zone '{}' (ID: {}) mis à jour pour l'area ID: {}", savedTemplate.getName(), templateId, areaId);
+        return audienceZoneTemplateMapper.toDto(savedTemplate);
     }
 
     @Override
     public void deleteAudienceZoneTemplate(Long structureId, Long areaId, Long templateId) {
-        AudienceZoneTemplate template = audienceZoneTemplateRepository.findByIdAndAreaId(templateId, areaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id " + templateId + " for area", areaId));
-        if (!template.getArea().getStructure().getId().equals(structureId)) { // Ensure area belongs to structure
-            throw new ResourceNotFoundException("AudienceZoneTemplate", "id " + templateId + " for structure", structureId);
+        AudienceZoneTemplate template = audienceZoneTemplateRepository.findByIdAndAreaIdAndAreaStructureId(templateId, areaId, structureId)
+                .orElseThrow(() -> new ResourceNotFoundException("AudienceZoneTemplate", "id", templateId));
+
+        // GARDE-FOU : Interdire la suppression si le template est utilisé par des événements actifs
+        Set<EventStatus> activeStatuses = Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT);
+        if (eventRepository.existsByTemplateIdAndStatusIn(templateId, activeStatuses)) {
+            throw new BadRequestException(
+                    "Suppression impossible : Cette zone d'audience ('" + template.getName() + "') est actuellement utilisée par des événements actifs ou en brouillon. " +
+                            "Veuillez d'abord annuler ou terminer ces événements."
+            );
         }
+
+        log.info("Suppression du template de zone '{}' (ID: {}) pour l'area ID: {}", template.getName(), templateId, areaId);
         audienceZoneTemplateRepository.delete(template);
-        logger.info("Modèle de zone {} (ID: {}) supprimé de l'espace {} (ID: {}).", template.getName(), templateId, template.getArea().getName(), areaId);
     }
 }

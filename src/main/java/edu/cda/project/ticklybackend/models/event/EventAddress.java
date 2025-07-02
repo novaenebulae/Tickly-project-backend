@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
+//TODO:
 public class EventAddress {
     /**
      * Numéro et nom de la rue.

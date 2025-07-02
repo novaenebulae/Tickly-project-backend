@@ -25,7 +25,8 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration.access-token-ms}") // Durée d'expiration du token en ms
     private long jwtExpirationMs;
 
-    // Génère un token JWT pour un utilisateur
+// Modifier la génération du token pour utiliser user.getStructure() au lieu de ((StaffUser) userDetails).getStructure()
+
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof User user) {
@@ -34,21 +35,13 @@ public class JwtTokenProvider {
             if (user.getNeedsStructureSetup() != null) {
                 claims.put("needsStructureSetup", user.getNeedsStructureSetup());
             }
+            // CORRECTION : Utiliser user.getStructure() au lieu de ((StaffUser) userDetails).getStructure()
+            if (user.getStructure() != null) {
+                claims.put("structureId", user.getStructure().getId());
+            }
         }
         return createToken(claims, userDetails.getUsername());
     }
-
-    // Surcharge pour ajouter des claims personnalisés (ex: needsStructureSetup pour un nouvel admin)
-    public String generateToken(UserDetails userDetails, Map<String, Object> extraClaims) {
-        Map<String, Object> claims = new HashMap<>(extraClaims);
-        if (userDetails instanceof User) {
-            User user = (User) userDetails;
-            claims.put("userId", user.getId()); // Assure que userId est toujours présent
-            claims.put("role", user.getRole().name()); // Assure que role est toujours présent
-        }
-        return createToken(claims, userDetails.getUsername());
-    }
-
 
     // Crée le token avec les claims et le sujet (email de l'utilisateur)
     private String createToken(Map<String, Object> claims, String subject) {

@@ -8,6 +8,7 @@ import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
+import edu.cda.project.ticklybackend.mappers.event.EventAddressMapper;
 import edu.cda.project.ticklybackend.mappers.event.EventMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
@@ -55,6 +56,7 @@ public class EventServiceImpl implements EventService {
     private final MailingService mailingService;
     private final TicketRepository ticketRepository;
     private final FriendshipRepository friendshipRepository;
+    private final EventAddressMapper addressMapper;
 
     private static final String MAIN_PHOTO_SUBDIR = "events/main";
     private static final String GALLERY_SUBDIR = "events/gallery";
@@ -168,11 +170,31 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventDetailResponseDto updateEvent(Long eventId, EventUpdateDto updateDto) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdWithAudienceZones(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
-        eventMapper.updateEventFromDto(updateDto, event);
+        User currentUser = authUtils.getCurrentAuthenticatedUser();
 
+        // GARDE-FOU : Limiter les modifications pour les événements publiés
+        if (event.getStatus() == EventStatus.PUBLISHED) {
+            validatePublishedEventUpdate(updateDto);
+        }
+
+        // Champs toujours modifiables
+        if (StringUtils.hasText(updateDto.getShortDescription())) {
+            event.setShortDescription(updateDto.getShortDescription());
+        }
+        if (StringUtils.hasText(updateDto.getFullDescription())) {
+            event.setFullDescription(updateDto.getFullDescription());
+        }
+        if (updateDto.getDisplayOnHomepage() != null) {
+            event.setDisplayOnHomepage(updateDto.getDisplayOnHomepage());
+        }
+        if (updateDto.getIsFeaturedEvent() != null) {
+            event.setFeaturedEvent(updateDto.getIsFeaturedEvent());
+        }
+
+        // Catégories (toujours modifiables)
         if (updateDto.getCategoryIds() != null && !updateDto.getCategoryIds().isEmpty()) {
             Set<EventCategory> categories = new HashSet<>(categoryRepository.findAllById(updateDto.getCategoryIds()));
             if (categories.size() != updateDto.getCategoryIds().size()) {
@@ -181,18 +203,67 @@ public class EventServiceImpl implements EventService {
             event.setCategories(categories);
         }
 
-
-        // NOUVELLE LOGIQUE POUR LA MISE À JOUR DES ZONES
-        if (updateDto.getAudienceZones() != null && !updateDto.getAudienceZones().isEmpty()) {
-            updateEventAudienceZones(event, updateDto.getAudienceZones(), event.getStructure().getId());
-        } else {
-            throw new BadRequestException("Un événement doit avoir au moins une zone d'audience configurée.");
+        // Tags (toujours modifiables)
+        if (updateDto.getTags() != null) {
+            event.setTags(new ArrayList<>(updateDto.getTags()));
         }
 
+        // Champs modifiables SEULEMENT si l'événement n'est PAS publié
+        if (event.getStatus() != EventStatus.PUBLISHED) {
+            if (StringUtils.hasText(updateDto.getName())) {
+                event.setName(updateDto.getName());
+            }
+            if (updateDto.getStartDate() != null) {
+                event.setStartDate(updateDto.getStartDate().toInstant());
+            }
+            if (updateDto.getEndDate() != null) {
+                event.setEndDate(updateDto.getEndDate().toInstant());
+            }
+            if (updateDto.getAddress() != null) {
+                event.setAddress(addressMapper.toEntity(updateDto.getAddress()));
+            }
 
-        Event updatedEvent = eventRepository.save(event);
-        log.info("Événement '{}' (ID: {}) mis à jour.", updatedEvent.getName(), eventId);
-        return eventMapper.toDetailDto(updatedEvent);
+            // Mise à jour des zones d'audience (seulement si pas publié)
+            if (updateDto.getAudienceZones() != null && !updateDto.getAudienceZones().isEmpty()) {
+                updateEventAudienceZones(event, updateDto.getAudienceZones(), event.getStructure().getId());
+            }
+        }
+
+        Event savedEvent = eventRepository.save(event);
+        log.info("Événement '{}' (ID: {}) mis à jour par l'utilisateur ID: {}", savedEvent.getName(), eventId, currentUser.getId());
+
+        return eventMapper.toDetailDto(savedEvent);
+    }
+
+    /**
+     * Valide que les champs modifiés pour un événement publié sont autorisés.
+     */
+    private void validatePublishedEventUpdate(EventUpdateDto updateDto) {
+        List<String> restrictedFields = new ArrayList<>();
+
+        if (StringUtils.hasText(updateDto.getName())) {
+            restrictedFields.add("nom");
+        }
+        if (updateDto.getStartDate() != null) {
+            restrictedFields.add("date de début");
+        }
+        if (updateDto.getEndDate() != null) {
+            restrictedFields.add("date de fin");
+        }
+        if (updateDto.getAddress() != null) {
+            restrictedFields.add("adresse");
+        }
+        if (updateDto.getAudienceZones() != null && !updateDto.getAudienceZones().isEmpty()) {
+            restrictedFields.add("zones d'audience");
+        }
+
+        if (!restrictedFields.isEmpty()) {
+            throw new BadRequestException(
+                    "Modification restreinte : Cet événement est publié. " +
+                            "Les champs suivants ne peuvent plus être modifiés : " + String.join(", ", restrictedFields) + ". " +
+                            "Seuls les descriptions, catégories, tags, galerie d'images et options d'affichage sont modifiables."
+            );
+        }
     }
 
     /**
@@ -323,9 +394,38 @@ public class EventServiceImpl implements EventService {
     public EventDetailResponseDto updateEventStatus(Long eventId, EventStatusUpdateDto statusUpdateDto) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
-        event.setStatus(statusUpdateDto.getStatus());
-        Event updatedEvent = eventRepository.save(event);
-        return eventMapper.toDetailDto(updatedEvent);
+
+        EventStatus currentStatus = event.getStatus();
+        EventStatus newStatus = statusUpdateDto.getStatus();
+
+        // GARDE-FOU : Validation des transitions de statut
+        if (currentStatus == EventStatus.PUBLISHED) {
+            // Depuis PUBLISHED, on ne peut aller que vers CANCELLED
+            if (newStatus != EventStatus.CANCELLED) {
+                throw new BadRequestException(
+                        "Transition de statut invalide : Un événement publié ne peut être changé qu'au statut 'CANCELLED'. " +
+                                "Statut actuel : " + currentStatus + ", statut demandé : " + newStatus
+                );
+            }
+        }
+
+        event.setStatus(newStatus);
+        Event savedEvent = eventRepository.save(event);
+
+        // Notifications selon le nouveau statut
+        User currentUser = authUtils.getCurrentAuthenticatedUser();
+        if (newStatus == EventStatus.PUBLISHED) {
+            log.info("Événement '{}' publié par l'utilisateur {}", savedEvent.getName(), currentUser.getEmail());
+        } else if (newStatus == EventStatus.CANCELLED) {
+            mailingService.sendEventCancelledNotification(
+                    currentUser.getEmail(),
+                    currentUser.getFirstName(),
+                    savedEvent.getName()
+            );
+            log.warn("Événement '{}' annulé par l'utilisateur {}", savedEvent.getName(), currentUser.getEmail());
+        }
+
+        return eventMapper.toDetailDto(savedEvent);
     }
 
     @Override

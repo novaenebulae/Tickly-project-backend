@@ -1,11 +1,14 @@
 package edu.cda.project.ticklybackend.models.user;
 
 import edu.cda.project.ticklybackend.enums.UserRole;
+import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -51,6 +54,11 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "structure_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private Structure structure;
 
     // Indique si un administrateur de structure doit configurer sa structure
     private Boolean needsStructureSetup;

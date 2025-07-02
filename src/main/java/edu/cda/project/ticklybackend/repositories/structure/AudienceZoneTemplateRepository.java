@@ -14,4 +14,6 @@ public interface AudienceZoneTemplateRepository extends JpaRepository<AudienceZo
     Optional<AudienceZoneTemplate> findByIdAndAreaId(Long templateId, Long areaId);
 
     List<AudienceZoneTemplate> findByAreaStructureId(Long structureId); // Pour récupérer toutes les zones d'une structure
+
+    Optional<AudienceZoneTemplate> findByIdAndAreaIdAndAreaStructureId(Long templateId, Long areaId, Long structureId);
 }

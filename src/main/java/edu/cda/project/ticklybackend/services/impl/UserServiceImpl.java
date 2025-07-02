@@ -230,7 +230,10 @@ public class UserServiceImpl implements UserService {
                 // S'il est le seul admin (ou si le compte est 0 pour une raison quelconque, on est prudent), on bloque.
                 if (adminCount <= 1) {
                     throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
-                            + managedStructure.getName() + "'. Veuillez d'abord supprimer la structure ou transférer vos droits à un autre membre de l'équipe.");
+                            + managedStructure.getName() + "'. Avant de supprimer votre compte, vous devez soit :\n" +
+                            "1. Promouvoir un autre membre de l'équipe au rôle d'administrateur via l'interface de gestion d'équipe\n" +
+                            "2. Supprimer définitivement la structure si elle n'est plus utilisée\n" +
+                            "Ces actions peuvent être effectuées depuis le tableau de bord de votre structure.");
                 }
 
             }

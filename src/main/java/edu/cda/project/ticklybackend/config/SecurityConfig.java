@@ -33,11 +33,12 @@ public class SecurityConfig {
             "/api/v1/event-categories",
             "/api/v1/structures/**",
             "/api/v1/structure-types",
-            "/api/v1/auth/validate-email",
+            "/api/v1/auth/validate-email"
     };
 
     private static final String[] PUBLIC_POST_URLS = {
             "/api/v1/auth/**",
+            "/api/v1/team/invitations/accept"
     };
 
     private static final String[] PUBLIC_DELETE_URLS = {
