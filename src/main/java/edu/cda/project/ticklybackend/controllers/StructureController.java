@@ -211,7 +211,7 @@ public class StructureController {
     @Operation(summary = "Lister les espaces (Areas) d'une structure",
             description = "Récupère tous les espaces physiques configurés pour une structure donnée. Accessible au propriétaire ou aux services d'organisation.")
     @GetMapping("/{structureId}/areas")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE')")
+    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE') or hasAuthority('ROLE_RESERVATION_SERVICE')")
     public ResponseEntity<List<AreaResponseDto>> getAreasByStructureId(@PathVariable Long structureId, Authentication authentication) {
         return ResponseEntity.ok(structureService.getAreasByStructureId(structureId));
     }

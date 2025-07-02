@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.security;
 
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.team.Team;
 import edu.cda.project.ticklybackend.models.team.TeamMember;
@@ -44,6 +45,29 @@ public class TeamSecurityService {
                 .map(admin -> admin != null && Objects.equals(admin.getId(), user.getId()))
                 .orElse(false);
     }
+
+    @Transactional(readOnly = true)
+    public boolean isStructureOrganizationService(Long structureId, User user) {
+        if (structureId == null || user == null) {
+            return false;
+        }
+
+        return user.getStructure().getId().equals(structureId) && user.getRole().equals(UserRole.ORGANIZATION_SERVICE);
+
+
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isStructureReservationService(Long structureId, User user) {
+        if (structureId == null || user == null) {
+            return false;
+        }
+
+        return user.getStructure().getId().equals(structureId) && user.getRole().equals(UserRole.RESERVATION_SERVICE);
+
+
+    }
+
 
     /**
      * Nouvelle méthode pour vérifier si un utilisateur est l'admin de l'équipe d'un membre donné.

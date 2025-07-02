@@ -27,7 +27,7 @@ public class TeamController {
 
     @GetMapping("/structure/{structureId}")
     @Operation(summary = "Récupérer les membres de l'équipe d'une structure")
-    @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal)")
+    @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal) or @teamSecurityService.isStructureOrganizationService(#structureId, authentication.principal) or @teamSecurityService.isStructureReservationService(#structureId, authentication.principal)")
     public ResponseEntity<List<TeamMemberDto>> getTeamMembers(@PathVariable Long structureId) {
         return ResponseEntity.ok(teamService.getTeamMembers(structureId));
     }

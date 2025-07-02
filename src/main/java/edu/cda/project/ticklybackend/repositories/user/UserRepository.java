@@ -46,6 +46,21 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
                                    @Param("structureId") Long structureId);
 
     /**
+     * Met à jour le type d'utilisateur (discriminateur) et le rôle d'un utilisateur existant.
+     * Cette méthode est utilisée lors de la modification du rôle d'un membre d'équipe.
+     *
+     * @param userId   ID de l'utilisateur à mettre à jour
+     * @param userType Nouveau type d'utilisateur (discriminateur)
+     * @param role     Nouveau rôle
+     * @return Nombre de lignes mises à jour
+     */
+    @Modifying
+    @Query(value = "UPDATE users SET user_type = :userType, role = :role WHERE id = :userId", nativeQuery = true)
+    int updateUserTypeAndRole(@Param("userId") Long userId,
+                              @Param("userType") String userType,
+                              @Param("role") String role);
+
+    /**
      * Convertit un utilisateur Staff en Spectator en supprimant l'association à la structure.
      * Cette méthode est utilisée lors de la suppression d'un membre d'équipe.
      *

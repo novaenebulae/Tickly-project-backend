@@ -209,10 +209,27 @@ public class TeamManagementServiceImpl implements TeamManagementService {
         }
 
         member.setRole(roleDto.getRole());
+
         if (member.getUser() != null) {
-            member.getUser().setRole(roleDto.getRole());
-            userRepository.save(member.getUser());
+            // MISE À JOUR DIRECTE : Mettre à jour le rôle ET le discriminateur via requête native
+            String discriminatorValue = getDiscriminatorValueForRole(roleDto.getRole());
+            int updateCount = userRepository.updateUserTypeAndRole(
+                    member.getUser().getId(),
+                    discriminatorValue,
+                    roleDto.getRole().name()
+            );
+
+            if (updateCount != 1) {
+                throw new RuntimeException("Erreur lors de la mise à jour du rôle de l'utilisateur.");
+            }
+
+            // Forcer le rafraîchissement
+            userRepository.flush();
+
+            log.info("Rôle de l'utilisateur {} mis à jour : {} -> {}",
+                    member.getUser().getEmail(), member.getUser().getRole(), roleDto.getRole());
         }
+
         TeamMember updatedMember = memberRepository.save(member);
         return memberMapper.toDto(updatedMember, fileStorageService);
     }
