@@ -8,11 +8,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
+
+    // Override standard findById to exclude deleted events
+    @Query("SELECT e FROM Event e WHERE e.id = :id AND e.deleted = false")
+    Optional<Event> findById(@Param("id") Long id);
+
+    // Find by ID including deleted events (for admin purposes)
+    @Query("SELECT e FROM Event e WHERE e.id = :id")
+    Optional<Event> findByIdIncludingDeleted(@Param("id") Long id);
+
+    // Find all non-deleted events
+    @Query("SELECT e FROM Event e WHERE e.deleted = false")
+    List<Event> findAll();
 
     @Query("SELECT e FROM Event e " +
             "LEFT JOIN FETCH e.audienceZones az " +
@@ -20,7 +33,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
             "LEFT JOIN FETCH t.area a " +
             "LEFT JOIN FETCH e.categories " +
             "LEFT JOIN FETCH e.structure " +
-            "WHERE e.id = :id")
+            "WHERE e.id = :id AND e.deleted = false")
     Optional<Event> findByIdWithAudienceZones(@Param("id") Long id);
 
     boolean existsByStructureIdAndStatusIn(Long structureId, Set<EventStatus> published);

@@ -2,6 +2,7 @@ package edu.cda.project.ticklybackend.services.interfaces;
 
 import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
+import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -87,10 +88,11 @@ public interface EventService {
      * Ajoute une image à la galerie d'un événement.
      *
      * @param eventId ID de l'événement.
-     * @param file    Le fichier image à ajouter.
+     * @param files   Les fichiers images à ajouter.
      * @return L'URL complète de l'image ajoutée.
      */
-    String addEventGalleryImage(Long eventId, MultipartFile file);
+    List<FileUploadResponseDto> addEventGalleryImages(Long eventId, MultipartFile[] files);
+
 
     /**
      * Supprime une image de la galerie d'un événement.

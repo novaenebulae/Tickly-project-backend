@@ -23,7 +23,6 @@ public class EventSummaryDto {
     private String city; // Ville de la structure (ou de l'événement si adresse spécifique)
     private Long structureId;
     private String structureName; // Nom de la structure
-    private boolean isFreeEvent;
     private String mainPhotoUrl; // URL complète de la photo principale
     private EventStatus status;
     private boolean isFeaturedEvent;

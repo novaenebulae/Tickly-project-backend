@@ -4,7 +4,6 @@ import edu.cda.project.ticklybackend.dtos.structure.AddressDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +22,6 @@ public class EventUpdateDto {
     private String name;
 
     @Schema(description = "Liste des IDs des catégories de l'événement.", example = "[1, 3, 5]")
-    @NotNull(message = "Au moins une catégorie est requise.")
     @Size(min = 1, message = "Au moins une catégorie doit être sélectionnée.")
     private List<Long> categoryIds;
 
@@ -48,9 +46,7 @@ public class EventUpdateDto {
     @Valid
     private AddressDto address;
 
-    @NotNull
     @Schema(description = "Nouvelle configuration des zones d'audience (remplace l'ancienne).")
-    @Size(min = 1, message = "An event must have at least one audience zone.")
     @Valid
     private List<EventAudienceZoneConfigDto> audienceZones;
 

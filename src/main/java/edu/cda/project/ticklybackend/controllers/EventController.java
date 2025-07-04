@@ -97,8 +97,8 @@ public class EventController {
 
 
     @Operation(
-            summary = "Mettre à jour un événement existant",
-            description = "Met à jour les informations d'un événement. Seul le propriétaire de l'événement (via sa structure) peut effectuer cette action.",
+            summary = "Mettre à jour partiellement un événement existant",
+            description = "Met à jour les informations d'un événement. Seuls les champs fournis seront modifiés. Seul le propriétaire de l'événement peut effectuer cette action.",
             security = @SecurityRequirement(name = "bearerAuth"),
             responses = {
                     @ApiResponse(responseCode = "200", description = "Événement mis à jour avec succès", content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventDetailResponseDto.class))),
@@ -107,11 +107,14 @@ public class EventController {
                     @ApiResponse(responseCode = "404", description = "Événement non trouvé")
             }
     )
-    @PutMapping("/events/{eventId}")
+    @PatchMapping("/events/{eventId}")
     @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
-    public ResponseEntity<EventDetailResponseDto> updateEvent(@Parameter(description = "ID de l'événement à mettre à jour") @PathVariable Long eventId, @Valid @RequestBody EventUpdateDto updateDto) {
+    public ResponseEntity<EventDetailResponseDto> updateEvent(
+            @Parameter(description = "ID de l'événement à mettre à jour") @PathVariable Long eventId,
+            @Valid @RequestBody EventUpdateDto updateDto) {
         return ResponseEntity.ok(eventService.updateEvent(eventId, updateDto));
     }
+
 
     @Operation(
             summary = "Supprimer un événement",
@@ -163,18 +166,18 @@ public class EventController {
     }
 
     @Operation(
-            summary = "Ajouter une image à la galerie d'un événement",
-            description = "Ajoute une nouvelle image à la galerie. Seul le propriétaire peut effectuer cette action.",
+            summary = "Ajouter des images à la galerie d'un événement",
+            description = "Ajoute de nouvelles images à la galerie.",
             security = @SecurityRequirement(name = "bearerAuth"),
             responses = @ApiResponse(responseCode = "200", description = "Image ajoutée", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
     )
     @PostMapping(value = "/events/{eventId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
-    public ResponseEntity<FileUploadResponseDto> addGalleryImage(
-            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
-            @Parameter(description = "Fichier image à ajouter") @RequestParam("file") MultipartFile file) {
-        String fileUrl = eventService.addEventGalleryImage(eventId, file);
-        return ResponseEntity.ok(new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Image ajoutée à la galerie."));
+    public ResponseEntity<List<FileUploadResponseDto>> addGalleryImages(
+            @PathVariable Long eventId,
+            @RequestParam("files") MultipartFile[] files) {
+        List<FileUploadResponseDto> responses = eventService.addEventGalleryImages(eventId, files);
+        return ResponseEntity.ok(responses);
     }
 
     @Operation(
