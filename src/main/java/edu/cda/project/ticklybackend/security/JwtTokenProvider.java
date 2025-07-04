@@ -29,19 +29,19 @@ public class JwtTokenProvider {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+
         if (userDetails instanceof User user) {
             claims.put("userId", user.getId());
             claims.put("role", user.getRole().name());
-            if (user.getNeedsStructureSetup() != null) {
-                claims.put("needsStructureSetup", user.getNeedsStructureSetup());
-            }
-            // CORRECTION : Utiliser user.getStructure() au lieu de ((StaffUser) userDetails).getStructure()
+            // Correction : Vérifier si la structure n'est pas nulle avant d'accéder à son ID
             if (user.getStructure() != null) {
                 claims.put("structureId", user.getStructure().getId());
             }
         }
+
         return createToken(claims, userDetails.getUsername());
     }
+
 
     // Crée le token avec les claims et le sujet (email de l'utilisateur)
     private String createToken(Map<String, Object> claims, String subject) {

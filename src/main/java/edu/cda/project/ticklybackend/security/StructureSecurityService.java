@@ -4,6 +4,7 @@ import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,8 +40,29 @@ public class StructureSecurityService {
                 .orElse(false);
     }
 
+    /**
+     * Nouvelle méthode pour vérifier si un utilisateur a le droit de créer une structure.
+     *
+     * @param authentication L'objet d'authentification de Spring Security.
+     * @return true si l'utilisateur peut créer une structure, false sinon.
+     */
+    @Transactional(readOnly = true)
+    public boolean canCreateStructure(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            return false;
+        }
 
-    // TODO : implémenter la vérification dans le repo.
+        User user = (User) authentication.getPrincipal();
+
+        // Vérifie si l'utilisateur a le rôle 'ROLE_SPECTATOR', que son email est validé
+        // et qu'il n'est pas déjà lié à une structure.
+        boolean hasSpectatorRole = user.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_SPECTATOR"));
+
+        // Assurez-vous que votre entité User a les getters `isEmailValidated()` et `getStructureId()`
+        return hasSpectatorRole && user.isEmailValidated();
+    }
+
 
     /**
      * Vérifie si l'utilisateur spécifié est l'administrateur de la structure à laquelle appartient la zone (Area).

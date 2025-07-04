@@ -100,40 +100,39 @@ VALUES (1, 'L''Arsenal',
 -- La colonne `user_type` est définie à 'User' pour correspondre à la stratégie d'héritage de base.
 
 
-INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at,
-                   needs_structure_setup, user_type, avatar_path, is_email_validated)
+INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at, user_type,
+                   avatar_path, is_email_validated)
 VALUES
 -- Administrateurs de structure
 (1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_1.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_1.png', 1),
 (2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_2.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_2.png', 1),
 (3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_3.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_3.png', 1),
 (4, 'Damien', 'Robert', 'damien.robert@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_4.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_4.png', 1),
 (5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_5.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_5.png', 1),
 (6, 'François', 'Petit', 'francois.petit@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_6.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_6.png', 1),
 (7, 'Gabrielle', 'Laurent', 'gabrielle.laurent@tickly.dev',
- '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(), 0,
+ '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(),
  'STRUCTURE_ADMINISTRATOR',
  'avatar_7.png', 1),
 (8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', 'avatar_8.png', 1),
+ 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_8.png', 1),
 -- Spectateurs
 (9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', 'avatar_9.png', 1),
+ 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_9.png', 1),
 (10, 'Julien', 'Garcia', 'julien.garcia@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', 'avatar_10.png', 1),
+ 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_10.png', 1),
 (11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 0, 'SPECTATOR', 'avatar_11.png', 1),
+ 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_11.png', 1),
 (12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'SPECTATOR',
- NULL, NOW(), NOW(), 0, 'SPECTATOR', 'avatar_12.png', 1),
+ NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_12.png', 1),
 (13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 0, 'STRUCTURE_ADMINISTRATOR', '', 1);
-
+ 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', '', 1);
 
 -- ##################################################
 -- # 4. MISE À JOUR DE LA TABLE `structures`        #

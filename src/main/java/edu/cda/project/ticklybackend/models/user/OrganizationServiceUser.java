@@ -22,6 +22,5 @@ public class OrganizationServiceUser extends StaffUser {
         this.setEmail(email);
         this.setPassword(password);
         this.setRole(UserRole.ORGANIZATION_SERVICE);
-        this.setNeedsStructureSetup(false);
     }
 }

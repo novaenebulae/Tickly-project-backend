@@ -49,7 +49,7 @@ public class StructureController {
             @ApiResponse(responseCode = "403", description = "L'utilisateur n'est pas autorisé à créer une structure ou en a déjà une")
     })
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_STRUCTURE_ADMINISTRATOR') and #authentication.principal.needsStructureSetup == true")
+    @PreAuthorize("@structureSecurityService.canCreateStructure(authentication)")
     public ResponseEntity<StructureCreationResponseDto> createStructure(
             @Parameter(description = "DTO pour la création de la structure", required = true)
             @Valid @RequestBody StructureCreationDto creationDto,

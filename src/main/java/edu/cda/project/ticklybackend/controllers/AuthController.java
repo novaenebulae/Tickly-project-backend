@@ -1,16 +1,20 @@
 package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dtos.auth.*;
+import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -66,5 +70,20 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetDto resetDto) {
         authService.resetPassword(resetDto);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Rafraîchir le token JWT", 
+            description = "Génère un nouveau token JWT pour l'utilisateur actuellement authentifié.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token rafraîchi avec succès", 
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Authentification requise")
+    })
+    @PostMapping("/refresh-token")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<AuthResponseDto> refreshToken(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        AuthResponseDto authResponse = authService.refreshToken(user);
+        return ResponseEntity.ok(authResponse);
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -60,9 +61,6 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private Structure structure;
 
-    // Indique si un administrateur de structure doit configurer sa structure
-    private Boolean needsStructureSetup;
-
     // Chemin vers le fichier avatar de l'utilisateur (sera géré plus tard)
     private String avatarPath;
 
@@ -73,6 +71,9 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @UpdateTimestamp // Géré automatiquement par Hibernate
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "consent_given_at")
+    private LocalDateTime consentGivenAt;
 
 
     // Implémentation des méthodes de UserDetails pour Spring Security

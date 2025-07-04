@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.dtos.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,8 +26,9 @@ public class UserRegistrationDto {
     @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères.")
     private String password;
 
-    @Schema(description = "Indique si l'utilisateur s'inscrit en tant qu'administrateur et doit créer une structure. Si non fourni, la valeur par défaut est false.")
-    private Boolean createStructure = false;
+
+    @AssertTrue(message = "Vous devez accepter les termes pour vous inscrire.")
+    private boolean termsAccepted;
 
     /**
      * Si un token d'invitation est fourni, le processus d'inscription

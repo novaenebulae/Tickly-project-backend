@@ -22,6 +22,5 @@ public class ReservationServiceUser extends StaffUser {
         this.setEmail(email);
         this.setPassword(password);
         this.setRole(UserRole.RESERVATION_SERVICE);
-        this.setNeedsStructureSetup(false);
     }
 }

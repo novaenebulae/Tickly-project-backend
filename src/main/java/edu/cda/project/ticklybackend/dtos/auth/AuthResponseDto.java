@@ -24,7 +24,6 @@ public class AuthResponseDto {
     private String firstName;
     private String lastName;
     private UserRole role;
-    private Boolean needsStructureSetup; // Pour STRUCTURE_ADMINISTRATOR
     private Long structureId; // ID de la structure associée (pour StaffUser)
     private String avatarUrl; // URL complète de l'avatar
 }

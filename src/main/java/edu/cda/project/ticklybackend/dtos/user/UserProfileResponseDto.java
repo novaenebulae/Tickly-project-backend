@@ -22,5 +22,4 @@ public class UserProfileResponseDto {
     private String avatarUrl; // URL complète de l'avatar
     private Instant createdAt;
     private Instant updatedAt;
-    private Boolean needsStructureSetup; // Pour les admins de structure
 }

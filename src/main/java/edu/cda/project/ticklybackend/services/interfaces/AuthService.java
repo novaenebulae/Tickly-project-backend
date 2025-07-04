@@ -5,6 +5,7 @@ import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
+import edu.cda.project.ticklybackend.models.user.User;
 
 
 public interface AuthService {
@@ -42,4 +43,12 @@ public interface AuthService {
      * @param passwordResetDto DTO contenant le token et le nouveau mot de passe.
      */
     void resetPassword(PasswordResetDto passwordResetDto);
+
+    /**
+     * Rafraîchit le token JWT de l'utilisateur actuel.
+     *
+     * @param user L'utilisateur actuel.
+     * @return Un DTO de réponse d'authentification avec un nouveau token JWT.
+     */
+    AuthResponseDto refreshToken(User user);
 }

@@ -20,7 +20,6 @@ public class SpectatorUser extends User {
         this.setEmail(email);
         this.setPassword(password);
         this.setRole(UserRole.SPECTATOR);
-        this.setNeedsStructureSetup(false);
     }
 
     // Constructeur par défaut requis par JPA

@@ -38,8 +38,16 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
      * @param structureId ID de la structure à associer
      * @return Nombre de lignes mises à jour
      */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "UPDATE users SET " +
+            "user_type = 'STRUCTURE_ADMINISTRATOR', " +
+            "role = 'STRUCTURE_ADMINISTRATOR', " +
+            "structure_id = :structureId " +
+            "WHERE id = :userId", nativeQuery = true)
+    void upgradeUserToStructureAdmin(@Param("userId") Long userId, @Param("structureId") Long structureId);
+
     @Modifying
-    @Query(value = "UPDATE users SET user_type = :userType, role = :role, structure_id = :structureId, needs_structure_setup = false WHERE id = :userId", nativeQuery = true)
+    @Query(value = "UPDATE users SET user_type = :userType, role = :role, structure_id = :structureId WHERE id = :userId", nativeQuery = true)
     int updateUserTypeAndStructure(@Param("userId") Long userId,
                                    @Param("userType") String userType,
                                    @Param("role") String role,
@@ -60,6 +68,7 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
                               @Param("userType") String userType,
                               @Param("role") String role);
 
+
     /**
      * Convertit un utilisateur Staff en Spectator en supprimant l'association à la structure.
      * Cette méthode est utilisée lors de la suppression d'un membre d'équipe.
@@ -68,7 +77,7 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
      * @return Nombre de lignes mises à jour
      */
     @Modifying
-    @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL, needs_structure_setup = false WHERE id = :userId", nativeQuery = true)
+    @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL WHERE id = :userId", nativeQuery = true)
     int convertUserToSpectator(@Param("userId") Long userId);
 
     /**
@@ -79,6 +88,6 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
      * @return Nombre de lignes mises à jour
      */
     @Modifying
-    @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL, needs_structure_setup = false WHERE structure_id = :structureId", nativeQuery = true)
+    @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL WHERE structure_id = :structureId", nativeQuery = true)
     int convertAllStructureUsersToSpectator(@Param("structureId") Long structureId);
 }

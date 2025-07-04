@@ -3,9 +3,11 @@ package edu.cda.project.ticklybackend.services.impl;
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.structure.*;
 import edu.cda.project.ticklybackend.enums.EventStatus;
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.FileStorageException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
+import edu.cda.project.ticklybackend.exceptions.StructureCreationForbiddenException;
 import edu.cda.project.ticklybackend.mappers.structure.*;
 import edu.cda.project.ticklybackend.models.structure.*;
 import edu.cda.project.ticklybackend.models.user.StaffUser;
@@ -17,6 +19,7 @@ import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureTypeRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserFavoriteStructureRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
+import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StructureService;
@@ -48,6 +51,8 @@ public class StructureServiceImpl implements StructureService {
 
     private static final Logger logger = LoggerFactory.getLogger(StructureServiceImpl.class);
 
+    private final JwtTokenProvider jwtTokenProvider;
+
     private final StructureRepository structureRepository;
     private final StructureTypeRepository structureTypeRepository;
     private final StructureAreaRepository structureAreaRepository;
@@ -71,41 +76,39 @@ public class StructureServiceImpl implements StructureService {
     private static final String GALLERY_SUBDIR = "structures/gallery";
 
     @Override
-    public StructureCreationResponseDto createStructure(StructureCreationDto creationDto, String adminEmail) {
-        User admin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", adminEmail));
+    public StructureCreationResponseDto createStructure(StructureCreationDto creationDto, String userEmail) {
+        // 1. Trouver l'utilisateur qui crée la structure.
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", userEmail));
 
-        if (admin.getRole() != edu.cda.project.ticklybackend.enums.UserRole.STRUCTURE_ADMINISTRATOR ||
-                Boolean.FALSE.equals(admin.getNeedsStructureSetup())) {
-            throw new BadRequestException("L'utilisateur n'est pas autorisé à créer une structure ou en a déjà une.");
+        // 2. Vérifier si l'utilisateur est autorisé à créer une structure.
+        if (user.getStructure() != null || user.getRole() != UserRole.SPECTATOR) {
+            throw new StructureCreationForbiddenException("L'utilisateur est déjà associé à une structure.");
         }
 
+        // 3. Créer et sauvegarder la nouvelle structure.
         Structure structure = structureMapper.toEntity(creationDto);
-        structure.setAdministrator(admin);
-
-        Set<StructureType> types = new HashSet<>(structureTypeRepository.findAllById(creationDto.getTypeIds()));
-        if (types.size() != creationDto.getTypeIds().size()) {
-            throw new BadRequestException("Un ou plusieurs IDs de type de structure sont invalides.");
-        }
-        structure.setTypes(types);
-
+        // Ici, vous pouvez ajouter une logique pour l'adresse, etc.
         Structure savedStructure = structureRepository.save(structure);
 
-        // Update admin user
-        admin.setNeedsStructureSetup(false);
-        if (admin instanceof StaffUser) { // Should be StructureAdministratorUser
-            ((StaffUser) admin).setStructure(savedStructure);
-        }
-        userRepository.save(admin);
-        logger.info("Structure {} créée par l'administrateur {}", savedStructure.getName(), adminEmail);
+        // 4. Mettre à jour l'utilisateur pour en faire un administrateur de structure.
+        userRepository.upgradeUserToStructureAdmin(user.getId(), savedStructure.getId());
 
+        // 5. Récupérer l'utilisateur mis à jour pour générer un nouveau token.
+        User updatedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", user.getId()));
 
-        return new StructureCreationResponseDto(
-                savedStructure.getId(),
-                savedStructure.getName(),
-                "Structure créée avec succès.",
-                true // needsReAuth
-        );
+        // 6. Générer un nouveau token JWT qui inclura le structureId.
+        String newJwt = jwtTokenProvider.generateToken(updatedUser);
+
+        // 7. Préparer la réponse DTO avec le nouveau token.
+        StructureCreationResponseDto responseDto = new StructureCreationResponseDto();
+        responseDto.setStructureId(savedStructure.getId());
+        responseDto.setMessage("Structure créée avec succès. L'utilisateur a été promu Administrateur de Structure.");
+        responseDto.setAccessToken(newJwt);
+        responseDto.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
+
+        return responseDto;
     }
 
     @Transactional(readOnly = true)
@@ -210,7 +213,6 @@ public class StructureServiceImpl implements StructureService {
         if (admin instanceof StaffUser) {
             log.info("Dissociation de l'administrateur ID: {} de la structure supprimée.", admin.getId());
             ((StaffUser) admin).setStructure(null);
-            admin.setNeedsStructureSetup(true);
             userRepository.save(admin);
         }
 

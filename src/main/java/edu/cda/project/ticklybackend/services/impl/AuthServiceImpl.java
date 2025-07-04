@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +77,9 @@ public class AuthServiceImpl implements AuthService {
                 passwordEncoder.encode(registrationDto.getPassword())
         );
         newUser.setEmailValidated(true); // Email validé via invitation
+
+        newUser.setConsentGivenAt(LocalDateTime.now());
+
         User savedUser = userRepository.save(newUser);
 
         // 2. Accepter l'invitation (transforme l'utilisateur et retourne les infos complètes)
@@ -103,26 +107,17 @@ public class AuthServiceImpl implements AuthService {
     private AuthResponseDto registerStandardUser(UserRegistrationDto registrationDto) {
         log.info("Début du flux d'inscription standard pour {}", registrationDto.getEmail());
 
-        User newUser;
-        if (Boolean.TRUE.equals(registrationDto.getCreateStructure())) {
-            newUser = new StructureAdministratorUser(
-                    registrationDto.getFirstName(),
-                    registrationDto.getLastName(),
-                    registrationDto.getEmail(),
-                    passwordEncoder.encode(registrationDto.getPassword()),
-                    null,
-                    true
-            );
-        } else {
-            newUser = new SpectatorUser(
-                    registrationDto.getFirstName(),
-                    registrationDto.getLastName(),
-                    registrationDto.getEmail(),
-                    passwordEncoder.encode(registrationDto.getPassword())
-            );
-        }
+        User newUser = new SpectatorUser(
+                registrationDto.getFirstName(),
+                registrationDto.getLastName(),
+                registrationDto.getEmail(),
+                passwordEncoder.encode(registrationDto.getPassword())
+        );
 
         newUser.setEmailValidated(false); // L'email doit être validé
+
+        newUser.setConsentGivenAt(LocalDateTime.now());
+
         User savedUser = userRepository.save(newUser);
 
         // Créer un token et envoyer l'e-mail de validation
@@ -228,6 +223,16 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         tokenService.markTokenAsUsed(token);
         return generateAuthResponse(user);
+    }
+
+    @Override
+    public AuthResponseDto refreshToken(User user) {
+        // Recharger l'utilisateur depuis la base de données pour s'assurer d'avoir les données les plus récentes
+        User refreshedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", user.getId()));
+
+        // Générer un nouveau token JWT
+        return generateAuthResponse(refreshedUser);
     }
 
 }

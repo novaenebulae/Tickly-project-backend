@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 public class StructureAdministratorUser extends StaffUser {
 
 
-    public StructureAdministratorUser(String firstName, String lastName, String email, String password, Structure structure, boolean needsStructureSetup) {
+    public StructureAdministratorUser(String firstName, String lastName, String email, String password, Structure structure) {
         super();
         this.setFirstName(firstName);
         this.setLastName(lastName);
@@ -22,7 +22,6 @@ public class StructureAdministratorUser extends StaffUser {
         this.setPassword(password);
         this.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
         this.setStructure(structure);
-        this.setNeedsStructureSetup(needsStructureSetup);
     }
 
     public StructureAdministratorUser() {

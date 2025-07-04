@@ -23,7 +23,11 @@ public class StructureCreationResponseDto {
     @Schema(description = "Message confirmant la création.", example = "Structure créée avec succès.")
     private String message;
 
-    @Schema(description = "Indique si le client (administrateur de structure) doit se réauthentifier " +
-            "pour mettre à jour son token JWT avec le nouveau structureId associé.", example = "true")
-    private boolean needsReAuth;
+    private Long structureId;
+
+    private String accessToken;
+
+    private long expiresIn;
+
+
 }
