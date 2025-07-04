@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.repositories.user;
 
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,6 +19,16 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
 
     // Vérifie si un utilisateur existe avec cet email
     boolean existsByEmail(String email);
+
+    /**
+     * Recherche tous les utilisateurs associés à une structure spécifique avec un rôle donné.
+     * Utilisé pour trouver les administrateurs d'une structure avant sa suppression.
+     *
+     * @param structureId L'ID de la structure.
+     * @param role        Le rôle de l'utilisateur.
+     * @return Une liste d'utilisateurs correspondant aux critères.
+     */
+    List<User> findByStructureIdAndRole(Long structureId, UserRole role);
 
     /**
      * Récupère un utilisateur avec sa structure chargée (fetch join) pour éviter LazyInitializationException.
@@ -30,13 +42,10 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
 
     /**
      * Met à jour le type d'utilisateur (discriminateur), le rôle et la structure via requête native.
-     * Cette méthode est utilisée lors de l'acceptation d'invitations pour transformer un SpectatorUser en StaffUser.
+     * Cette méthode est utilisée lors de la création d'une structure pour promouvoir le créateur.
      *
      * @param userId      ID de l'utilisateur à mettre à jour
-     * @param userType    Nouveau type d'utilisateur (discriminateur)
-     * @param role        Nouveau rôle
      * @param structureId ID de la structure à associer
-     * @return Nombre de lignes mises à jour
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "UPDATE users SET " +
@@ -90,4 +99,5 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
     @Modifying
     @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL WHERE structure_id = :structureId", nativeQuery = true)
     int convertAllStructureUsersToSpectator(@Param("structureId") Long structureId);
+
 }

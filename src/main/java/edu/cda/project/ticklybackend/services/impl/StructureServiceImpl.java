@@ -10,7 +10,6 @@ import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.exceptions.StructureCreationForbiddenException;
 import edu.cda.project.ticklybackend.mappers.structure.*;
 import edu.cda.project.ticklybackend.models.structure.*;
-import edu.cda.project.ticklybackend.models.user.StaffUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
@@ -159,25 +158,29 @@ public class StructureServiceImpl implements StructureService {
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
 
-        // GARDE-FOU: Interdire la suppression si des événements sont encore actifs ou en brouillon.
-        if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED, EventStatus.DRAFT))) {
-            throw new BadRequestException("Suppression impossible : Des événements actifs ou en brouillon existent pour cette structure. " +
+        // GARDE-FOU: Interdire la suppression si des événements sont encore actifs.
+        if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED))) {
+            throw new BadRequestException("Suppression impossible : Des événements actifs existent pour cette structure. " +
                     "Pour supprimer la structure, vous devez d'abord :\n" +
                     "1. Accéder à la liste des événements de votre structure\n" +
                     "2. Annuler tous les événements actifs (statut PUBLISHED)\n" +
-                    "3. Supprimer tous les brouillons (statut DRAFT)\n" +
-                    "Une fois tous les événements traités, vous pourrez supprimer la structure.");
+                    "Une fois tous les événements actifs traités, vous pourrez supprimer la structure.");
         }
 
         // Sauvegarde des informations pour la notification avant l'anonymisation
-        User admin = structure.getAdministrator();
         String originalStructureName = structure.getName();
+
+        // NOUVELLE ÉTAPE : Récupérer les administrateurs pour la notification future.
+        // Note : Vous devrez ajouter la méthode `findByStructureIdAndRole` à votre UserRepository.
+        List<User> administratorsToNotify = userRepository.findByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+        log.info("Trouvé {} administrateur(s) à notifier pour la structure ID: {}", administratorsToNotify.size(), structureId);
+
 
         // 1. Dissolution des relations
         log.info("Suppression des favoris pour la structure ID: {}", structureId);
         favoriteRepository.deleteByStructureId(structureId);
 
-        // Dissolution de l'équipe - conversion des membres en SPECTATOR
+        // Dissolution de l'équipe - convertit tous les membres (y compris les admins) en SPECTATOR
         log.info("Dissolution de l'équipe pour la structure ID: {}", structureId);
         teamService.dissolveTeam(structureId);
 
@@ -204,22 +207,16 @@ public class StructureServiceImpl implements StructureService {
         structure.getGalleryImagePaths().clear();
         structure.getSocialMediaLinks().clear();
         structure.setActive(false);
-        structure.setAdministrator(null); // Rompre le lien avec l'admin
 
         structureRepository.save(structure);
         log.info("Anonymisation de la structure ID: {} terminée.", structureId);
 
-        // 4. Dissociation de l'administrateur
-        if (admin instanceof StaffUser) {
-            log.info("Dissociation de l'administrateur ID: {} de la structure supprimée.", admin.getId());
-            ((StaffUser) admin).setStructure(null);
-            userRepository.save(admin);
-        }
-
-        // 5. Communication finale
-        if (admin != null) {
-            mailingService.sendStructureDeletionConfirmation(admin.getEmail(), admin.getFirstName(), originalStructureName);
-        }
+        // 4. Communication finale aux administrateurs
+        // La dissociation manuelle est désormais gérée par teamService.dissolveTeam()
+        log.info("Envoi des notifications de suppression aux anciens administrateurs...");
+        administratorsToNotify.forEach(admin ->
+                mailingService.sendStructureDeletionConfirmation(admin.getEmail(), admin.getFirstName(), originalStructureName)
+        );
 
         log.warn("Suppression de la structure ID: {} terminée avec succès.", structureId);
     }

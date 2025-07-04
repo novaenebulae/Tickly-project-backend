@@ -34,60 +34,60 @@ VALUES (1, 'Salle de concert', 'icon-concert-hall'),
 -- La mise à jour sera faite à l'étape 4.
 
 INSERT INTO structures (id, name, description, phone, email, website_url, is_active, street, city, zip_code, country,
-                        created_at, updated_at, logo_path, cover_path, administrator_id)
+                        created_at, updated_at, logo_path, cover_path)
 VALUES (1, 'L''Arsenal',
         'Prestigieuse salle de concert et lieu d''exposition réputé pour son acoustique exceptionnelle.', '0387399200',
         'contact@arsenal-metz.fr', 'https://www.citemusicale-metz.fr', 1, '3 Avenue Ney', 'Metz', '57000', 'France',
         NOW(), NOW(), 'logo_arsenal.jpg',
-        'cover_arsenal.jpg', NULL),
+        'cover_arsenal.jpg'),
        (2, 'La BAM (Boîte à Musiques)',
         'Salle de musiques actuelles moderne, avec studios de répétition et une programmation éclectique.',
         '0387393470', 'contact@bam-metz.fr', 'https://www.citemusicale-metz.fr/la-bam', 1, '20 Boulevard d''Alsace',
         'Metz', '57070', 'France', NOW(), NOW(), 'logo_bam.jpg',
-        'cover_bam.jpg', NULL),
+        'cover_bam.jpg'),
        (3, 'Opéra-Théâtre de Metz',
         'Le plus ancien opéra-théâtre en activité en France, proposant des productions lyriques et théâtrales.',
         '0387156060', 'billetterie@opera.metzmetropole.fr', 'https://opera.eurometropolemetz.eu', 1,
         '4-5 Place de la Comédie', 'Metz', '57000', 'France', NOW(), NOW(),
-        'logo_opera.jpg', 'cover_opera.jpg', NULL),
+        'logo_opera.jpg', 'cover_opera.jpg'),
        (4, 'Stade Saint-Symphorien', 'Principal stade de football de la ville, accueillant les matchs du FC Metz.',
         '0387667215', 'contact@fcmetz.com', 'https://www.fcmetz.com', 1, '3 Allée Saint-Symphorien',
         'Longeville-lès-Metz', '57050', 'France', NOW(), NOW(), 'logo_fcmetz.png',
-        'cover_fcmetz.jpg', NULL),
+        'cover_fcmetz.jpg'),
        (5, 'Parc des Expositions de Metz Métropole',
         'Vaste complexe pour foires, salons professionnels et expositions de grande envergure.', '0387556600',
         'info@metz-expo.com', 'https://www.metz-expo.com', 1, 'Rue de la Grange aux Bois', 'Metz', '57070', 'France',
         NOW(), NOW(), 'logo_parcexpo.jpg',
-        'cover_parcexpo.jpg', NULL),
+        'cover_parcexpo.jpg'),
        (6, 'Les Trinitaires',
         'Lieu culturel historique situé dans un ancien couvent, avec un caveau jazz et une chapelle pour concerts.',
         '0387200303', 'contact@lestrinitaires.com', 'https://www.citemusicale-metz.fr/les-trinitaires', 1,
         '12 Rue des Trinitaires', 'Metz', '57000', 'France', NOW(), NOW(),
         'logo_trinitaires.jpg',
-        'cover_trinitaires.jpg', NULL),
+        'cover_trinitaires.jpg'),
        (7, 'Comédie de Metz', 'Théâtre dédié à l''humour et aux comédies, situé dans un quartier historique.',
         '0781511512', 'comediedemetz@gmail.com', 'https://www.comediedemetz.fr', 1, '1/3 Rue du Pont Saint-Marcel',
         'Metz', '57000', 'France', NOW(), NOW(), 'logo_comedie.png',
-        'cover_comedie.jpg', NULL),
+        'cover_comedie.jpg'),
        (8, 'Salle Braun', 'Théâtre intimiste proposant une programmation variée, notamment pour le jeune public.',
         '0668092756', 'directionsallebraun@gmail.com', 'https://sallebraun.com', 1, '18 Rue Mozart', 'Metz', '57000',
         'France', NOW(), NOW(), 'logo_braun.png',
-        'cover_braun.jpg', NULL),
+        'cover_braun.jpg'),
        (9, 'Metz Congrès Robert Schuman',
         'Centre de congrès moderne face au Centre Pompidou, idéal pour les conventions et séminaires.', '0387556600',
         'congres@metz-evenements.com', 'https://www.metz-evenements.com', 1, '112 Rue aux Arènes', 'Metz', '57000',
         'France', NOW(), NOW(), 'logo_congres.jpg',
-        'cover_congres.png', NULL),
+        'cover_congres.png'),
        (10, 'Centre Pompidou-Metz',
         'Musée d''art moderne et contemporain de renommée internationale, à l''architecture audacieuse.', '0387153939',
         'contact@centrepompidou-metz.fr', 'https://www.centrepompidou-metz.fr', 1, '1 Parvis des Droits-de-l''Homme',
         'Metz', '57000', 'France', NOW(), NOW(), 'logo_pompidou.png',
-        'cover_pompidou.jpg', NULL),
+        'cover_pompidou.jpg'),
        (11, 'Les Arènes de Metz',
         'Palais omnisports polyvalent accueillant des événements sportifs majeurs et des concerts de grande ampleur.',
         '0387629360', 'contact@arenes-metz.com', 'https://www.arenes-metz.com', 1, '5 Avenue Louis le Débonnaire',
         'Metz', '57000', 'France', NOW(), NOW(), 'logo_arenes.png',
-        'cover_arenes.jpg', NULL);
+        'cover_arenes.jpg');
 
 -- ##################################################
 -- # 3. PEUPLEMENT DE LA TABLE `users`              #
@@ -134,46 +134,6 @@ VALUES
 (13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
  'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', '', 1);
 
--- ##################################################
--- # 4. MISE À JOUR DE LA TABLE `structures`        #
--- ##################################################
--- Assignation des administrateurs aux structures pour finaliser la relation.
-
-UPDATE structures
-SET administrator_id = 1
-WHERE id = 1;
-UPDATE structures
-SET administrator_id = 2
-WHERE id = 2;
-UPDATE structures
-SET administrator_id = 3
-WHERE id = 3;
-UPDATE structures
-SET administrator_id = 4
-WHERE id = 4;
-UPDATE structures
-SET administrator_id = 5
-WHERE id = 5;
-UPDATE structures
-SET administrator_id = 6
-WHERE id = 6;
-UPDATE structures
-SET administrator_id = 7
-WHERE id = 7;
-UPDATE structures
-SET administrator_id = 8
-WHERE id = 11;
--- Assignation des structures restantes à des administrateurs existants
-UPDATE structures
-SET administrator_id = 1
-WHERE id = 8; -- Salle Braun gérée par Alice Martin
-UPDATE structures
-SET administrator_id = 2
-WHERE id = 9; -- Metz Congrès géré par Baptiste Dubois
-UPDATE structures
-SET administrator_id = 3
-WHERE id = 10;
--- Pompidou géré par Chloé Bernard
 
 -- ##############################################################
 -- # 5. PEUPLEMENT DE LA TABLE DE JOINTURE `structure_has_types` #

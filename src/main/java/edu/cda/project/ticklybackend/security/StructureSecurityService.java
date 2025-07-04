@@ -1,14 +1,13 @@
 package edu.cda.project.ticklybackend.security;
 
-import edu.cda.project.ticklybackend.models.structure.Structure;
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
+import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
 
 /**
  * Service pour gérer la logique de sécurité spécifique aux structures.
@@ -19,24 +18,32 @@ import java.util.Objects;
 public class StructureSecurityService {
 
     private final StructureRepository structureRepository;
+    private final UserRepository userRepository;
 
     /**
-     * Vérifie si l'utilisateur spécifié est l'administrateur de la structure donnée.
+     * Vérifie si l'utilisateur est un administrateur de la structure donnée.
+     * La nouvelle logique se base sur le rôle de l'utilisateur et son ID de structure associé.
      *
      * @param structureId L'ID de la structure.
      * @param userId      L'ID de l'utilisateur.
-     * @return true si l'utilisateur est l'administrateur de la structure, false sinon.
+     * @return true si l'utilisateur est un administrateur de la structure, false sinon.
      */
     @Transactional(readOnly = true)
     public boolean isOwner(Long structureId, Long userId) {
-        if (structureId == null ||
-                userId == null) {
+        if (structureId == null || userId == null) {
             return false;
         }
-        return structureRepository.findById(structureId)
-                .map(Structure::getAdministrator)
-                .map(User::getId)
-                .map(adminId -> Objects.equals(adminId, userId))
+
+        return userRepository.findById(userId)
+                .map(user -> {
+                    // Vérifie 3 conditions :
+                    // 1. L'utilisateur a-t-il un ID de structure ?
+                    // 2. Cet ID de structure correspond-il à celui demandé ?
+                    // 3. L'utilisateur a-t-il le rôle d'administrateur de structure ?
+                    return user.getStructure() != null &&
+                            user.getStructure().getId().equals(structureId) &&
+                            user.getRole() == UserRole.STRUCTURE_ADMINISTRATOR;
+                })
                 .orElse(false);
     }
 
@@ -63,23 +70,4 @@ public class StructureSecurityService {
         return hasSpectatorRole && user.isEmailValidated();
     }
 
-
-    /**
-     * Vérifie si l'utilisateur spécifié est l'administrateur de la structure à laquelle appartient la zone (Area).
-     *
-     * @param areaId L'ID de la StructureArea.
-     * @param userId L'ID de l'utilisateur.
-     * @return true si l'utilisateur est l'administrateur de la structure parente, false sinon.
-     */
-    @Transactional(readOnly = true)
-    public boolean isAreaOwnerViaStructure(Long areaId, Long userId) {
-        // Cette méthode nécessiterait que StructureAreaRepository ait une méthode pour remonter à la structure
-        // ou que StructureArea ait une référence directe à l'ID de l'administrateur de sa structure.
-        // Pour simplifier, on suppose que la vérification se fait sur la structureId passée en paramètre au contrôleur.
-        // Si une vérification plus profonde est nécessaire, il faudrait enrichir les entités/repositories.
-        // Par exemple, si le contrôleur a déjà la structureId:
-        // @PreAuthorize("... @structureSecurityService.isOwner(#structureId, authentication.principal.id)")
-        // Cette méthode est un placeholder pour une logique plus complexe si nécessaire.
-        return false; // À implémenter si une vérification directe sur areaId est requise sans structureId.
-    }
 }

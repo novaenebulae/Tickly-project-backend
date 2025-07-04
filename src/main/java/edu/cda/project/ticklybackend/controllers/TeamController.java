@@ -55,14 +55,14 @@ public class TeamController {
 
     @PutMapping("/members/{memberId}/role")
     @Operation(summary = "Mettre à jour le rôle d'un membre de l'équipe")
-    @PreAuthorize("@teamSecurityService.isTeamAdminOfMember(#memberId, authentication.principal)")
+    @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
     public ResponseEntity<TeamMemberDto> updateMemberRole(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRoleDto roleDto) {
         return ResponseEntity.ok(teamService.updateMemberRole(memberId, roleDto));
     }
 
     @DeleteMapping("/members/{memberId}")
     @Operation(summary = "Supprimer un membre de l'équipe")
-    @PreAuthorize("@teamSecurityService.isTeamAdminOfMember(#memberId, authentication.principal)")
+    @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
     public ResponseEntity<Void> removeMember(@PathVariable Long memberId) {
         teamService.removeMember(memberId);
         return ResponseEntity.noContent().build();

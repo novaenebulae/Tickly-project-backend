@@ -1,6 +1,5 @@
 package edu.cda.project.ticklybackend.models.structure;
 
-import edu.cda.project.ticklybackend.models.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -81,10 +80,6 @@ public class Structure {
     @CollectionTable(name = "structure_gallery_images", joinColumns = @JoinColumn(name = "structure_id"))
     @Column(name = "image_path", length = 512)
     private List<String> galleryImagePaths = new ArrayList<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "administrator_id")
-    private User administrator;
 
     @Column(nullable = false)
     private boolean isActive = true;

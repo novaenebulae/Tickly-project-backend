@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.services.impl;
 
+
 import edu.cda.project.ticklybackend.dtos.team.InvitationAcceptanceResponseDto;
 import edu.cda.project.ticklybackend.dtos.team.InviteMemberRequestDto;
 import edu.cda.project.ticklybackend.dtos.team.TeamMemberDto;
@@ -26,10 +27,10 @@ import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.TeamManagementService;
 import edu.cda.project.ticklybackend.services.interfaces.TokenService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -53,7 +54,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    @Transactional(readOnly = true)
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<TeamMemberDto> getTeamMembers(Long structureId) {
         List<TeamMember> members = memberRepository.findByTeamStructureId(structureId);
         return memberMapper.toDtoList(members, fileStorageService);
@@ -106,7 +107,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
     }
 
     @Override
-    @Transactional
+    @org.springframework.transaction.annotation.Transactional
     public InvitationAcceptanceResponseDto acceptInvitation(String token) {
         // 1. Valider le token d'invitation
         VerificationToken invitationToken = tokenService.validateToken(token, TokenType.TEAM_INVITATION);
@@ -197,15 +198,22 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
     @Override
     public TeamMemberDto updateMemberRole(Long memberId, UpdateMemberRoleDto roleDto) {
+        User currentUser = authUtils.getCurrentAuthenticatedUser();
         TeamMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Membre d'équipe", "id", memberId));
 
-        if (member.getUser() != null && member.getTeam().getStructure().getAdministrator().getId().equals(member.getUser().getId())) {
-            throw new BadRequestException("Le rôle de l'administrateur principal de la structure ne peut pas être modifié. " +
-                    "Pour transférer la propriété de la structure, vous devez d'abord :\n" +
-                    "1. Promouvoir un autre membre de l'équipe au rôle d'administrateur\n" +
-                    "2. Contacter le support pour effectuer un transfert de propriété\n" +
-                    "Cette restriction existe pour garantir qu'une structure a toujours un propriétaire désigné.");
+        // Un administrateur ne peut pas modifier son propre rôle.
+        if (member.getUser() != null && currentUser.getId().equals(member.getUser().getId())) {
+            throw new BadRequestException("Vous ne pouvez pas modifier votre propre rôle. Cette action doit être effectuée par un autre administrateur.");
+        }
+
+        // On vérifie si on essaie de rétrograder le dernier administrateur de la structure.
+        if (member.getRole() == UserRole.STRUCTURE_ADMINISTRATOR && roleDto.getRole() != UserRole.STRUCTURE_ADMINISTRATOR) {
+            if (countAdminsForStructure(member.getTeam().getStructure().getId()) <= 1) {
+                throw new BadRequestException("Impossible de rétrograder le dernier administrateur de la structure. " +
+                        "Une structure doit toujours avoir au moins un administrateur. " +
+                        "Veuillez d'abord promouvoir un autre membre au rôle d'administrateur.");
+            }
         }
 
         member.setRole(roleDto.getRole());
@@ -223,11 +231,9 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                 throw new RuntimeException("Erreur lors de la mise à jour du rôle de l'utilisateur.");
             }
 
-            // Forcer le rafraîchissement
             userRepository.flush();
-
             log.info("Rôle de l'utilisateur {} mis à jour : {} -> {}",
-                    member.getUser().getEmail(), member.getUser().getRole(), roleDto.getRole());
+                    member.getUser().getEmail(), member.getRole(), roleDto.getRole());
         }
 
         TeamMember updatedMember = memberRepository.save(member);
@@ -239,29 +245,24 @@ public class TeamManagementServiceImpl implements TeamManagementService {
         TeamMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Membre d'équipe", "id", memberId));
 
-        if (member.getUser() != null && member.getTeam().getStructure().getAdministrator().getId().equals(member.getUser().getId())) {
-            throw new BadRequestException("L'administrateur principal de la structure ne peut pas être supprimé de l'équipe. " +
-                    "Si vous souhaitez quitter l'équipe en tant qu'administrateur principal, vous devez d'abord :\n" +
-                    "1. Promouvoir un autre membre de l'équipe au rôle d'administrateur\n" +
-                    "2. Contacter le support pour effectuer un transfert de propriété\n" +
-                    "3. Ou supprimer complètement la structure si elle n'est plus utilisée\n" +
-                    "Cette restriction garantit qu'une structure active a toujours un propriétaire désigné.");
+        if (member.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
+            if (countAdminsForStructure(member.getTeam().getStructure().getId()) <= 1) {
+                throw new BadRequestException("L'administrateur principal de la structure ne peut pas être supprimé de l'équipe. " +
+                        "Si vous souhaitez quitter l'équipe, vous devez d'abord promouvoir un autre membre au rôle d'administrateur " +
+                        "ou supprimer complètement la structure si elle n'est plus utilisée. " +
+                        "Cette restriction garantit qu'une structure active a toujours un propriétaire désigné.");
+            }
         }
 
         if (member.getUser() != null) {
             User user = member.getUser();
             log.info("Conversion du membre {} (rôle: {}) en SPECTATOR", user.getEmail(), user.getRole());
-
-            // MISE À JOUR DIRECTE : Convertir l'utilisateur en Spectator via requête native
             int updateCount = userRepository.convertUserToSpectator(user.getId());
 
             if (updateCount != 1) {
                 throw new RuntimeException("Erreur lors de la conversion de l'utilisateur en Spectator.");
             }
-
-            // Forcer le rafraîchissement
             userRepository.flush();
-
             log.info("Utilisateur {} converti avec succès en SPECTATOR", user.getEmail());
         }
 
@@ -270,7 +271,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public long countAdminsForStructure(Long structureId) {
         return memberRepository.countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
     }
@@ -292,42 +293,30 @@ public class TeamManagementServiceImpl implements TeamManagementService {
     }
 
     @Override
-    @Transactional
+    @org.springframework.transaction.annotation.Transactional
     public void dissolveTeam(Long structureId) {
         log.info("Début de la dissolution de l'équipe pour la structure ID: {}", structureId);
 
-        // Vérifier si la structure existe
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
-
-        // Récupérer tous les membres de l'équipe
-        List<TeamMember> teamMembers = memberRepository.findByTeamStructureId(structureId);
-
-        if (teamMembers.isEmpty()) {
-            log.info("Aucun membre d'équipe trouvé pour la structure ID: {}", structureId);
+        if (!structureRepository.existsById(structureId)) {
+            log.warn("Tentative de dissoudre une équipe pour une structure ID: {} non existante.", structureId);
             return;
         }
 
-        log.info("Conversion de {} membres d'équipe en SPECTATOR pour la structure ID: {}",
-                teamMembers.size(), structureId);
+        int updatedUsers = userRepository.convertAllStructureUsersToSpectator(structureId);
+        if (updatedUsers > 0) {
+            log.info("{} utilisateurs de la structure ID {} ont été convertis en SPECTATOR.", updatedUsers, structureId);
+            userRepository.flush();
+        }
 
-        // CONVERSION EN LOT : Convertir tous les utilisateurs de la structure en Spectator
-        int convertedCount = userRepository.convertAllStructureUsersToSpectator(structureId);
-        log.info("{} utilisateurs convertis en SPECTATOR pour la structure ID: {}", convertedCount, structureId);
-
-        // Supprimer tous les membres de l'équipe
-        memberRepository.deleteAll(teamMembers);
-
-        // Forcer le rafraîchissement
-        userRepository.flush();
-
-        // Supprimer l'équipe elle-même
         teamRepository.findByStructureId(structureId).ifPresent(team -> {
-            log.info("Suppression de l'équipe ID: {} pour la structure ID: {}", team.getId(), structureId);
+            long deletedMembers = memberRepository.deleteByTeamId(team.getId());
+            if (deletedMembers > 0) {
+                log.info("{} membres de l'équipe ID {} ont été supprimés.", deletedMembers, team.getId());
+            }
             teamRepository.delete(team);
+            log.info("L'équipe ID {} (pour structure ID {}) a été supprimée.", team.getId(), structureId);
         });
 
-        log.info("Dissolution de l'équipe terminée pour la structure ID: {}. {} membres convertis en SPECTATOR.",
-                structureId, convertedCount);
+        log.info("Dissolution de l'équipe pour la structure ID {} terminée.", structureId);
     }
 }

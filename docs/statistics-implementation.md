@@ -1,3 +1,27 @@
+1. Read the statistic implementation documentation in 'docs/statistics-implementation.md'
+
+2. Analyze actual context of the application related to statistics integration.
+   Relevant files could be :
+
+- Models : 'edu/cda/project/ticklybackend/models/event', 'edu/cda/project/ticklybackend/models/ticket', '
+  edu/cda/project/ticklybackend/models/structure'
+- Repositories : 'edu/cda/project/ticklybackend/repositories/event', '
+  edu/cda/project/ticklybackend/repositories/structure', 'edu/cda/project/ticklybackend/repositories/ticket'
+- Security : 'edu/cda/project/ticklybackend/security/StructureSecurityService.java', '
+  edu/cda/project/ticklybackend/security/EventSecurityService.java'
+- Services : 'edu/cda/project/ticklybackend/services/impl/EventServiceImpl.java', '
+  edu/cda/project/ticklybackend/services/impl/EventSpecification.java', '
+  edu/cda/project/ticklybackend/services/impl/StructureServiceImpl.java', '
+  edu/cda/project/ticklybackend/services/impl/TicketServiceImpl.java', '
+  edu/cda/project/ticklybackend/services/impl/AuthServiceImpl.java'
+- Mappers (if needed) : 'edu/cda/project/ticklybackend/mappers/ticket', '
+  edu/cda/project/ticklybackend/mappers/structure', 'edu/cda/project/ticklybackend/mappers/event'
+
+3. Implement all the statistics functionalities as described in the documentation, add OpenAPI documentation, unit tests
+   and method documentation.
+
+4. Test the implementation.
+
 # **Backend Statistics Service: Implementation Plan**
 
 This document outlines the technical design and step-by-step implementation plan for creating a new statistics service

@@ -5,17 +5,20 @@ import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
 import edu.cda.project.ticklybackend.enums.TokenType;
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
+import edu.cda.project.ticklybackend.models.team.TeamMember;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
+import edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserFavoriteStructureRepository;
@@ -38,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -51,6 +55,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserFavoriteStructureRepository favoriteRepository;
     private final StructureRepository structureRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final AuthUtils authUtils;
     private final TokenService tokenService;
     private final MailingService mailingService;
@@ -265,6 +270,22 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Invalide le mot de passe
         user.setAvatarPath(null);
         user.setEmailValidated(false); // Invalide l'email
+
+        Optional<TeamMember> teamMemberOpt = teamMemberRepository.findByUserId(user.getId());
+        if (teamMemberOpt.isPresent()) {
+            TeamMember teamMember = teamMemberOpt.get();
+            // Vérifier s'il est le dernier administrateur de la structure
+            if (teamMember.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
+                Long structureId = teamMember.getTeam().getStructure().getId();
+                if (teamService.countAdminsForStructure(structureId) <= 1) {
+                    throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le dernier administrateur de votre structure. " +
+                            "Veuillez d'abord transférer la propriété de la structure à un autre membre ou supprimer la structure.");
+                }
+            }
+            // Supprimer l'entrée de membre d'équipe
+            teamMemberRepository.delete(teamMember);
+            log.info("L'utilisateur {} a été retiré de son équipe.", user.getEmail());
+        }
 
         // 2. Anonymiser les billets associés
         List<Ticket> ticketsToAnonymize = ticketRepository.findByUserId(user.getId());
