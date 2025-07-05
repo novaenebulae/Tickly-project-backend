@@ -5,7 +5,7 @@ import edu.cda.project.ticklybackend.enums.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Data
 @Schema(description = "DTO représentant un membre d'une équipe.")
@@ -35,5 +35,5 @@ public class TeamMemberDto {
     private TeamMemberStatus status;
 
     @Schema(description = "Date à laquelle le membre a rejoint l'équipe.")
-    private Instant joinedAt;
+    private ZonedDateTime joinedAt;
 }

@@ -12,7 +12,6 @@ import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
-import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
@@ -34,6 +33,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
         );
         newUser.setEmailValidated(true); // Email validé via invitation
 
-        newUser.setConsentGivenAt(LocalDateTime.now());
+        newUser.setConsentGivenAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
 
         User savedUser = userRepository.save(newUser);
 
@@ -116,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
 
         newUser.setEmailValidated(false); // L'email doit être validé
 
-        newUser.setConsentGivenAt(LocalDateTime.now());
+        newUser.setConsentGivenAt(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
 
         User savedUser = userRepository.save(newUser);
 

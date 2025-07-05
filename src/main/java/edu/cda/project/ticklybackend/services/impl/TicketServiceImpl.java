@@ -25,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -140,7 +142,7 @@ public class TicketServiceImpl implements TicketService {
 
         ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
         confirmationDto.setReservationId(savedReservation.getId());
-        confirmationDto.setReservationDate(savedReservation.getReservationDate());
+        confirmationDto.setReservationDate(ZonedDateTime.ofInstant(savedReservation.getReservationDate(), ZoneOffset.UTC));
         confirmationDto.setTickets(ticketDtos);
 
         return confirmationDto;

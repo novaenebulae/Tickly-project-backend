@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -14,5 +14,5 @@ public class UserFavoriteStructureDto {
     private Long id; // ID de l'enregistrement UserFavoriteStructure
     private Long userId;
     private StructureSummaryDto structure; // Détails de la structure favorisée
-    private Instant addedAt;
+    private ZonedDateTime addedAt;
 }

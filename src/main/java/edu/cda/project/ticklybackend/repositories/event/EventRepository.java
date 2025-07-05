@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -48,4 +49,22 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
             "JOIN e.audienceZones az " +
             "WHERE az.template.id = :templateId AND e.status IN :statuses")
     boolean existsByTemplateIdAndStatusIn(@Param("templateId") Long templateId, @Param("statuses") Set<EventStatus> statuses);
+
+    /**
+     * Counts upcoming events for a structure.
+     *
+     * @param structureId The ID of the structure
+     * @param startDate The date after which events are considered upcoming
+     * @return The count of upcoming events
+     */
+    long countByStructureIdAndStartDateAfterAndDeletedFalse(Long structureId, Instant startDate);
+
+    /**
+     * Finds past events for a structure.
+     *
+     * @param structureId The ID of the structure
+     * @param endDate The date before which events are considered past
+     * @return A list of past events
+     */
+    List<Event> findByStructureIdAndEndDateBeforeAndDeletedFalse(Long structureId, Instant endDate);
 }

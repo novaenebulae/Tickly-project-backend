@@ -15,7 +15,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -73,7 +72,7 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     private Instant updatedAt;
 
     @Column(name = "consent_given_at")
-    private LocalDateTime consentGivenAt;
+    private Instant consentGivenAt;
 
 
     // Implémentation des méthodes de UserDetails pour Spring Security

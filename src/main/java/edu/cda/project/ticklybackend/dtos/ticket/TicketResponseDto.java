@@ -6,7 +6,7 @@ import edu.cda.project.ticklybackend.enums.TicketStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Data
@@ -32,7 +32,7 @@ public class TicketResponseDto {
     private AudienceZoneTicketSnapshotDto audienceZoneSnapshot;
 
     @Schema(description = "Date et heure de la réservation.", example = "2025-06-18T10:00:00")
-    private LocalDateTime reservation_date_time;
+    private ZonedDateTime reservation_date_time;
 
 //    @Schema(description = "Prix du billet.", example = "45.50")
 //    private BigDecimal price;
@@ -45,7 +45,7 @@ public class TicketResponseDto {
     public static class EventTicketSnapshotDto {
         private Long eventId;
         private String name;
-        private LocalDateTime startDate;
+        private ZonedDateTime startDate;
         private AddressDto address;
         private String mainPhotoUrl;
     }

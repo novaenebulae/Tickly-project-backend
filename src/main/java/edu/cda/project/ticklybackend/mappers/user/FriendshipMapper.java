@@ -12,6 +12,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {UserMapper.class})
@@ -20,7 +23,7 @@ public interface FriendshipMapper {
     // --- Mappings pour les listes d'amis et de demandes ---
 
     @Mapping(target = "friendshipId", source = "id")
-    @Mapping(target = "since", source = "updatedAt")
+    @Mapping(target = "since", source = "updatedAt", qualifiedByName = "friendshipToZonedDateTime")
     @Mapping(target = "friend", source = "friendship", qualifiedByName = "mapFriendshipToFriendSummaryDto")
     FriendResponseDto toFriendResponseDto(Friendship friendship, @Context Long currentUserId, @Context FileStorageService fsService);
 
@@ -28,14 +31,14 @@ public interface FriendshipMapper {
 
     @Mapping(target = "friendshipId", source = "id")
     @Mapping(target = "sender", source = "sender")
-    @Mapping(target = "requestedAt", source = "createdAt")
+    @Mapping(target = "requestedAt", source = "createdAt", qualifiedByName = "friendshipToZonedDateTime")
     ReceivedFriendRequestResponseDto toReceivedFriendRequestDto(Friendship friendship, @Context FileStorageService fsService);
 
     List<ReceivedFriendRequestResponseDto> toReceivedFriendRequestDtoList(List<Friendship> friendships, @Context FileStorageService fsService);
 
     @Mapping(target = "friendshipId", source = "id")
     @Mapping(target = "receiver", source = "receiver")
-    @Mapping(target = "sentAt", source = "createdAt")
+    @Mapping(target = "sentAt", source = "createdAt", qualifiedByName = "friendshipToZonedDateTime")
     SentFriendRequestResponseDto toSentFriendRequestDto(Friendship friendship, @Context FileStorageService fsService);
 
     List<SentFriendRequestResponseDto> toSentFriendRequestDtoList(List<Friendship> friendships, @Context FileStorageService fsService);
@@ -67,5 +70,14 @@ public interface FriendshipMapper {
                 friendUser.getLastName(),
                 avatarUrl
         );
+    }
+
+    /**
+     * Convertit un Instant (depuis l'entité) en ZonedDateTime (pour les DTOs), en forçant le fuseau UTC (Z).
+     */
+    @Named("friendshipToZonedDateTime")
+    default ZonedDateTime toZonedDateTime(Instant instant) {
+        if (instant == null) return null;
+        return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

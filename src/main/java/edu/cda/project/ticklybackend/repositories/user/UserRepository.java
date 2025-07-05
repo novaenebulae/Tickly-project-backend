@@ -100,4 +100,5 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
     @Query(value = "UPDATE users SET user_type = 'SPECTATOR', role = 'SPECTATOR', structure_id = NULL WHERE structure_id = :structureId", nativeQuery = true)
     int convertAllStructureUsersToSpectator(@Param("structureId") Long structureId);
 
+    boolean findByStructureId(Long structureId);
 }

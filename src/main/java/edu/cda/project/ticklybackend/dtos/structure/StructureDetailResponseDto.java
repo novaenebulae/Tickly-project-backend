@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -59,10 +59,10 @@ public class StructureDetailResponseDto {
     private boolean isActive;
 
     @Schema(description = "Date et heure de création de l'enregistrement de la structure.", example = "2024-07-15T10:30:00Z")
-    private Instant createdAt;
+    private ZonedDateTime createdAt;
 
     @Schema(description = "Date et heure de la dernière modification de l'enregistrement de la structure.", example = "2024-07-16T14:45:00Z")
-    private Instant updatedAt;
+    private ZonedDateTime updatedAt;
 
     // On pourrait ajouter des informations sur l'administrateur si nécessaire
     // private UserSummaryDto administrator;

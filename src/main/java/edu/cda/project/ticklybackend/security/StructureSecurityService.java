@@ -47,6 +47,19 @@ public class StructureSecurityService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isStructureStaff(Long structureId, Authentication authentication) {
+        if (structureId == null || authentication == null || !(authentication.getPrincipal() instanceof User currentUser)) {
+            return false;
+        }
+
+        User user = (User) authentication.getPrincipal();
+
+        return user.getStructure() != null &&
+                user.getStructure().getId().equals(structureId) &&
+                user.getRole() != UserRole.SPECTATOR;
+    }
+
     /**
      * Nouvelle méthode pour vérifier si un utilisateur a le droit de créer une structure.
      *

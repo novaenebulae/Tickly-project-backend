@@ -10,6 +10,80 @@
 -- Désactivation des contraintes de clés étrangères pour permettre l'insertion dans un ordre flexible
 SET FOREIGN_KEY_CHECKS = 0;
 
+DELETE
+FROM tickets;
+DELETE
+FROM reservations;
+DELETE
+FROM event_has_categories;
+DELETE
+FROM event_gallery_images;
+DELETE
+FROM event_tags;
+DELETE
+FROM event_audience_zone;
+DELETE
+FROM events;
+DELETE
+FROM friendships;
+DELETE
+FROM team_members;
+DELETE
+FROM teams;
+DELETE
+FROM user_favorite_structures;
+DELETE
+FROM verification_tokens;
+DELETE
+FROM audience_zone_template;
+DELETE
+FROM structure_areas;
+DELETE
+FROM structure_has_types;
+DELETE
+FROM structure_gallery_images;
+DELETE
+FROM structure_social_media_links;
+DELETE
+FROM users;
+DELETE
+FROM structures;
+DELETE
+FROM event_categories;
+DELETE
+FROM structure_types;
+
+ALTER TABLE tickets
+    AUTO_INCREMENT = 1;
+ALTER TABLE reservations
+    AUTO_INCREMENT = 1;
+ALTER TABLE event_audience_zone
+    AUTO_INCREMENT = 1;
+ALTER TABLE events
+    AUTO_INCREMENT = 1;
+ALTER TABLE friendships
+    AUTO_INCREMENT = 1;
+ALTER TABLE team_members
+    AUTO_INCREMENT = 1;
+ALTER TABLE teams
+    AUTO_INCREMENT = 1;
+ALTER TABLE user_favorite_structures
+    AUTO_INCREMENT = 1;
+ALTER TABLE verification_tokens
+    AUTO_INCREMENT = 1;
+ALTER TABLE audience_zone_template
+    AUTO_INCREMENT = 1;
+ALTER TABLE structure_areas
+    AUTO_INCREMENT = 1;
+ALTER TABLE users
+    AUTO_INCREMENT = 1;
+ALTER TABLE structures
+    AUTO_INCREMENT = 1;
+ALTER TABLE event_categories
+    AUTO_INCREMENT = 1;
+ALTER TABLE structure_types
+    AUTO_INCREMENT = 1;
+
 -- ##################################################
 -- # 1. PEUPLEMENT DE LA TABLE `structure_types`    #
 -- ##################################################
@@ -670,6 +744,344 @@ VALUES (1, 11, UUID(), 'EMAIL_VALIDATION', NOW() + INTERVAL 1 DAY, 0, NULL), -- 
        (4, 9, UUID(), 'ACCOUNT_DELETION_CONFIRMATION', NOW() - INTERVAL 2 HOUR, 1, NULL);
 -- Token de suppression de compte expiré et utilisé pour Inès
 
+-- ######################################################################
+-- #                                                                    #
+-- #        JEU DE DONNÉES DE TEST POUR LA STRUCTURE 'LES TRINITAIRES' (ID 6)      #
+-- #                                                                    #
+-- ######################################################################
+-- Ce script ajoute des données complètes pour la structure avec l'ID 6.
+-- Il est conçu pour être ajouté à la fin de votre fichier data.sql existant.
+
+-- ###################################################################
+-- # 1. UTILISATEURS SUPPLÉMENTAIRES POUR L'ÉQUIPE ET LES AMIS       #
+-- ###################################################################
+-- Création de 7 nouveaux utilisateurs qui formeront l'équipe des Trinitaires
+-- et de quelques spectateurs supplémentaires pour les relations.
+-- Le mot de passe est 'Tickly123!' ($2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii)
+
+INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at, user_type,
+                   avatar_path, is_email_validated)
+VALUES
+-- Équipe des Trinitaires (l'admin François Petit avec l'ID 6 existe déjà)
+(20, 'Hélène', 'Mercier', 'helene.mercier@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_20.png', 1),
+(21, 'Isaac', 'Garnier', 'isaac.garnier@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'ORGANIZATION_SERVICE', 6, NOW(), NOW(), 'ORGANIZATION_SERVICE', 'avatar_21.png', 1),
+(22, 'Justine', 'Faure', 'justine.faure@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'ORGANIZATION_SERVICE', 6, NOW(), NOW(), 'ORGANIZATION_SERVICE', 'avatar_22.png', 1),
+(23, 'Kévin', 'Roussel', 'kevin.roussel@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_23.png', 1),
+(24, 'Léa', 'Blanc', 'lea.blanc@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_24.png', 1),
+(25, 'Marc', 'Guérin', 'marc.guerin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_25.png', 1),
+-- Spectateurs supplémentaires pour les billets et amitiés
+(26, 'Nadia', 'Henry', 'nadia.henry@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_26.png', 1),
+(27, 'Olivier', 'Perrin', 'olivier.perrin@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+ 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_27.png', 1);
+
+
+-- ###################################################################
+-- # 2. ÉQUIPE ET MEMBRES POUR 'LES TRINITAIRES' (ID 6)              #
+-- ###################################################################
+
+-- Création de l'équipe pour la structure 6
+INSERT INTO teams (id, structure_id, name)
+VALUES (6, 6, 'Équipe Les Trinitaires');
+
+-- Ajout des 7 membres à l'équipe
+INSERT INTO team_members (id, team_id, user_id, email, role, status, joined_at)
+VALUES
+-- L'admin principal (François Petit, ID 6) est déjà dans la structure, on l'ajoute à l'équipe
+(10, 6, 6, 'francois.petit@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 100 DAY),
+-- Les 6 nouveaux membres
+(11, 6, 20, 'helene.mercier@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 90 DAY),
+(12, 6, 21, 'isaac.garnier@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY),
+(13, 6, 22, 'justine.faure@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY),
+(14, 6, 23, 'kevin.roussel@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 80 DAY),
+(15, 6, 24, 'lea.blanc@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY),
+(16, 6, 25, 'marc.guerin@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY);
+
+
+-- ###################################################################
+-- # 3. AMITIÉS ENTRE LES MEMBRES DE L'ÉQUIPE                        #
+-- ###################################################################
+
+INSERT INTO friendships (id, sender_id, receiver_id, status, created_at, updated_at)
+VALUES
+-- Amitiés acceptées
+(10, 6, 20, 'ACCEPTED', NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 49 DAY),  -- François et Hélène
+(11, 21, 22, 'ACCEPTED', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 38 DAY), -- Isaac et Justine
+(12, 23, 24, 'ACCEPTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 29 DAY), -- Kévin et Léa
+-- Demandes en attente
+(13, 20, 21, 'PENDING', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY),    -- Hélène a demandé Isaac en ami
+(14, 25, 6, 'PENDING', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY);
+-- Marc a demandé François en ami
+
+
+-- ###################################################################
+-- # 4. ÉVÉNEMENTS POUR 'LES TRINITAIRES' (ID 6)                     #
+-- ###################################################################
+-- 10 nouveaux événements, dont 2 (ID 20 et 21) avec des données riches pour les statistiques.
+
+INSERT INTO events (id, name, short_description, full_description, start_date, end_date, status, display_on_homepage,
+                    is_featured_event, structure_id, creator_id, created_at, updated_at, main_photo_path, street, city,
+                    zip_code, country)
+VALUES
+-- Événement 20 : Pour les statistiques de remplissage et de statuts
+(20, 'Nuit du Blues & Soul', 'Une nuit entière dédiée aux légendes du blues et de la soul.',
+ 'Le Caveau des Trinitaires se transforme en club de blues de Chicago. Retrouvez des artistes locaux et internationaux pour des reprises endiablées et des compositions originales. Une soirée authentique et pleine d''émotion.',
+ DATE_ADD(NOW(), INTERVAL 14 DAY), DATE_ADD(NOW(), INTERVAL 14 DAY) + INTERVAL 4 HOUR, 'PUBLISHED', 1, 1, 6, 6,
+ NOW() - INTERVAL 30 DAY, NOW(), 'nuit_blues.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+
+-- Événement 21 : Pour les statistiques d'évolution des réservations
+(21, 'Scène Ouverte Poésie & Slam', 'Donnez de la voix lors de notre scène ouverte mensuelle.',
+ 'Que vous soyez poète aguerri ou simple curieux, la scène de La Chapelle vous est ouverte. Venez partager vos textes, écouter ceux des autres dans une ambiance bienveillante et créative. Inscription sur place.',
+ DATE_ADD(NOW(), INTERVAL 35 DAY), DATE_ADD(NOW(), INTERVAL 35 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6, 20,
+ NOW() - INTERVAL 25 DAY, NOW(), 'scene_poesie.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+
+-- 8 autres événements
+(22, 'Trio de Jazz Manouche', 'Hommage à Django Reinhardt.',
+ 'Un concert virtuose qui vous fera voyager dans le Paris des années 30.', DATE_ADD(NOW(), INTERVAL 40 DAY),
+ DATE_ADD(NOW(), INTERVAL 40 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 0, 6, 21, NOW(), NOW(), 'jazz_manouche.jpg',
+ '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(23, 'Théâtre d''Improvisation : Le Match', 'Deux équipes s''affrontent dans un match d''improvisation déjanté.',
+ 'Le public vote, les comédiens improvisent ! Une soirée unique et hilarante.', DATE_ADD(NOW(), INTERVAL 48 DAY),
+ DATE_ADD(NOW(), INTERVAL 48 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 0, 0, 6, 22, NOW(), NOW(), 'theatre_impro.jpg',
+ '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(24, 'Exposition Photos : "Regards sur Metz"', 'Le travail de 10 photographes locaux sur la ville de Metz.',
+ 'Une vision plurielle et poétique de la ville, capturée par des talents de la région.',
+ DATE_ADD(NOW(), INTERVAL 55 DAY), DATE_ADD(NOW(), INTERVAL 85 DAY), 'PUBLISHED', 1, 0, 6, 6, NOW(), NOW(),
+ 'expo_metz.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(25, 'Concert Folk : The Wandering Souls', 'Un duo folk acoustique pour une soirée intimiste.',
+ 'Des mélodies envoûtantes et des textes poignants par ce duo montant de la scène folk.',
+ DATE_ADD(NOW(), INTERVAL 62 DAY), DATE_ADD(NOW(), INTERVAL 62 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 1, 6, 20, NOW(),
+ NOW(), 'folk_concert.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(26, 'Conférence : L''Histoire des Templiers', 'Par l''historien Jean-Marc Durand.',
+ 'Découvrez les mythes et réalités de l''ordre des Templiers, de leur création à leur chute.',
+ DATE_ADD(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 70 DAY) + INTERVAL 90 MINUTE, 'PUBLISHED', 0, 0, 6, 21,
+ NOW(), NOW(), 'conf_templiers.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(27, 'Spectacle de Danse : "Origines"', 'Une performance de danse contemporaine explorant nos racines.',
+ 'La compagnie "Corps en Mouvement" présente sa dernière création, un voyage chorégraphique puissant.',
+ DATE_ADD(NOW(), INTERVAL 78 DAY), DATE_ADD(NOW(), INTERVAL 78 DAY) + INTERVAL 80 MINUTE, 'PUBLISHED', 0, 0, 6, 22,
+ NOW(), NOW(), 'danse_origines.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(28, 'Concert Rock Indé : "The Fuzz"', 'Le groupe de rock garage "The Fuzz" en concert unique.',
+ 'Énergie brute et guitares saturées pour les amateurs de rock sans concession.', DATE_ADD(NOW(), INTERVAL 85 DAY),
+ DATE_ADD(NOW(), INTERVAL 85 DAY) + INTERVAL 2 HOUR, 'DRAFT', 0, 0, 6, 6, NOW(), NOW(), 'rock_fuzz.jpg',
+ '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+(29, 'Ciné-Concert : "Metropolis"', 'Projection du chef-d''oeuvre de Fritz Lang avec musique live.',
+ 'Redécouvrez ce classique du cinéma muet accompagné au piano par l''artiste international Marc Vella.',
+ DATE_ADD(NOW(), INTERVAL 92 DAY), DATE_ADD(NOW(), INTERVAL 92 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6, 20, NOW(),
+ NOW(), 'cine_metropolis.jpg', '12 Rue des Trinitaires', 'Metz', '57000', 'France');
+
+-- Attribution des catégories aux nouveaux événements
+INSERT INTO event_has_categories (event_id, category_id)
+VALUES (20, 1),
+       (20, 3), -- Nuit du Blues & Soul: Concert, Festival
+       (21, 2),
+       (21, 7), -- Scène Ouverte: Théâtre, Humour
+       (22, 1), -- Trio de Jazz Manouche: Concert
+       (23, 2),
+       (23, 7), -- Théâtre d'Improvisation: Théâtre, Humour
+       (24, 6), -- Exposition Photos: Exposition
+       (25, 1), -- Concert Folk: Concert
+       (26, 5), -- Conférence: Conférence
+       (27, 9), -- Spectacle de Danse: Danse
+       (28, 1), -- Concert Rock Indé: Concert
+       (29, 1),
+       (29, 10);
+-- Ciné-Concert: Concert, Jeune public
+
+-- Attribution des zones d'audience aux nouveaux événements
+INSERT INTO event_audience_zone (id, event_id, template_id, allocated_capacity)
+VALUES (30, 20, 18, 200), -- Nuit du Blues & Soul (Caveau)
+       (31, 21, 17, 350), -- Scène Ouverte (Chapelle)
+       (32, 22, 18, 180), -- Trio de Jazz (Caveau)
+       (33, 23, 17, 300), -- Théâtre d'Impro (Chapelle)
+       (34, 24, 17, 150), -- Expo Photos (Chapelle)
+       (35, 25, 18, 150), -- Concert Folk (Caveau)
+       (36, 26, 17, 250), -- Conférence (Chapelle)
+       (37, 27, 17, 280), -- Danse (Chapelle)
+       (38, 28, 18, 200), -- Rock Indé (Caveau)
+       (39, 29, 17, 350);
+-- Ciné-Concert (Chapelle)
+
+
+-- ###################################################################
+-- # 5. DONNÉES DE BILLETS POUR LES STATISTIQUES                     #
+-- ###################################################################
+
+-- Réservations et Billets pour l'événement 20 "Nuit du Blues & Soul"
+-- Objectif: Tester le remplissage des zones et la répartition des statuts.
+INSERT INTO reservations (id, user_id, reservation_date, total_amount)
+VALUES (10, 9, NOW() - INTERVAL 20 DAY, 0.00),
+       (11, 10, NOW() - INTERVAL 18 DAY, 0.00),
+       (12, 26, NOW() - INTERVAL 15 DAY, 0.00);
+
+-- Insertion de 100 billets 'USED'
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 100)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       9,
+       10,
+       UUID(),
+       'User',
+       'A',
+       'a@test.com',
+       'USED',
+       (SELECT reservation_date FROM reservations WHERE id = 10)
+FROM a;
+
+-- Insertion de 40 billets 'VALID'
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 40)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       10,
+       11,
+       UUID(),
+       'User',
+       'B',
+       'b@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 11)
+FROM a;
+
+-- Insertion de 10 billets 'CANCELLED'
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 10)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       26,
+       12,
+       UUID(),
+       'User',
+       'C',
+       'c@test.com',
+       'CANCELLED',
+       (SELECT reservation_date FROM reservations WHERE id = 12)
+FROM a;
+
+
+-- Réservations et Billets pour l'événement 21 "Scène Ouverte Poésie & Slam"
+-- Objectif: Tester l'évolution des réservations dans le temps.
+INSERT INTO reservations (id, user_id, reservation_date, total_amount)
+VALUES (14, 9, NOW() - INTERVAL 24 DAY, 0.00),
+       (15, 10, NOW() - INTERVAL 20 DAY, 0.00),
+       (16, 11, NOW() - INTERVAL 15 DAY, 0.00),
+       (17, 12, NOW() - INTERVAL 10 DAY, 0.00),
+       (18, 26, NOW() - INTERVAL 5 DAY, 0.00),
+       (19, 27, NOW() - INTERVAL 2 DAY, 0.00);
+
+-- Jour 1 (-24d): 20 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 20)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       9,
+       14,
+       UUID(),
+       'User',
+       'D',
+       'd@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 14)
+FROM a;
+
+-- Jour 2 (-20d): 30 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 30)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       10,
+       15,
+       UUID(),
+       'User',
+       'E',
+       'e@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 15)
+FROM a;
+
+-- Jour 3 (-15d): 50 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 50)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       11,
+       16,
+       UUID(),
+       'User',
+       'F',
+       'f@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 16)
+FROM a;
+
+-- Jour 4 (-10d): 40 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 40)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       12,
+       17,
+       UUID(),
+       'User',
+       'G',
+       'g@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 17)
+FROM a;
+
+-- Jour 5 (-5d): 60 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 60)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       26,
+       18,
+       UUID(),
+       'User',
+       'H',
+       'h@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 18)
+FROM a;
+
+-- Jour 6 (-2d): 25 billets
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 25)
+SELECT UUID_TO_BIN(UUID()),
+       21,
+       31,
+       27,
+       19,
+       UUID(),
+       'User',
+       'I',
+       'i@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 19)
+FROM a;
 
 -- Réactivation des contraintes de clés étrangères
 SET FOREIGN_KEY_CHECKS = 1;

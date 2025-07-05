@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -174,7 +176,7 @@ public class EventServiceImpl implements EventService {
                     return new FriendResponseDto(
                             friendship.getId(),
                             friendSummary,
-                            friendship.getCreatedAt()
+                            ZonedDateTime.ofInstant(friendship.getCreatedAt(), ZoneOffset.UTC)
                     );
                 })
                 .collect(Collectors.toList());

@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -21,5 +21,5 @@ public class FriendResponseDto {
     private UserSummaryDto friend;
 
     @Schema(description = "Date à laquelle l'amitié a été acceptée (devenue effective).", example = "2025-06-25T10:30:00Z")
-    private Instant since;
+    private ZonedDateTime since;
 }

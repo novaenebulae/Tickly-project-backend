@@ -10,7 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +39,9 @@ public class Reservation {
 
     @CreationTimestamp
     @Column(name = "reservation_date", nullable = false, updatable = false)
-    private LocalDateTime reservationDate;
+    private Instant reservationDate;
 
-    @NotNull
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    @Column(name = "total_amount", precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     /**

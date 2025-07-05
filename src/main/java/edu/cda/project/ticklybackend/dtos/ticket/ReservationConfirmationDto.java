@@ -3,7 +3,7 @@ package edu.cda.project.ticklybackend.dtos.ticket;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -17,5 +17,5 @@ public class ReservationConfirmationDto {
     private List<TicketResponseDto> tickets;
 
     @Schema(description = "Date et heure de la réservation.")
-    private LocalDateTime reservationDate;
+    private ZonedDateTime reservationDate;
 }

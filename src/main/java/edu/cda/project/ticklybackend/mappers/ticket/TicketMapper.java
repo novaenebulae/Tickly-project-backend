@@ -7,8 +7,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -33,8 +33,8 @@ public interface TicketMapper {
 
     List<TicketResponseDto> toDtoList(List<Ticket> tickets);
 
-    default LocalDateTime toLocalDateTime(Instant instant) {
+    default ZonedDateTime toZonedDateTime(Instant instant) {
         if (instant == null) return null;
-        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

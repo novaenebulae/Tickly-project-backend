@@ -16,6 +16,9 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,5 +81,13 @@ public abstract class UserMapper {
             return null;
         }
         return fileStorageService.getFileUrl(avatarPath, "avatars");
+    }
+
+    /**
+     * Convertit un Instant (depuis l'entité) en ZonedDateTime (pour les DTOs), en forçant le fuseau UTC (Z).
+     */
+    protected ZonedDateTime toZonedDateTime(Instant instant) {
+        if (instant == null) return null;
+        return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -20,6 +20,6 @@ public class UserProfileResponseDto {
     private UserRole role;
     private Long structureId; // Si l'utilisateur est lié à une structure (ex: StaffUser)
     private String avatarUrl; // URL complète de l'avatar
-    private Instant createdAt;
-    private Instant updatedAt;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime updatedAt;
 }

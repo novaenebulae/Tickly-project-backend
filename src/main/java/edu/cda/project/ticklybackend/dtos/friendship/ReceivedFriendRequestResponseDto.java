@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -20,5 +20,5 @@ public class ReceivedFriendRequestResponseDto {
     private UserSummaryDto sender;
 
     @Schema(description = "Date à laquelle la demande a été envoyée.")
-    private Instant requestedAt;
+    private ZonedDateTime requestedAt;
 }

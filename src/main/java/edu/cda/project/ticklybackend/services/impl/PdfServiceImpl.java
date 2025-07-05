@@ -166,7 +166,7 @@ public class PdfServiceImpl implements PdfService {
         document.add(new Paragraph("🎟️ INFORMATIONS DU BILLET", headerFont));
         document.add(new Paragraph("ID Billet : " + ticket.getId(), contentFont));
         document.add(new Paragraph("Statut : " + ticket.getStatus(), contentFont));
-        document.add(new Paragraph("Date de réservation : " + ticket.getReservationDate().format(DATE_FORMATTER), contentFont));
+        document.add(new Paragraph("Date de réservation : " + LocalDateTime.ofInstant(ticket.getReservationDate(), ZoneId.systemDefault()).format(DATE_FORMATTER), contentFont));
         document.add(new Paragraph(" "));
 
         // QR Code

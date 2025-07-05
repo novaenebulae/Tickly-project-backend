@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public class ErrorResponseDto {
 
     private final int statusCode;
     private final String message;
-    private final Instant timestamp = Instant.now(); // Horodatage automatique
+    private final ZonedDateTime timestamp = ZonedDateTime.now(); // Horodatage automatique
     private String path; // Chemin de la requête ayant causé l'erreur
     private List<Map<String, String>> errors; // Pour les erreurs de validation multiples
 

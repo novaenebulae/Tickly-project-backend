@@ -128,13 +128,13 @@ public class EventSecurityService {
         try {
             User currentUser = authUtils.getCurrentAuthenticatedUser();
             log.debug("Vérification d'accès pour l'utilisateur {} (type: {}, role: {}) à l'événement {} (statut: {}, structure: {})",
-                    currentUser.getEmail(), currentUser.getClass().getSimpleName(), currentUser.getRole(), 
+                    currentUser.getEmail(), currentUser.getClass().getSimpleName(), currentUser.getRole(),
                     eventId, eventStatus, structureId);
 
             // Vérifier si l'utilisateur est un administrateur de structure
             if (currentUser.getRole() != null && currentUser.getRole().name().equals("STRUCTURE_ADMINISTRATOR")) {
                 if (currentUser.getStructure() != null && currentUser.getStructure().getId().equals(structureId)) {
-                    log.debug("Accès autorisé : Administrateur de la structure {} pour l'événement {} (statut: {})", 
+                    log.debug("Accès autorisé : Administrateur de la structure {} pour l'événement {} (statut: {})",
                             structureId, eventId, eventStatus);
                     return true;
                 }
@@ -142,12 +142,12 @@ public class EventSecurityService {
 
             // Staff de la structure : accès total à ses propres événements
             if (isStructureStaff(currentUser)) {
-                log.debug("Utilisateur {} est un staff avec structure {}", 
-                        currentUser.getEmail(), 
+                log.debug("Utilisateur {} est un staff avec structure {}",
+                        currentUser.getEmail(),
                         currentUser.getStructure() != null ? currentUser.getStructure().getId() : "null");
 
                 if (currentUser.getStructure() != null && currentUser.getStructure().getId().equals(structureId)) {
-                    log.debug("Accès autorisé : Staff de la structure {} pour l'événement {} (statut: {})", 
+                    log.debug("Accès autorisé : Staff de la structure {} pour l'événement {} (statut: {})",
                             structureId, eventId, eventStatus);
                     return true;
                 }
@@ -180,6 +180,32 @@ public class EventSecurityService {
     public boolean canAccessEventDetails(Long eventId, EventStatus eventStatus, Long structureId) {
         return canAccessEventDetails(eventId, eventStatus, structureId, false);
     }
+
+    /**
+     * Vérifie si l'utilisateur peut accéder aux statistiques d'un événement.
+     * Permet l'accès à tous les staff de la structure qui possède l'événement.
+     *
+     * @param eventId        ID de l'événement
+     * @param authentication L'objet d'authentification contenant l'utilisateur connecté
+     * @return true si l'utilisateur peut accéder aux statistiques, false sinon
+     */
+    @Transactional(readOnly = true)
+    public boolean canAccessEventForStatistics(Long eventId, org.springframework.security.core.Authentication authentication) {
+        if (eventId == null || authentication == null || !(authentication.getPrincipal() instanceof User currentUser)) {
+            return false;
+        }
+
+        return eventRepository.findById(eventId)
+                .map(event -> {
+                    // Vérifie si l'utilisateur est staff de la structure qui possède l'événement
+                    return currentUser.getStructure() != null &&
+                            event.getStructure() != null &&
+                            currentUser.getStructure().getId().equals(event.getStructure().getId()) &&
+                            isStructureStaff(currentUser);
+                })
+                .orElse(false);
+    }
+
 
     @Transactional(readOnly = true)
     public boolean isOwner(Long eventId, UserDetails principal) {
@@ -271,10 +297,10 @@ public class EventSecurityService {
     private boolean isStructureStaff(User user) {
         boolean isStaff = user instanceof StaffUser && user.getStructure() != null;
         log.debug("Vérification si l'utilisateur {} est un staff: {} (type: {}, role: {}, structure: {})",
-                user.getEmail(), 
-                isStaff, 
-                user.getClass().getSimpleName(), 
-                user.getRole(), 
+                user.getEmail(),
+                isStaff,
+                user.getClass().getSimpleName(),
+                user.getRole(),
                 user.getStructure() != null ? user.getStructure().getId() : "null");
         return isStaff;
     }

@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -77,7 +77,7 @@ public class Ticket {
 
     @NotNull
     @Column(name = "reservation_date", nullable = false)
-    private LocalDateTime reservationDate;
+    private Instant reservationDate;
 
 //    @Column(precision = 10, scale = 2)
 //    private BigDecimal price;
@@ -88,7 +88,7 @@ public class Ticket {
 
     @PrePersist
     protected void onCreate() {
-        this.reservationDate = LocalDateTime.now();
+        this.reservationDate = Instant.now();
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }

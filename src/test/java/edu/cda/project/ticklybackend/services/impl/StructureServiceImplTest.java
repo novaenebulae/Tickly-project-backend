@@ -1,14 +1,13 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.dtos.structure.StructureCreationDto;
 import edu.cda.project.ticklybackend.dtos.structure.AddressDto;
+import edu.cda.project.ticklybackend.dtos.structure.StructureCreationDto;
 import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.mappers.structure.StructureMapper;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.structure.StructureType;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
-import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureTypeRepository;
@@ -21,13 +20,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class StructureServiceImplTest {

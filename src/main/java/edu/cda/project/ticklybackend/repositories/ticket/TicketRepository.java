@@ -1,15 +1,14 @@
 package edu.cda.project.ticklybackend.repositories.ticket;
 
+import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * Repository Spring Data JPA pour l'entité Ticket.
@@ -43,12 +42,22 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
      * @return le nombre de billets.
      */
     long countByEventAudienceZoneId(Long zoneId);
+    
 
-    /**
-     * Récupère tous les billets pour un ID d'événement donné.
-     *
-     * @param eventId L'ID de l'événement.
-     * @return Une liste de billets.
-     */
     List<Ticket> findAllByEventId(Long eventId);
+
+    // --- Voici les méthodes corrigées ---
+
+    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.structure.id = ?1 AND t.status IN (?2)
+    long countByEventStructureIdAndStatusIn(Long structureId, Collection<TicketStatus> statuses);
+
+    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.structure.id = ?1 AND t.event.startDate > ?2 AND t.status = ?3
+    long countByEventStructureIdAndEventStartDateAfterAndStatus(Long structureId, Instant startDate, TicketStatus status);
+
+    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.id = ?1 AND t.status = ?2
+    long countByEventIdAndStatus(Long eventId, TicketStatus status);
+
+    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.id = ?1 AND t.status IN (?2)
+    long countByEventIdAndStatusIn(Long eventId, Collection<TicketStatus> statuses);
+
 }

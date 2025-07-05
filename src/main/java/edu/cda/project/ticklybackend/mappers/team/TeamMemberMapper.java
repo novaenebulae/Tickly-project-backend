@@ -7,6 +7,9 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -25,5 +28,13 @@ public interface TeamMemberMapper {
             return null;
         }
         return fileStorageService.getFileUrl(member.getUser().getAvatarPath(), "avatars");
+    }
+
+    /**
+     * Convertit un Instant (depuis l'entité) en ZonedDateTime (pour les DTOs), en forçant le fuseau UTC (Z).
+     */
+    default ZonedDateTime toZonedDateTime(Instant instant) {
+        if (instant == null) return null;
+        return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

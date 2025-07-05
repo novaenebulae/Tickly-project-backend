@@ -8,6 +8,9 @@ import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import org.mapstruct.*;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,5 +91,13 @@ public abstract class StructureMapper {
         return galleryImagePaths.stream()
                 .map(path -> fileStorageService.getFileUrl(path, "structures/gallery"))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Convertit un Instant (depuis l'entité) en ZonedDateTime (pour les DTOs), en forçant le fuseau UTC (Z).
+     */
+    protected ZonedDateTime toZonedDateTime(Instant instant) {
+        if (instant == null) return null;
+        return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }
