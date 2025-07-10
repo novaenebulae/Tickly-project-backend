@@ -1,14 +1,28 @@
 package edu.cda.project.ticklybackend.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Exception levée lorsqu'un token de vérification est invalide, expiré, déjà utilisé ou non trouvé.
+ * Exception thrown when a verification token is invalid, expired, already used, or not found.
  */
-@ResponseStatus(HttpStatus.FORBIDDEN)
-public class InvalidTokenException extends RuntimeException {
+public class InvalidTokenException extends BaseException {
+
+    /**
+     * Creates a new exception with the specified message.
+     *
+     * @param message the detail message
+     */
     public InvalidTokenException(String message) {
-        super(message);
+        super(message, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Creates a new exception with the specified message and cause.
+     *
+     * @param message the detail message
+     * @param cause the cause of the exception
+     */
+    public InvalidTokenException(String message, Throwable cause) {
+        super(message, cause, HttpStatus.FORBIDDEN);
     }
 }

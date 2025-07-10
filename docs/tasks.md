@@ -7,36 +7,34 @@ with a checkbox [ ] that can be checked off when completed.
 
 ### Security
 
-[ ] Fix security vulnerability in ticket validation (TicketServiceImpl.java line 181)
-[ ] Implement comprehensive permission checks for all sensitive operations
+[x] Fix security vulnerability in ticket validation (TicketServiceImpl.java line 181)
+[x] Implement canValidateTicket method in TicketSecurityService to check if a user has permission to validate tickets
+[x] Implement comprehensive permission checks for all sensitive operations
 [ ] Add rate limiting for authentication endpoints to prevent brute force attacks
 [ ] Implement API request throttling to prevent DoS attacks
-[ ] Conduct a thorough security audit of the application
-
-### Scalability
-
-[ ] Containerize the application for easier deployment and scaling :
-
-- Nginx Reverse proxy (Load Balancer) to Nginx static server + Java Container connected to MySQL server
-- Only have to add the nginx reverse proxy as the rest is actually containerized.
+[ ] Implement HTTPS for all environments
+[ ] Add Content Security Policy headers
+[ ] Implement proper CORS configuration
+[ ] Add security headers (X-XSS-Protection, X-Content-Type-Options, etc.)
 
 ### Resilience
 
-[ ] Enhance error handling
+[ ] Enhance error handling with proper fallback mechanisms
 
 ## Code Quality Improvements
 
 ### Testing
 
-[ ] Increase unit test coverage (aim for at least 60%)
+[ ] Increase unit test coverage (aim for 60%)
+[ ] Add integration tests for critical workflows
 [ ] Set up automated testing in CI/CD pipeline
 
 ### Code Organization
 
 [ ] Refactor large service classes into smaller, more focused components
 [ ] Review and improve separation of concerns in service implementations
-[ ] Standardize exception handling across the application
-[ ] Implement consistent logging strategy with appropriate log levels
+[x] Standardize exception handling across the application
+[x] Implement consistent logging strategy with appropriate log levels
 [ ] Organize imports and remove unused dependencies
 
 ### Documentation
@@ -50,6 +48,8 @@ with a checkbox [ ] that can be checked off when completed.
 [ ] Refactor duplicate code into reusable utilities
 [ ] Improve naming conventions for better code readability
 [ ] Add more meaningful comments for complex business logic
+[ ] Implement design patterns where appropriate
+[ ] Remove deprecated code and unused features
 
 ## Feature Improvements
 
@@ -58,23 +58,3 @@ with a checkbox [ ] that can be checked off when completed.
 [X] Implement email verification workflow for new user registrations
 [ ] Add password strength requirements and validation
 [ ] Enhance error messages to be more user-friendly
-
-### Business Logic
-
-## DevOps Improvements
-
-### CI/CD
-
-[ ] Set up automated build and test pipeline
-[ ] Implement infrastructure as code for all environments
-[ ] Set up proper environment separation (dev, test, staging, production)
-
-[ ] Setup backend deployment environment :
-
-HTTPS =>  Nginx reverse proxy -> Java container -> MySQL
-| | |
-|--> Nginx Static -> Static files |-> Private files
-
-### Deployment
-
-[ ] Optimize Docker container configuration

@@ -7,6 +7,7 @@ import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.StructureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -164,14 +165,6 @@ public class StructureController {
         return ResponseEntity.noContent().build();
     }
 
-//    @Operation(summary = "Ajouter une image à la galerie d'une structure",
-//            description = "Ajoute une nouvelle image à la galerie de la structure. Nécessite d'être le propriétaire.")
-//    @PostMapping(value = "/{structureId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
-//    public ResponseEntity<FileUploadResponseDto> addStructureGalleryImage(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
-//        return ResponseEntity.status(HttpStatus.CREATED).body(structureService.addStructureGalleryImage(structureId, file));
-//    }
-
     @Operation(summary = "Ajouter plusieurs images à la galerie d'une structure",
             description = "Ajoute plusieurs nouvelles images à la galerie de la structure en une seule fois.")
     @PostMapping(value = "/{structureId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -196,6 +189,16 @@ public class StructureController {
             Authentication authentication) {
         structureService.removeStructureGalleryImage(structureId, imagePath);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Récupérer tous les types de structure disponibles",
+            description = "Retourne une liste de tous les types de structure que les lieux événementiels peuvent adopter.")
+    @ApiResponse(responseCode = "200", description = "Liste des types de structure récupérée avec succès.",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = StructureTypeDto.class))))
+    @GetMapping("/types")
+    public ResponseEntity<List<StructureTypeDto>> getAllStructureTypes() {
+        return ResponseEntity.ok(structureService.getAllStructureTypes());
     }
 
     // ====== NESTED: STRUCTURE AREA ======

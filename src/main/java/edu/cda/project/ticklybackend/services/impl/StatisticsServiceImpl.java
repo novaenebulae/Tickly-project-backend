@@ -13,6 +13,7 @@ import edu.cda.project.ticklybackend.security.EventSecurityService;
 import edu.cda.project.ticklybackend.security.StructureSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.StatisticsService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -45,78 +46,137 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public StructureDashboardStatsDto getStructureDashboardStats(Long structureId) {
-        // Security check: Verify that the current user is staff of this structure
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!structureSecurityService.isStructureStaff(structureId, authentication)) {
-            throw new AccessDeniedException("You are not authorized to access statistics for this structure");
+        LoggingUtils.logMethodEntry(log, "getStructureDashboardStats", "structureId", structureId);
+
+        try {
+            log.debug("Début de la récupération des statistiques du tableau de bord pour la structure ID: {}", structureId);
+
+            // Security check: Verify that the current user is staff of this structure
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            log.debug("Vérification des autorisations pour l'accès aux statistiques de la structure ID: {}", structureId);
+            if (!structureSecurityService.isStructureStaff(structureId, authentication)) {
+                log.warn("Accès refusé aux statistiques pour la structure ID: {} - Utilisateur non autorisé", structureId);
+                throw new AccessDeniedException("You are not authorized to access statistics for this structure");
+            }
+            log.debug("Autorisation validée pour l'accès aux statistiques de la structure ID: {}", structureId);
+
+            // Get current date/time for upcoming events calculation
+            LocalDateTime now = LocalDateTime.now();
+
+            // Calculate KPIs
+            log.debug("Calcul des KPIs pour la structure ID: {}", structureId);
+            long upcomingEventsCount = countUpcomingEvents(structureId, now);
+            long totalTicketsReserved = countTotalTicketsReserved(structureId);
+            long totalExpectedAttendees = countExpectedAttendees(structureId, now);
+            double averageAttendanceRate = calculateAverageAttendanceRate(structureId);
+            log.debug("KPIs calculés pour la structure ID: {}: événements à venir={}, tickets réservés={}, participants attendus={}, taux de participation moyen={}%", 
+                    structureId, upcomingEventsCount, totalTicketsReserved, totalExpectedAttendees, averageAttendanceRate);
+
+            // Generate charts
+            log.debug("Génération des graphiques pour la structure ID: {}", structureId);
+            ChartJsDataDto topEventsChart = generateTopEventsChart(structureId);
+            ChartJsDataDto attendanceByCategoryChart = generateAttendanceByCategoryChart(structureId);
+            log.debug("Graphiques générés avec succès pour la structure ID: {}", structureId);
+
+            // Create and return the DTO
+            log.debug("Création du DTO de statistiques pour la structure ID: {}", structureId);
+            StructureDashboardStatsDto result = new StructureDashboardStatsDto(
+                    upcomingEventsCount,
+                    totalTicketsReserved,
+                    totalExpectedAttendees,
+                    averageAttendanceRate,
+                    topEventsChart,
+                    attendanceByCategoryChart
+            );
+            log.info("Statistiques du tableau de bord générées avec succès pour la structure ID: {}", structureId);
+
+            LoggingUtils.logMethodExit(log, "getStructureDashboardStats", result);
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des statistiques pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-
-        // Get current date/time for upcoming events calculation
-        LocalDateTime now = LocalDateTime.now();
-
-        // Calculate KPIs
-        long upcomingEventsCount = countUpcomingEvents(structureId, now);
-        long totalTicketsReserved = countTotalTicketsReserved(structureId);
-        long totalExpectedAttendees = countExpectedAttendees(structureId, now);
-        double averageAttendanceRate = calculateAverageAttendanceRate(structureId);
-
-        // Generate charts
-        ChartJsDataDto topEventsChart = generateTopEventsChart(structureId);
-        ChartJsDataDto attendanceByCategoryChart = generateAttendanceByCategoryChart(structureId);
-
-        // Create and return the DTO
-        return new StructureDashboardStatsDto(
-                upcomingEventsCount,
-                totalTicketsReserved,
-                totalExpectedAttendees,
-                averageAttendanceRate,
-                topEventsChart,
-                attendanceByCategoryChart
-        );
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventStatisticsDto getEventStats(Long eventId) {
-        // Fetch the event to verify it exists and get its name
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+        LoggingUtils.logMethodEntry(log, "getEventStats", "eventId", eventId);
 
-        // Security check: Verify that the current user is authorized to access this event's statistics
-        User currentUser = authUtils.getCurrentAuthenticatedUser();
-        if (!eventSecurityService.isOwner(eventId, currentUser)) {
-            throw new AccessDeniedException("You are not authorized to access statistics for this event");
+        try {
+            log.debug("Début de la récupération des statistiques pour l'événement ID: {}", eventId);
+
+            // Fetch the event to verify it exists and get its name
+            log.debug("Recherche de l'événement ID: {}", eventId);
+            Event event = eventRepository.findById(eventId)
+                    .orElseThrow(() -> {
+                        LoggingUtils.logException(log, "Événement non trouvé avec ID: " + eventId, null);
+                        return new ResourceNotFoundException("Event", "id", eventId);
+                    });
+            log.debug("Événement trouvé: ID={}, nom={}", event.getId(), event.getName());
+
+            // Security check: Verify that the current user is authorized to access this event's statistics
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            log.debug("Vérification des autorisations pour l'accès aux statistiques de l'événement ID: {}", eventId);
+            if (!eventSecurityService.isOwner(eventId, currentUser)) {
+                log.warn("Accès refusé aux statistiques pour l'événement ID: {} - Utilisateur ID: {} non autorisé", 
+                        eventId, currentUser.getId());
+                throw new AccessDeniedException("You are not authorized to access statistics for this event");
+            }
+            log.debug("Autorisation validée pour l'accès aux statistiques de l'événement ID: {}", eventId);
+
+            // Get zone fill rates data (used for both chart and fill percentage calculation)
+            log.debug("Récupération des taux de remplissage par zone pour l'événement ID: {}", eventId);
+            List<ZoneFillRateDataPointDto> zoneFillRates = statisticsRepository.findZoneFillRatesByEventId(eventId);
+            log.debug("Récupéré {} zones pour l'événement ID: {}", zoneFillRates.size(), eventId);
+
+            // Generate charts
+            log.debug("Génération des graphiques pour l'événement ID: {}", eventId);
+            ChartJsDataDto zoneFillRateChart = generateZoneFillRateChart(zoneFillRates);
+            ChartJsDataDto reservationsOverTimeChart = generateReservationsOverTimeChart(eventId);
+            ChartJsDataDto ticketStatusChart = generateTicketStatusChart(eventId);
+            log.debug("Graphiques générés avec succès pour l'événement ID: {}", eventId);
+
+            // Calculate KPIs
+            log.debug("Calcul des KPIs pour l'événement ID: {}", eventId);
+            double fillPercentage = calculateFillPercentage(zoneFillRates);
+            long uniqueReservationAmount = statisticsRepository.countUniqueReservationsByEventId(eventId);
+            long attributedTicketsAmount = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
+            long scannedTicketsNumber = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
+            log.debug("KPIs calculés pour l'événement ID: {}: taux de remplissage={}%, réservations uniques={}, tickets attribués={}, tickets scannés={}", 
+                    eventId, fillPercentage, uniqueReservationAmount, attributedTicketsAmount, scannedTicketsNumber);
+
+            // Create and return the DTO with all data
+            log.debug("Création du DTO de statistiques pour l'événement ID: {}", eventId);
+            EventStatisticsDto dto = new EventStatisticsDto(
+                    eventId,
+                    event.getName(),
+                    fillPercentage,
+                    uniqueReservationAmount,
+                    attributedTicketsAmount,
+                    scannedTicketsNumber,
+                    zoneFillRateChart,
+                    reservationsOverTimeChart,
+                    ticketStatusChart
+            );
+
+            log.info("Statistiques générées avec succès pour l'événement ID: {}, nom: {}", eventId, event.getName());
+
+            LoggingUtils.logMethodExit(log, "getEventStats", dto);
+            return dto;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des statistiques pour l'événement ID: " + eventId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        // Get zone fill rates data (used for both chart and fill percentage calculation)
-        List<ZoneFillRateDataPointDto> zoneFillRates = statisticsRepository.findZoneFillRatesByEventId(eventId);
-
-        // Generate charts
-        ChartJsDataDto zoneFillRateChart = generateZoneFillRateChart(zoneFillRates);
-        ChartJsDataDto reservationsOverTimeChart = generateReservationsOverTimeChart(eventId);
-        ChartJsDataDto ticketStatusChart = generateTicketStatusChart(eventId);
-
-        // Calculate KPIs
-        double fillPercentage = calculateFillPercentage(zoneFillRates);
-        long uniqueReservationAmount = statisticsRepository.countUniqueReservationsByEventId(eventId);
-        long attributedTicketsAmount = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
-        long scannedTicketsNumber = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
-
-        // Create and return the DTO with all data
-        EventStatisticsDto dto = new EventStatisticsDto(
-                eventId,
-                event.getName(),
-                fillPercentage,
-                uniqueReservationAmount,
-                attributedTicketsAmount,
-                scannedTicketsNumber,
-                zoneFillRateChart,
-                reservationsOverTimeChart,
-                ticketStatusChart
-        );
-
-        return dto;
     }
 
     /**
@@ -127,158 +187,219 @@ public class StatisticsServiceImpl implements StatisticsService {
      * @return The fill percentage as a value between 0 and 100
      */
     private double calculateFillPercentage(List<ZoneFillRateDataPointDto> zoneFillRates) {
-        if (zoneFillRates.isEmpty()) {
-            return 0.0;
+        LoggingUtils.logMethodEntry(log, "calculateFillPercentage", "zoneFillRates.size", zoneFillRates != null ? zoneFillRates.size() : 0);
+
+        try {
+            if (zoneFillRates.isEmpty()) {
+                LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
+                return 0.0;
+            }
+
+            int totalCapacity = 0;
+            long totalTicketsSold = 0;
+
+            for (ZoneFillRateDataPointDto zone : zoneFillRates) {
+                totalCapacity += zone.getCapacity();
+                totalTicketsSold += zone.getTicketsSold();
+            }
+
+            if (totalCapacity == 0) {
+                LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
+                return 0.0;
+            }
+
+            double result = (double) totalTicketsSold / totalCapacity * 100;
+            LoggingUtils.logMethodExit(log, "calculateFillPercentage", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
         }
-
-        int totalCapacity = 0;
-        long totalTicketsSold = 0;
-
-        for (ZoneFillRateDataPointDto zone : zoneFillRates) {
-            totalCapacity += zone.getCapacity();
-            totalTicketsSold += zone.getTicketsSold();
-        }
-
-        if (totalCapacity == 0) {
-            return 0.0;
-        }
-
-        return (double) totalTicketsSold / totalCapacity * 100;
     }
 
     /**
      * Count the number of upcoming events for a structure.
      */
     private long countUpcomingEvents(Long structureId, LocalDateTime now) {
-        // Query to find events that haven't started yet
-        return eventRepository.countByStructureIdAndStartDateAfterAndDeletedFalse(structureId, now.atZone(ZoneId.systemDefault()).toInstant());
+        LoggingUtils.logMethodEntry(log, "countUpcomingEvents", "structureId", structureId, "now", now);
+
+        try {
+            // Query to find events that haven't started yet
+            long result = eventRepository.countByStructureIdAndStartDateAfterAndDeletedFalse(structureId, now.atZone(ZoneId.systemDefault()).toInstant());
+            LoggingUtils.logMethodExit(log, "countUpcomingEvents", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
+        }
     }
 
     /**
      * Count the total number of reserved tickets for a structure.
      */
     private long countTotalTicketsReserved(Long structureId) {
-        return ticketRepository.countByEventStructureIdAndStatusIn(
-                structureId,
-                Arrays.asList(TicketStatus.VALID, TicketStatus.USED) // On passe les enums
-        );
+        LoggingUtils.logMethodEntry(log, "countTotalTicketsReserved", "structureId", structureId);
+
+        try {
+            long result = ticketRepository.countByEventStructureIdAndStatusIn(
+                    structureId,
+                    Arrays.asList(TicketStatus.VALID, TicketStatus.USED) // On passe les enums
+            );
+            LoggingUtils.logMethodExit(log, "countTotalTicketsReserved", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
+        }
     }
 
     /**
      * Count the expected number of attendees for upcoming events.
      */
     private long countExpectedAttendees(Long structureId, LocalDateTime now) {
-        return ticketRepository.countByEventStructureIdAndEventStartDateAfterAndStatus(
-                structureId,
-                now.atZone(ZoneId.systemDefault()).toInstant(),
-                TicketStatus.VALID
-        );
+        LoggingUtils.logMethodEntry(log, "countExpectedAttendees", "structureId", structureId, "now", now);
+
+        try {
+            long result = ticketRepository.countByEventStructureIdAndEventStartDateAfterAndStatus(
+                    structureId,
+                    now.atZone(ZoneId.systemDefault()).toInstant(),
+                    TicketStatus.VALID
+            );
+            LoggingUtils.logMethodExit(log, "countExpectedAttendees", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
+        }
     }
 
     /**
      * Calculate the average attendance rate for past events.
      */
     private double calculateAverageAttendanceRate(Long structureId) {
-        // Get past events for this structure
-        List<Event> pastEvents = eventRepository.findByStructureIdAndEndDateBeforeAndDeletedFalse(
-                structureId,
-                LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()
-        );
+        LoggingUtils.logMethodEntry(log, "calculateAverageAttendanceRate", "structureId", structureId);
 
-        if (pastEvents.isEmpty()) {
-            return 0.0;
-        }
-
-        double totalRate = 0.0;
-        int eventCount = 0;
-
-        for (Event event : pastEvents) {
-            // Count used tickets (attendees)
-            long attendees = ticketRepository.countByEventIdAndStatus(event.getId(), TicketStatus.USED);
-
-            // Count total tickets (valid + used)
-            long totalTickets = ticketRepository.countByEventIdAndStatusIn(
-                    event.getId(),
-                    Arrays.asList(TicketStatus.VALID, TicketStatus.USED)
+        try {
+            // Get past events for this structure
+            List<Event> pastEvents = eventRepository.findByStructureIdAndEndDateBeforeAndDeletedFalse(
+                    structureId,
+                    LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()
             );
 
-            if (totalTickets > 0) {
-                totalRate += (double) attendees / totalTickets * 100;
-                eventCount++;
+            if (pastEvents.isEmpty()) {
+                LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", 0.0);
+                return 0.0;
             }
-        }
 
-        return eventCount > 0 ? totalRate / eventCount : 0.0;
+            double totalRate = 0.0;
+            int eventCount = 0;
+
+            for (Event event : pastEvents) {
+                // Count used tickets (attendees)
+                long attendees = ticketRepository.countByEventIdAndStatus(event.getId(), TicketStatus.USED);
+
+                // Count total tickets (valid + used)
+                long totalTickets = ticketRepository.countByEventIdAndStatusIn(
+                        event.getId(),
+                        Arrays.asList(TicketStatus.VALID, TicketStatus.USED)
+                );
+
+                if (totalTickets > 0) {
+                    totalRate += (double) attendees / totalTickets * 100;
+                    eventCount++;
+                }
+            }
+
+            double result = eventCount > 0 ? totalRate / eventCount : 0.0;
+            LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
+        }
     }
 
     /**
      * Generate a chart of the top events by ticket sales.
      */
     private ChartJsDataDto generateTopEventsChart(Long structureId) {
-        List<Map<String, Object>> topEvents = statisticsRepository.findTopEventsByTickets(structureId, TOP_EVENTS_LIMIT);
+        LoggingUtils.logMethodEntry(log, "generateTopEventsChart", "structureId", structureId);
 
-        List<String> labels = new ArrayList<>();
-        List<Number> data = new ArrayList<>();
-        List<String> backgroundColors = new ArrayList<>();
+        try {
+            List<Map<String, Object>> topEvents = statisticsRepository.findTopEventsByTickets(structureId, TOP_EVENTS_LIMIT);
 
-        // Generate random colors for the chart
-        String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"};
+            List<String> labels = new ArrayList<>();
+            List<Number> data = new ArrayList<>();
+            List<String> backgroundColors = new ArrayList<>();
 
-        for (int i = 0; i < topEvents.size(); i++) {
-            Map<String, Object> event = topEvents.get(i);
-            labels.add((String) event.get("name"));
-            data.add((Number) event.get("ticket_count"));
-            backgroundColors.add(colors[i % colors.length]);
+            // Generate random colors for the chart
+            String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"};
+
+            for (int i = 0; i < topEvents.size(); i++) {
+                Map<String, Object> event = topEvents.get(i);
+                labels.add((String) event.get("name"));
+                data.add((Number) event.get("ticket_count"));
+                backgroundColors.add(colors[i % colors.length]);
+            }
+
+            ChartJsDataset dataset = new ChartJsDataset(
+                    "Tickets Sold",
+                    data,
+                    backgroundColors,
+                    "#FFFFFF",
+                    false
+            );
+
+            ChartJsDataDto result = new ChartJsDataDto(
+                    "bar",
+                    labels,
+                    Collections.singletonList(dataset)
+            );
+
+            LoggingUtils.logMethodExit(log, "generateTopEventsChart", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
         }
-
-        ChartJsDataset dataset = new ChartJsDataset(
-                "Tickets Sold",
-                data,
-                backgroundColors,
-                "#FFFFFF",
-                false
-        );
-
-        return new ChartJsDataDto(
-                "bar",
-                labels,
-                Collections.singletonList(dataset)
-        );
     }
 
     /**
      * Generate a chart of attendance by event category.
      */
     private ChartJsDataDto generateAttendanceByCategoryChart(Long structureId) {
-        List<Map<String, Object>> attendanceByCategory = statisticsRepository.findAttendanceByCategory(structureId);
+        LoggingUtils.logMethodEntry(log, "generateAttendanceByCategoryChart", "structureId", structureId);
 
-        List<String> labels = new ArrayList<>();
-        List<Number> data = new ArrayList<>();
-        List<String> backgroundColors = new ArrayList<>();
+        try {
+            List<Map<String, Object>> attendanceByCategory = statisticsRepository.findAttendanceByCategory(structureId);
 
-        // Generate random colors for the chart
-        String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#FFCD56"};
+            List<String> labels = new ArrayList<>();
+            List<Number> data = new ArrayList<>();
+            List<String> backgroundColors = new ArrayList<>();
 
-        for (int i = 0; i < attendanceByCategory.size(); i++) {
-            Map<String, Object> category = attendanceByCategory.get(i);
-            labels.add((String) category.get("name"));
-            data.add((Number) category.get("attendee_count"));
-            backgroundColors.add(colors[i % colors.length]);
+            // Generate random colors for the chart
+            String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#FFCD56"};
+
+            for (int i = 0; i < attendanceByCategory.size(); i++) {
+                Map<String, Object> category = attendanceByCategory.get(i);
+                labels.add((String) category.get("name"));
+                data.add((Number) category.get("attendee_count"));
+                backgroundColors.add(colors[i % colors.length]);
+            }
+
+            ChartJsDataset dataset = new ChartJsDataset(
+                    "Attendees",
+                    data,
+                    backgroundColors,
+                    "#FFFFFF",
+                    false
+            );
+
+            ChartJsDataDto result = new ChartJsDataDto(
+                    "doughnut",
+                    labels,
+                    Collections.singletonList(dataset)
+            );
+
+            LoggingUtils.logMethodExit(log, "generateAttendanceByCategoryChart", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
         }
-
-        ChartJsDataset dataset = new ChartJsDataset(
-                "Attendees",
-                data,
-                backgroundColors,
-                "#FFFFFF",
-                false
-        );
-
-        return new ChartJsDataDto(
-                "doughnut",
-                labels,
-                Collections.singletonList(dataset)
-        );
     }
 
     /**

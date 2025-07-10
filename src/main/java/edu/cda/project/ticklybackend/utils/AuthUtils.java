@@ -39,4 +39,20 @@ public class AuthUtils {
     public Long getCurrentAuthenticatedUserId() {
         return getCurrentAuthenticatedUser().getId();
     }
+
+    /**
+     * Récupère l'objet Authentication du contexte de sécurité actuel.
+     * 
+     * @return L'objet Authentication actuel
+     * @throws org.springframework.security.authentication.AuthenticationCredentialsNotFoundException si aucun utilisateur n'est authentifié
+     */
+    public Authentication getCurrentAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null ||
+                !authentication.isAuthenticated() ||
+                authentication.getPrincipal() instanceof String && authentication.getPrincipal().equals("anonymousUser")) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Utilisateur non authentifié.");
+        }
+        return authentication;
+    }
 }

@@ -1,6 +1,6 @@
 package edu.cda.project.ticklybackend.controllers;
 
-import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
+import edu.cda.project.ticklybackend.dtos.auth.*;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,9 +30,139 @@ class AuthControllerTest {
     @InjectMocks
     private AuthController authController;
 
+    private AuthResponseDto mockAuthResponse;
+    private UserRegistrationDto registrationDto;
+    private UserLoginDto loginDto;
+    private PasswordResetRequestDto passwordResetRequestDto;
+    private PasswordResetDto passwordResetDto;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        // Setup mock auth response
+        mockAuthResponse = new AuthResponseDto();
+        mockAuthResponse.setAccessToken("test-token");
+        mockAuthResponse.setTokenType("Bearer");
+        mockAuthResponse.setExpiresIn(3600000L);
+        mockAuthResponse.setEmail("test@example.com");
+
+        // Setup registration DTO
+        registrationDto = new UserRegistrationDto();
+        registrationDto.setEmail("test@example.com");
+        registrationDto.setPassword("Password123!");
+        registrationDto.setFirstName("Test");
+        registrationDto.setLastName("User");
+
+        // Setup login DTO
+        loginDto = new UserLoginDto();
+        loginDto.setEmail("test@example.com");
+        loginDto.setPassword("Password123!");
+
+        // Setup password reset request DTO
+        passwordResetRequestDto = new PasswordResetRequestDto();
+        passwordResetRequestDto.setEmail("test@example.com");
+
+        // Setup password reset DTO
+        passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setToken("reset-token");
+        passwordResetDto.setNewPassword("NewPassword123!");
+    }
+
+    @Test
+    void registerAndLoginUser_ShouldReturnAuthResponseDto() {
+        // Arrange
+        when(authService.registerUser(registrationDto)).thenReturn(mockAuthResponse);
+
+        // Act
+        ResponseEntity<AuthResponseDto> response = authController.registerAndLoginUser(registrationDto);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("test-token", response.getBody().getAccessToken());
+        assertEquals("Bearer", response.getBody().getTokenType());
+        assertEquals(3600000L, response.getBody().getExpiresIn());
+        assertEquals("test@example.com", response.getBody().getEmail());
+
+        // Verify
+        verify(authService, times(1)).registerUser(registrationDto);
+    }
+
+    @Test
+    void loginUser_ShouldReturnAuthResponseDto() {
+        // Arrange
+        when(authService.login(loginDto)).thenReturn(mockAuthResponse);
+
+        // Act
+        ResponseEntity<AuthResponseDto> response = authController.loginUser(loginDto);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("test-token", response.getBody().getAccessToken());
+        assertEquals("Bearer", response.getBody().getTokenType());
+        assertEquals(3600000L, response.getBody().getExpiresIn());
+        assertEquals("test@example.com", response.getBody().getEmail());
+
+        // Verify
+        verify(authService, times(1)).login(loginDto);
+    }
+
+    @Test
+    void validateEmail_ShouldReturnAuthResponseDto() {
+        // Arrange
+        String token = "validation-token";
+        when(authService.validateEmail(token)).thenReturn(mockAuthResponse);
+
+        // Act
+        ResponseEntity<AuthResponseDto> response = authController.validateEmail(token);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("test-token", response.getBody().getAccessToken());
+        assertEquals("Bearer", response.getBody().getTokenType());
+        assertEquals(3600000L, response.getBody().getExpiresIn());
+        assertEquals("test@example.com", response.getBody().getEmail());
+
+        // Verify
+        verify(authService, times(1)).validateEmail(token);
+    }
+
+    @Test
+    void forgotPassword_ShouldReturnOk() {
+        // Arrange
+        doNothing().when(authService).forgotPassword(passwordResetRequestDto.getEmail());
+
+        // Act
+        ResponseEntity<Void> response = authController.forgotPassword(passwordResetRequestDto);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        // Verify
+        verify(authService, times(1)).forgotPassword(passwordResetRequestDto.getEmail());
+    }
+
+    @Test
+    void resetPassword_ShouldReturnOk() {
+        // Arrange
+        doNothing().when(authService).resetPassword(passwordResetDto);
+
+        // Act
+        ResponseEntity<Void> response = authController.resetPassword(passwordResetDto);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        // Verify
+        verify(authService, times(1)).resetPassword(passwordResetDto);
     }
 
     @Test

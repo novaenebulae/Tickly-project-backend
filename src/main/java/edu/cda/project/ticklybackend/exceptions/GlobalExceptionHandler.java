@@ -12,24 +12,27 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// @ControllerAdvice permet de centraliser la gestion des exceptions pour tous les contrôleurs.
+/**
+ * Global exception handler for the application.
+ * Centralizes exception handling for all controllers.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Gère les exceptions de validation des arguments (ex: @Valid sur un DTO)
+    /**
+     * Handles validation exceptions (e.g., @Valid on a DTO).
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponseDto> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
-        logger.warn("Erreur de validation: {}", ex.getMessage());
+        logger.warn("Validation error: {}", ex.getMessage());
         List<Map<String, String>> errors = ex.getBindingResult().getAllErrors().stream()
                 .map(error -> {
                     String fieldName = (error instanceof FieldError) ? ((FieldError) error).getField() : error.getObjectName();
@@ -46,68 +49,48 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // Gère les exceptions pour les ressources non trouvées
-    @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(
-            ResourceNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Ressource non trouvée: {}", ex.getMessage());
+    /**
+     * Handles all application-specific exceptions.
+     */
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponseDto> handleBaseException(
+            BaseException ex, HttpServletRequest request) {
+        if (ex.getStatus().is4xxClientError()) {
+            logger.warn("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        } else {
+            logger.error("{}: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+        }
+
         ErrorResponseDto errorResponse = new ErrorResponseDto(
-                HttpStatus.NOT_FOUND.value(),
+                ex.getStatus().value(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
-    // Gère les exceptions pour les emails déjà existants (exemple)
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyExistsException(
-            EmailAlreadyExistsException ex, HttpServletRequest request) {
-        logger.warn(ex.getMessage());
-        ErrorResponseDto errorResponse = new ErrorResponseDto(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<ErrorResponseDto> handleInvalidTokenException(
-            InvalidTokenException ex, HttpServletRequest request) {
-        logger.warn("Token invalide : {}", ex.getMessage());
-        ErrorResponseDto errorResponse = new ErrorResponseDto(
-                HttpStatus.FORBIDDEN.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    }
-
-
-    // Gère les exceptions de type BadCredentialsException (identifiants incorrects)
+    /**
+     * Handles BadCredentialsException (incorrect credentials).
+     */
     @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponseDto> handleBadCredentialsException(
             BadCredentialsException ex, HttpServletRequest request) {
-        logger.warn("Tentative de connexion échouée (mauvais identifiants): {}", ex.getMessage());
+        logger.warn("Failed login attempt (bad credentials): {}", ex.getMessage());
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Identifiants invalides ou email non validé.", // Message générique pour la sécurité
+                "Identifiants invalides ou email non validé.", // Generic message for security
                 request.getRequestURI()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    // Gère les exceptions de type AccessDeniedException (accès refusé par Spring Security)
+    /**
+     * Handles AccessDeniedException (access denied by Spring Security).
+     */
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<ErrorResponseDto> handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request) {
-        logger.warn("Accès refusé: {}", ex.getMessage());
+        logger.warn("Access denied: {}", ex.getMessage());
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 HttpStatus.FORBIDDEN.value(),
                 "Accès refusé. Vous n'avez pas les permissions nécessaires pour accéder à cette ressource.",
@@ -116,41 +99,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
-    // Gère les exceptions de stockage de fichiers
-    @ExceptionHandler(FileStorageException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ErrorResponseDto> handleFileStorageException(
-            FileStorageException ex, HttpServletRequest request) {
-        logger.error("Erreur de stockage de fichier: {}", ex.getMessage(), ex);
-        ErrorResponseDto errorResponse = new ErrorResponseDto(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                ex.getMessage(), // Ou un message plus générique "Erreur lors du traitement du fichier."
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    // Gère les exceptions de type BadRequestException
-    @ExceptionHandler(BadRequestException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponseDto> handleBadRequestException(
-            BadRequestException ex, HttpServletRequest request) {
-        logger.warn("Requête invalide: {}", ex.getMessage());
-        ErrorResponseDto errorResponse = new ErrorResponseDto(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-
-    // Gère toutes les autres exceptions non interceptées spécifiquement
+    /**
+     * Handles all other uncaught exceptions.
+     */
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponseDto> handleAllUncaughtException(
             Exception ex, HttpServletRequest request) {
-        logger.error("Erreur interne du serveur inattendue: {}", ex.getMessage(), ex);
+        logger.error("Unexpected internal server error: {}", ex.getMessage(), ex);
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Une erreur interne inattendue est survenue.",

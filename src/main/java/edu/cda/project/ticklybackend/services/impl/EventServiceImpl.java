@@ -29,6 +29,7 @@ import edu.cda.project.ticklybackend.services.interfaces.EventService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -68,6 +69,8 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventDetailResponseDto createEvent(EventCreationDto creationDto) {
+        LoggingUtils.logMethodEntry(log, "createEvent", "creationDto", creationDto);
+
         if (creationDto.getEndDate().isBefore(creationDto.getStartDate())) {
             throw new BadRequestException("La date de fin ne peut pas être antérieure à la date de début.");
         }
@@ -97,13 +100,16 @@ public class EventServiceImpl implements EventService {
         }
 
         Event savedEvent = eventRepository.save(event);
-        log.info("Événement '{}' (ID: {}) créé par l'utilisateur '{}'.", savedEvent.getName(), savedEvent.getId(), creator.getEmail());
-        return eventMapper.toDetailDto(savedEvent);
+        EventDetailResponseDto result = eventMapper.toDetailDto(savedEvent);
+        LoggingUtils.logMethodExit(log, "createEvent", result);
+        return result;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<FriendResponseDto> getFriendsAttendingEvent(Long eventId) {
+        LoggingUtils.logMethodEntry(log, "getFriendsAttendingEvent", "eventId", eventId);
+
         // Vérifier que l'événement existe
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
@@ -137,6 +143,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toSet());
 
         if (friendIds.isEmpty()) {
+            LoggingUtils.logMethodExit(log, "getFriendsAttendingEvent", Collections.emptyList());
             return Collections.emptyList();
         }
 
@@ -152,7 +159,7 @@ public class EventServiceImpl implements EventService {
                 ));
 
         // Mapper vers les DTOs de réponse
-        return acceptedFriendships.stream()
+        List<FriendResponseDto> result = acceptedFriendships.stream()
                 .filter(friendship -> {
                     Long friendId = friendship.getSender().getId().equals(currentUserId)
                             ? friendship.getReceiver().getId()
@@ -180,12 +187,17 @@ public class EventServiceImpl implements EventService {
                     );
                 })
                 .collect(Collectors.toList());
+
+        LoggingUtils.logMethodExit(log, "getFriendsAttendingEvent", result);
+        return result;
     }
 
 
     @Override
     @Transactional
     public EventDetailResponseDto updateEvent(Long eventId, EventUpdateDto updateDto) {
+        LoggingUtils.logMethodEntry(log, "updateEvent", "eventId", eventId, "updateDto", updateDto);
+
         Event event = eventRepository.findByIdWithAudienceZones(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
@@ -246,9 +258,10 @@ public class EventServiceImpl implements EventService {
         }
 
         Event savedEvent = eventRepository.save(event);
-        log.info("Événement '{}' (ID: {}) mis à jour par l'utilisateur ID: {}", savedEvent.getName(), eventId, currentUser.getId());
+        EventDetailResponseDto result = eventMapper.toDetailDto(savedEvent);
 
-        return eventMapper.toDetailDto(savedEvent);
+        LoggingUtils.logMethodExit(log, "updateEvent", result);
+        return result;
     }
 
     /**
@@ -312,28 +325,28 @@ public class EventServiceImpl implements EventService {
 
     /**
      * Gère la logique complexe de mise à jour des zones d'audience d'un événement.
-     * ✅ CORRECTION : Évite les conflits de clés dupliquées
+     * CORRECTION : Évite les conflits de clés dupliquées
      */
     private void updateEventAudienceZones(Event event, List<EventAudienceZoneConfigDto> configDtos, Long structureId) {
-        log.debug("🔄 Mise à jour des zones d'audience pour l'événement {}", event.getId());
+        log.debug("Mise à jour des zones d'audience pour l'événement {}", event.getId());
 
-        // ✅ CORRECTION : Utiliser un Map avec template_id comme clé, pas l'ID de la zone
+        // CORRECTION : Utiliser un Map avec template_id comme clé, pas l'ID de la zone
         Map<Long, EventAudienceZone> existingZonesByTemplateId = event.getAudienceZones().stream()
                 .collect(Collectors.toMap(
                         zone -> zone.getTemplate().getId(), // Clé = template_id (unique pour cet événement)
                         zone -> zone,
                         (existing, duplicate) -> {
-                            log.warn("⚠️ Zone dupliquée détectée pour template {}, gardant la première", existing.getTemplate().getId());
+                            log.warn("Zone dupliquée détectée pour template {}, gardant la première", existing.getTemplate().getId());
                             return existing; // En cas de doublon, garder la première
                         }
                 ));
 
-        log.debug("🔍 Zones existantes par template: {}", existingZonesByTemplateId.keySet());
+        log.debug("Zones existantes par template: {}", existingZonesByTemplateId.keySet());
 
         List<EventAudienceZone> finalZones = new ArrayList<>();
 
         for (EventAudienceZoneConfigDto configDto : configDtos) {
-            log.debug("🔄 Traitement config DTO - templateId: {}, capacity: {}",
+            log.debug("Traitement config DTO - templateId: {}, capacity: {}",
                     configDto.getTemplateId(), configDto.getAllocatedCapacity());
 
             AudienceZoneTemplate template = templateRepository.findById(configDto.getTemplateId())
@@ -347,18 +360,18 @@ public class EventServiceImpl implements EventService {
                 throw new BadRequestException("La capacité allouée pour la zone '" + template.getName() + "' dépasse la capacité maximale du modèle.");
             }
 
-            // ✅ CORRECTION : Chercher par template_id, pas par zone_id
+            // CORRECTION : Chercher par template_id, pas par zone_id
             EventAudienceZone zoneToUpdate = existingZonesByTemplateId.remove(configDto.getTemplateId());
 
             if (zoneToUpdate != null) {
                 // Mise à jour d'une zone existante
-                log.debug("✅ Mise à jour zone existante - ID: {}, templateId: {}",
+                log.debug("Mise à jour zone existante - ID: {}, templateId: {}",
                         zoneToUpdate.getId(), configDto.getTemplateId());
                 zoneToUpdate.setAllocatedCapacity(configDto.getAllocatedCapacity());
                 // Le template reste le même
             } else {
                 // Nouvelle zone à créer
-                log.debug("➕ Création nouvelle zone - templateId: {}", configDto.getTemplateId());
+                log.debug("Création nouvelle zone - templateId: {}", configDto.getTemplateId());
                 zoneToUpdate = new EventAudienceZone();
                 zoneToUpdate.setEvent(event);
                 zoneToUpdate.setTemplate(template);
@@ -370,19 +383,21 @@ public class EventServiceImpl implements EventService {
 
         // Les zones restantes dans existingZonesByTemplateId sont celles à supprimer
         if (!existingZonesByTemplateId.isEmpty()) {
-            log.debug("🗑️ Suppression des zones non mentionnées: {}", existingZonesByTemplateId.keySet());
+            log.debug("Suppression des zones non mentionnées: {}", existingZonesByTemplateId.keySet());
         }
 
-        // ✅ CORRECTION : Réassignation propre de la collection
+        // CORRECTION : Réassignation propre de la collection
         event.getAudienceZones().clear();
         event.getAudienceZones().addAll(finalZones);
 
-        log.debug("✅ Zones d'audience mises à jour - Nombre final: {}", finalZones.size());
+        log.debug("Zones d'audience mises à jour - Nombre final: {}", finalZones.size());
     }
 
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponseDto<EventSummaryDto> searchEvents(EventSearchParamsDto params, Pageable pageable) {
+        LoggingUtils.logMethodEntry(log, "searchEvents", "params", params, "pageable", pageable);
+
         // Construire la spécification de base avec les paramètres de recherche
         Specification<Event> baseSpec = EventSpecification.getSpecification(params);
 
@@ -392,30 +407,30 @@ public class EventServiceImpl implements EventService {
         Page<Event> eventPage = eventRepository.findAll(secureSpec, pageable);
         Page<EventSummaryDto> dtoPage = eventPage.map(eventMapper::toSummaryDto);
 
-        log.debug("Recherche d'événements : {} résultats trouvés après filtres de sécurité", eventPage.getTotalElements());
-        return new PaginatedResponseDto<>(dtoPage);
+        PaginatedResponseDto<EventSummaryDto> result = new PaginatedResponseDto<>(dtoPage);
+        LoggingUtils.logMethodExit(log, "searchEvents", result);
+        return result;
     }
 
 
     @Override
     @Transactional(readOnly = true)
     public EventDetailResponseDto getEventById(Long eventId) {
+        LoggingUtils.logMethodEntry(log, "getEventById", "eventId", eventId);
+
         // Try to find the event with the given ID
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         // If not found, try with ID-1 (to handle potential ID shift after deletion)
         if (eventOptional.isEmpty() && eventId > 1) {
-            log.debug("Événement avec ID {} non trouvé, tentative avec ID {}", eventId, eventId-1);
-            eventOptional = eventRepository.findById(eventId-1);
+            eventOptional = eventRepository.findById(eventId - 1);
         }
 
         // If still not found, try to find it including deleted events (for better error messages)
         if (eventOptional.isEmpty()) {
-            log.debug("Événement avec ID {} non trouvé, vérification si supprimé", eventId);
             eventOptional = eventRepository.findByIdIncludingDeleted(eventId);
 
             if (eventOptional.isPresent() && eventOptional.get().isDeleted()) {
-                log.debug("Événement avec ID {} trouvé mais marqué comme supprimé", eventId);
                 throw new ResourceNotFoundException("L'événement avec ID " + eventId + " a été supprimé");
             }
         }
@@ -435,20 +450,22 @@ public class EventServiceImpl implements EventService {
             throw new ResourceNotFoundException("Event", "id", eventId);
         }
 
-        log.debug("Accès autorisé aux détails de l'événement {} (statut: {})", eventId, event.getStatus());
-        return eventMapper.toDetailDto(event);
+        EventDetailResponseDto result = eventMapper.toDetailDto(event);
+        LoggingUtils.logMethodExit(log, "getEventById", result);
+        return result;
     }
 
     @Override
     @Transactional
     public void deleteEvent(Long eventId) {
+        LoggingUtils.logMethodEntry(log, "deleteEvent", "eventId", eventId);
+
         // Try to find the event with the given ID
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         // If not found, try with ID-1 (to handle potential ID shift after deletion)
         if (eventOptional.isEmpty() && eventId > 1) {
-            log.debug("Événement avec ID {} non trouvé pour suppression, tentative avec ID {}", eventId, eventId-1);
-            eventOptional = eventRepository.findById(eventId-1);
+            eventOptional = eventRepository.findById(eventId - 1);
         }
 
         // If still not found, throw exception
@@ -456,15 +473,11 @@ public class EventServiceImpl implements EventService {
 
         // RÈGLE: Seuls les événements DRAFT peuvent être supprimés
         if (event.getStatus() == EventStatus.DRAFT) {
-            log.info("Suppression autorisée de l'événement DRAFT '{}' (ID: {})",
-                    event.getName(), event.getId());
-
             // Utiliser la suppression logique (soft delete) au lieu de la suppression physique
             event.setDeleted(true);
             eventRepository.save(event);
 
-            log.info("Événement DRAFT '{}' (ID: {}) marqué comme supprimé avec succès",
-                    event.getName(), event.getId());
+            LoggingUtils.logMethodExit(log, "deleteEvent");
             return;
         }
 
@@ -474,28 +487,6 @@ public class EventServiceImpl implements EventService {
                         "Statut actuel: " + event.getStatus() + ". " +
                         "Pour les événements publiés, veuillez d'abord les annuler."
         );
-    }
-
-    private void cleanupEventFiles(Event event) {
-        // Supprimer la photo principale
-        if (StringUtils.hasText(event.getMainPhotoPath())) {
-            try {
-                fileStorageService.deleteFile(event.getMainPhotoPath(), MAIN_PHOTO_SUBDIR);
-            } catch (Exception e) {
-                log.warn("Impossible de supprimer la photo principale: {}", e.getMessage());
-            }
-        }
-
-        // Supprimer les images de galerie
-        if (event.getEventPhotoPaths() != null && !event.getEventPhotoPaths().isEmpty()) {
-            event.getEventPhotoPaths().forEach(path -> {
-                try {
-                    fileStorageService.deleteFile(path, GALLERY_SUBDIR);
-                } catch (Exception e) {
-                    log.warn("Impossible de supprimer l'image de galerie {}: {}", path, e.getMessage());
-                }
-            });
-        }
     }
 
     @Override
@@ -540,10 +531,12 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public String updateEventMainPhoto(Long eventId, MultipartFile file) {
+        log.debug("Mise à jour de la photo principale pour l'événement ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         if (StringUtils.hasText(event.getMainPhotoPath())) {
+            log.debug("Suppression de l'ancienne photo principale: {}", event.getMainPhotoPath());
             fileStorageService.deleteFile(event.getMainPhotoPath(), MAIN_PHOTO_SUBDIR);
         }
 
@@ -551,17 +544,20 @@ public class EventServiceImpl implements EventService {
         event.setMainPhotoPath(newPhotoPath);
         eventRepository.save(event);
 
+        log.info("Photo principale mise à jour avec succès pour l'événement ID: {}", eventId);
         return fileStorageService.getFileUrl(newPhotoPath, MAIN_PHOTO_SUBDIR);
     }
 
     @Override
     @Transactional
     public List<FileUploadResponseDto> addEventGalleryImages(Long eventId, MultipartFile[] files) {
+        log.debug("Ajout de {} images à la galerie de l'événement ID: {}", files.length, eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         List<FileUploadResponseDto> responses = new ArrayList<>();
         for (MultipartFile file : files) {
+            log.debug("Traitement de l'image: {}", file.getOriginalFilename());
             String newImagePath = fileStorageService.storeFile(file, GALLERY_SUBDIR);
             event.getEventPhotoPaths().add(newImagePath);
 
@@ -572,29 +568,36 @@ public class EventServiceImpl implements EventService {
             ));
         }
         eventRepository.save(event);
+        log.info("{} images ajoutées avec succès à la galerie de l'événement ID: {}", responses.size(), eventId);
         return responses;
     }
 
     @Override
     @Transactional
     public void removeEventGalleryImage(Long eventId, String imagePath) {
+        log.debug("Suppression de l'image '{}' de la galerie de l'événement ID: {}", imagePath, eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         if (!event.getEventPhotoPaths().contains(imagePath)) {
+            log.warn("Image '{}' non trouvée dans la galerie de l'événement ID: {}", imagePath, eventId);
             throw new ResourceNotFoundException("Image", "path", imagePath);
         }
 
         fileStorageService.deleteFile(imagePath, GALLERY_SUBDIR);
         event.getEventPhotoPaths().remove(imagePath);
         eventRepository.save(event);
+        log.info("Image '{}' supprimée avec succès de la galerie de l'événement ID: {}", imagePath, eventId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EventCategoryDto> getAllCategories() {
-        return categoryRepository.findAll().stream()
+        log.debug("Récupération de toutes les catégories d'événements");
+        List<EventCategoryDto> categories = categoryRepository.findAll().stream()
                 .map(category -> new EventCategoryDto(category.getId(), category.getName()))
                 .collect(Collectors.toList());
+        log.debug("{} catégories d'événements récupérées", categories.size());
+        return categories;
     }
 }

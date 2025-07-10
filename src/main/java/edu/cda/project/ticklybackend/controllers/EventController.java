@@ -6,6 +6,7 @@ import edu.cda.project.ticklybackend.dtos.event.*;
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Gestion des Événements", description = "API pour la création, recherche et gestion des événements.")
 public class EventController {
 
@@ -48,8 +51,15 @@ public class EventController {
     @PostMapping("/events")
     @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.canCreateInStructure(principal, #creationDto.structureId)")
     public ResponseEntity<EventDetailResponseDto> createEvent(@Valid @RequestBody EventCreationDto creationDto) {
-        EventDetailResponseDto createdEvent = eventService.createEvent(creationDto);
-        return new ResponseEntity<>(createdEvent, HttpStatus.CREATED);
+        LoggingUtils.logMethodEntry(log, "createEvent", "structureId", creationDto.getStructureId());
+        try {
+            EventDetailResponseDto createdEvent = eventService.createEvent(creationDto);
+            LoggingUtils.logMethodExit(log, "createEvent", createdEvent);
+            return new ResponseEntity<>(createdEvent, HttpStatus.CREATED);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la création de l'événement pour la structure ID " + creationDto.getStructureId(), e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -61,7 +71,15 @@ public class EventController {
     public ResponseEntity<PaginatedResponseDto<EventSummaryDto>> searchEvents(
             @ParameterObject EventSearchParamsDto params,
             @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(eventService.searchEvents(params, pageable));
+        LoggingUtils.logMethodEntry(log, "searchEvents", "params", params, "pageable", pageable);
+        try {
+            PaginatedResponseDto<EventSummaryDto> result = eventService.searchEvents(params, pageable);
+            LoggingUtils.logMethodExit(log, "searchEvents", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la recherche d'événements", e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -74,7 +92,15 @@ public class EventController {
     )
     @GetMapping("/events/{eventId}")
     public ResponseEntity<EventDetailResponseDto> getEventById(@Parameter(description = "ID de l'événement à récupérer") @PathVariable Long eventId) {
-        return ResponseEntity.ok(eventService.getEventById(eventId));
+        LoggingUtils.logMethodEntry(log, "getEventById", "eventId", eventId);
+        try {
+            EventDetailResponseDto event = eventService.getEventById(eventId);
+            LoggingUtils.logMethodExit(log, "getEventById", event);
+            return ResponseEntity.ok(event);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des détails de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -91,8 +117,15 @@ public class EventController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<FriendResponseDto>> getFriendsAttendingEvent(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId) {
-        List<FriendResponseDto> friendsAttending = eventService.getFriendsAttendingEvent(eventId);
-        return ResponseEntity.ok(friendsAttending);
+        LoggingUtils.logMethodEntry(log, "getFriendsAttendingEvent", "eventId", eventId);
+        try {
+            List<FriendResponseDto> friendsAttending = eventService.getFriendsAttendingEvent(eventId);
+            LoggingUtils.logMethodExit(log, "getFriendsAttendingEvent", friendsAttending);
+            return ResponseEntity.ok(friendsAttending);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des amis participant à l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
 
@@ -112,7 +145,15 @@ public class EventController {
     public ResponseEntity<EventDetailResponseDto> updateEvent(
             @Parameter(description = "ID de l'événement à mettre à jour") @PathVariable Long eventId,
             @Valid @RequestBody EventUpdateDto updateDto) {
-        return ResponseEntity.ok(eventService.updateEvent(eventId, updateDto));
+        LoggingUtils.logMethodEntry(log, "updateEvent", "eventId", eventId, "updateDto", updateDto);
+        try {
+            EventDetailResponseDto updatedEvent = eventService.updateEvent(eventId, updateDto);
+            LoggingUtils.logMethodExit(log, "updateEvent", updatedEvent);
+            return ResponseEntity.ok(updatedEvent);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la mise à jour de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
 
@@ -129,8 +170,15 @@ public class EventController {
     @DeleteMapping("/events/{eventId}")
     @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
     public ResponseEntity<Void> deleteEvent(@Parameter(description = "ID de l'événement à supprimer") @PathVariable Long eventId) {
-        eventService.deleteEvent(eventId);
-        return ResponseEntity.noContent().build();
+        LoggingUtils.logMethodEntry(log, "deleteEvent", "eventId", eventId);
+        try {
+            eventService.deleteEvent(eventId);
+            LoggingUtils.logMethodExit(log, "deleteEvent");
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -147,7 +195,15 @@ public class EventController {
     @PatchMapping("/events/{eventId}/status")
     @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
     public ResponseEntity<EventDetailResponseDto> updateEventStatus(@Parameter(description = "ID de l'événement") @PathVariable Long eventId, @Valid @RequestBody EventStatusUpdateDto statusUpdateDto) {
-        return ResponseEntity.ok(eventService.updateEventStatus(eventId, statusUpdateDto));
+        LoggingUtils.logMethodEntry(log, "updateEventStatus", "eventId", eventId, "status", statusUpdateDto.getStatus());
+        try {
+            EventDetailResponseDto updatedEvent = eventService.updateEventStatus(eventId, statusUpdateDto);
+            LoggingUtils.logMethodExit(log, "updateEventStatus", updatedEvent);
+            return ResponseEntity.ok(updatedEvent);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la mise à jour du statut de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -161,8 +217,16 @@ public class EventController {
     public ResponseEntity<FileUploadResponseDto> uploadMainPhoto(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "Fichier image à uploader") @RequestParam("file") MultipartFile file) {
-        String fileUrl = eventService.updateEventMainPhoto(eventId, file);
-        return ResponseEntity.ok(new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Photo principale mise à jour."));
+        LoggingUtils.logMethodEntry(log, "uploadMainPhoto", "eventId", eventId, "fileName", file.getOriginalFilename());
+        try {
+            String fileUrl = eventService.updateEventMainPhoto(eventId, file);
+            FileUploadResponseDto response = new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Photo principale mise à jour.");
+            LoggingUtils.logMethodExit(log, "uploadMainPhoto", response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de l'upload de la photo principale pour l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -176,8 +240,15 @@ public class EventController {
     public ResponseEntity<List<FileUploadResponseDto>> addGalleryImages(
             @PathVariable Long eventId,
             @RequestParam("files") MultipartFile[] files) {
-        List<FileUploadResponseDto> responses = eventService.addEventGalleryImages(eventId, files);
-        return ResponseEntity.ok(responses);
+        LoggingUtils.logMethodEntry(log, "addGalleryImages", "eventId", eventId, "filesCount", files.length);
+        try {
+            List<FileUploadResponseDto> responses = eventService.addEventGalleryImages(eventId, files);
+            LoggingUtils.logMethodExit(log, "addGalleryImages", responses);
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de l'ajout d'images à la galerie de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -191,8 +262,15 @@ public class EventController {
     public ResponseEntity<Void> removeGalleryImage(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "Chemin/nom du fichier image à supprimer (tel que retourné par l'API)") @RequestParam String imagePath) {
-        eventService.removeEventGalleryImage(eventId, imagePath);
-        return ResponseEntity.noContent().build();
+        LoggingUtils.logMethodEntry(log, "removeGalleryImage", "eventId", eventId, "imagePath", imagePath);
+        try {
+            eventService.removeEventGalleryImage(eventId, imagePath);
+            LoggingUtils.logMethodExit(log, "removeGalleryImage");
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression de l'image '" + imagePath + "' de la galerie de l'événement ID " + eventId, e);
+            throw e;
+        }
     }
 
     @Operation(
@@ -202,6 +280,14 @@ public class EventController {
     )
     @GetMapping("/event-categories")
     public ResponseEntity<List<EventCategoryDto>> getAllCategories() {
-        return ResponseEntity.ok(eventService.getAllCategories());
+        LoggingUtils.logMethodEntry(log, "getAllCategories");
+        try {
+            List<EventCategoryDto> categories = eventService.getAllCategories();
+            LoggingUtils.logMethodExit(log, "getAllCategories", categories);
+            return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des catégories d'événements", e);
+            throw e;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -31,120 +32,274 @@ public class MailingServiceImpl implements MailingService {
     @Async
     @Override
     public void sendEmailValidation(String to, String userName, String validationLink) {
-        final String subject = "Bienvenue sur Tickly ! Validez votre adresse e-mail";
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        context.setVariable("validationLink", frontendBaseUrl + validationLink);
-        sendHtmlEmail(to, subject, "emails/email-validation.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendEmailValidation", "to", to, "userName", userName, "validationLink", validationLink);
+
+        try {
+            log.debug("Préparation de l'email de validation pour: {}", to);
+            final String subject = "Bienvenue sur Tickly ! Validez votre adresse e-mail";
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("validationLink", frontendBaseUrl + validationLink);
+            try {
+                sendHtmlEmail(to, subject, "emails/email-validation.html", context, null, null);
+                log.debug("Email de validation envoyé avec succès à: {}", to);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de validation à " + to, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendEmailValidation");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendPasswordReset(String to, String userName, String resetLink) {
-        final String subject = "Réinitialisation de votre mot de passe Tickly";
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        context.setVariable("resetLink", frontendBaseUrl + resetLink);
-        sendHtmlEmail(to, subject, "emails/password-reset-request.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendPasswordReset", "to", to, "userName", userName, "resetLink", resetLink);
+
+        try {
+            log.debug("Préparation de l'email de réinitialisation de mot de passe pour: {}", to);
+            final String subject = "Réinitialisation de votre mot de passe Tickly";
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("resetLink", frontendBaseUrl + resetLink);
+            try {
+                sendHtmlEmail(to, subject, "emails/password-reset-request.html", context, null, null);
+                log.debug("Email de réinitialisation de mot de passe envoyé avec succès à: {}", to);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de réinitialisation de mot de passe à " + to, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendPasswordReset");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendAccountDeletionRequest(String to, String userName, String deletionLink) {
-        final String subject = "Demande de suppression de votre compte Tickly";
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        context.setVariable("deletionLink", frontendBaseUrl + deletionLink);
-        sendHtmlEmail(to, subject, "emails/account-deletion-request.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendAccountDeletionRequest", "to", to, "userName", userName, "deletionLink", deletionLink);
+
+        try {
+            log.debug("Préparation de l'email de demande de suppression de compte pour: {}", to);
+            final String subject = "Demande de suppression de votre compte Tickly";
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("deletionLink", frontendBaseUrl + deletionLink);
+            try {
+                sendHtmlEmail(to, subject, "emails/account-deletion-request.html", context, null, null);
+                log.debug("Email de demande de suppression de compte envoyé avec succès à: {}", to);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de demande de suppression de compte à " + to, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendAccountDeletionRequest");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendTeamInvitation(String to, String inviterName, String structureName, String invitationLink) {
-        final String subject = inviterName + " vous invite à rejoindre " + structureName + " sur Tickly";
-        Context context = new Context();
-        context.setVariable("inviterName", inviterName);
-        context.setVariable("structureName", structureName);
-        context.setVariable("invitationLink", frontendBaseUrl + invitationLink);
-        sendHtmlEmail(to, subject, "emails/team-invitation-request.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendTeamInvitation", "to", to, "inviterName", inviterName, 
+                "structureName", structureName, "invitationLink", invitationLink);
+
+        try {
+            log.debug("Préparation de l'email d'invitation d'équipe pour: {} (structure: {})", to, structureName);
+            final String subject = inviterName + " vous invite à rejoindre " + structureName + " sur Tickly";
+            Context context = new Context();
+            context.setVariable("inviterName", inviterName);
+            context.setVariable("structureName", structureName);
+            context.setVariable("invitationLink", frontendBaseUrl + invitationLink);
+            try {
+                sendHtmlEmail(to, subject, "emails/team-invitation-request.html", context, null, null);
+                log.debug("Email d'invitation d'équipe envoyé avec succès à: {} pour la structure: {}", to, structureName);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email d'invitation d'équipe à " + to + 
+                        " pour la structure " + structureName, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendTeamInvitation");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendAccountDeletionConfirmation(String to, String userName) {
-        final String subject = "Confirmation de la suppression de votre compte Tickly";
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        sendHtmlEmail(to, subject, "emails/account-deletion-confirmation.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendAccountDeletionConfirmation", "to", to, "userName", userName);
+
+        try {
+            log.debug("Préparation de l'email de confirmation de suppression de compte pour: {}", to);
+            final String subject = "Confirmation de la suppression de votre compte Tickly";
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            try {
+                sendHtmlEmail(to, subject, "emails/account-deletion-confirmation.html", context, null, null);
+                log.debug("Email de confirmation de suppression de compte envoyé avec succès à: {}", to);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de confirmation de suppression de compte à " + to, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendAccountDeletionConfirmation");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendEventCancelledNotification(String to, String userName, String eventName) {
-        final String subject = "Annulation de l'événement : " + eventName;
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        context.setVariable("eventName", eventName);
-        sendHtmlEmail(to, subject, "emails/event-cancellation.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendEventCancelledNotification", "to", to, "userName", userName, "eventName", eventName);
+
+        try {
+            log.debug("Préparation de l'email de notification d'annulation d'événement pour: {} (événement: {})", to, eventName);
+            final String subject = "Annulation de l'événement : " + eventName;
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("eventName", eventName);
+            try {
+                sendHtmlEmail(to, subject, "emails/event-cancellation.html", context, null, null);
+                log.debug("Email de notification d'annulation d'événement envoyé avec succès à: {} pour l'événement: {}", to, eventName);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de notification d'annulation d'événement à " + to + 
+                        " pour l'événement " + eventName, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendEventCancelledNotification");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendStructureDeletionConfirmation(String to, String adminName, String structureName) {
-        final String subject = "Confirmation de la suppression de votre structure : " + structureName;
-        Context context = new Context();
-        context.setVariable("adminName", adminName);
-        context.setVariable("structureName", structureName);
-        sendHtmlEmail(to, subject, "emails/structure-deletion-confirmation.html", context, null, null);
+        LoggingUtils.logMethodEntry(log, "sendStructureDeletionConfirmation", "to", to, "adminName", adminName, "structureName", structureName);
+
+        try {
+            log.debug("Préparation de l'email de confirmation de suppression de structure pour: {} (structure: {})", to, structureName);
+            final String subject = "Confirmation de la suppression de votre structure : " + structureName;
+            Context context = new Context();
+            context.setVariable("adminName", adminName);
+            context.setVariable("structureName", structureName);
+            try {
+                sendHtmlEmail(to, subject, "emails/structure-deletion-confirmation.html", context, null, null);
+                log.debug("Email de confirmation de suppression de structure envoyé avec succès à: {} pour la structure: {}", to, structureName);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email de confirmation de suppression de structure à " + to + 
+                        " pour la structure " + structureName, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendStructureDeletionConfirmation");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendTickets(String to, String userName, String eventName, byte[] pdfAttachment) {
-        final String subject = "Vos billets pour l'événement : " + eventName;
-        Context context = new Context();
-        context.setVariable("userName", userName);
-        context.setVariable("eventName", eventName);
-        String attachmentName = "billets-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
-        sendHtmlEmail(to, subject, "emails/ticket-receipt.html", context, pdfAttachment, attachmentName);
+        LoggingUtils.logMethodEntry(log, "sendTickets", "to", to, "userName", userName, "eventName", eventName);
+
+        try {
+            log.debug("Préparation de l'email d'envoi de billets pour: {} (événement: {})", to, eventName);
+            final String subject = "Vos billets pour l'événement : " + eventName;
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("eventName", eventName);
+            String attachmentName = "billets-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
+            try {
+                sendHtmlEmail(to, subject, "emails/ticket-receipt.html", context, pdfAttachment, attachmentName);
+                log.debug("Email avec billets envoyé avec succès à: {} pour l'événement: {}", to, eventName);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email avec billets à " + to + 
+                        " pour l'événement " + eventName, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendTickets");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Async
     @Override
     public void sendIndividualTicket(String to, String participantName, String eventName, byte[] pdfAttachment) {
-        final String subject = "Votre billet pour l'événement : " + eventName;
-        Context context = new Context();
-        context.setVariable("participantName", participantName);
-        context.setVariable("eventName", eventName);
-        String attachmentName = "billet-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
-        sendHtmlEmail(to, subject, "emails/individual-ticket.html", context, pdfAttachment, attachmentName);
+        LoggingUtils.logMethodEntry(log, "sendIndividualTicket", "to", to, "participantName", participantName, "eventName", eventName);
+
+        try {
+            log.debug("Préparation de l'email d'envoi de billet individuel pour: {} (participant: {}, événement: {})", to, participantName, eventName);
+            final String subject = "Votre billet pour l'événement : " + eventName;
+            Context context = new Context();
+            context.setVariable("participantName", participantName);
+            context.setVariable("eventName", eventName);
+            String attachmentName = "billet-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
+            try {
+                sendHtmlEmail(to, subject, "emails/individual-ticket.html", context, pdfAttachment, attachmentName);
+                log.debug("Email avec billet individuel envoyé avec succès à: {} pour l'événement: {}", to, eventName);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'email avec billet individuel à " + to + 
+                        " pour l'événement " + eventName, e);
+            }
+
+            LoggingUtils.logMethodExit(log, "sendIndividualTicket");
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     private void sendHtmlEmail(String to, String subject, String templateName, Context context, byte[] attachment, String attachmentName) {
+        LoggingUtils.logMethodEntry(log, "sendHtmlEmail", "to", to, "subject", subject, "templateName", templateName);
+
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, "UTF-8");
+            log.debug("Début de la préparation de l'email '{}' pour: {} avec template: {}", subject, to, templateName);
+            try {
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, "UTF-8");
 
-            // Remplir le template HTML avec les variables
-            context.setVariable("subject", subject);
-            String html = templateEngine.process(templateName, context);
+                // Remplir le template HTML avec les variables
+                context.setVariable("subject", subject);
+                log.debug("Traitement du template HTML: {}", templateName);
+                String html = templateEngine.process(templateName, context);
+                if (html == null || html.isEmpty()) {
+                    throw new MessagingException("Le template HTML généré est vide ou null");
+                }
 
-            helper.setTo(to);
-            helper.setFrom(senderEmail);
-            helper.setSubject(subject);
-            helper.setText(html, true); // true indique que le contenu est HTML
+                helper.setTo(to);
+                helper.setFrom(senderEmail);
+                helper.setSubject(subject);
+                helper.setText(html, true); // true indique que le contenu est HTML
+                log.debug("Contenu HTML et métadonnées de l'email configurés");
 
-            // Ajouter une pièce jointe si elle existe
-            if (attachment != null && attachment.length > 0 && attachmentName != null) {
-                helper.addAttachment(attachmentName, new ByteArrayResource(attachment));
-                log.info("Pièce jointe '{}' ajoutée à l'e-mail pour {}", attachmentName, to);
+                // Ajouter une pièce jointe si elle existe
+                if (attachment != null && attachment.length > 0 && attachmentName != null) {
+                    log.debug("Ajout d'une pièce jointe: {} (taille: {} octets)", attachmentName, attachment.length);
+                    helper.addAttachment(attachmentName, new ByteArrayResource(attachment));
+                    log.info("Pièce jointe '{}' ajoutée à l'e-mail pour {}", attachmentName, to);
+                } else if (attachment != null && attachment.length == 0) {
+                    log.warn("Tentative d'ajout d'une pièce jointe vide pour l'email à {}", to);
+                }
+
+                log.debug("Envoi de l'email à {}", to);
+                mailSender.send(mimeMessage);
+                log.info("E-mail '{}' envoyé avec succès à {}", subject, to);
+
+            } catch (MessagingException e) {
+                LoggingUtils.logException(log, "Échec de l'envoi de l'e-mail à " + to + " avec le sujet '" + subject + "'", e);
+                throw new RuntimeException("Échec de l'envoi de l'e-mail: " + e.getMessage(), e);
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Erreur inattendue lors de l'envoi de l'e-mail à " + to + " avec le sujet '" + subject + "'", e);
+                throw new RuntimeException("Erreur inattendue lors de l'envoi de l'e-mail: " + e.getMessage(), e);
             }
 
-            mailSender.send(mimeMessage);
-            log.info("E-mail '{}' envoyé avec succès à {}", subject, to);
-
-        } catch (MessagingException e) {
-            log.error("Échec de l'envoi de l'e-mail à {} avec le sujet '{}'", to, subject, e);
+            LoggingUtils.logMethodExit(log, "sendHtmlEmail");
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
         }
     }
 }

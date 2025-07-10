@@ -23,10 +23,9 @@ import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StructureService;
 import edu.cda.project.ticklybackend.services.interfaces.TeamManagementService;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,7 +47,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StructureServiceImpl implements StructureService {
 
-    private static final Logger logger = LoggerFactory.getLogger(StructureServiceImpl.class);
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -76,331 +74,503 @@ public class StructureServiceImpl implements StructureService {
 
     @Override
     public StructureCreationResponseDto createStructure(StructureCreationDto creationDto, String userEmail) {
-        // 1. Trouver l'utilisateur qui crée la structure.
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", userEmail));
+        LoggingUtils.logMethodEntry(log, "createStructure", "creationDto", creationDto, "userEmail", userEmail);
 
-        // 2. Vérifier si l'utilisateur est autorisé à créer une structure.
-        if (user.getStructure() != null || user.getRole() != UserRole.SPECTATOR) {
-            throw new StructureCreationForbiddenException("L'utilisateur est déjà associé à une structure.");
+        try {
+            // 1. Trouver l'utilisateur qui crée la structure.
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", userEmail));
+
+            LoggingUtils.setUserId(user.getId());
+            log.debug("Utilisateur trouvé: {} (ID: {})", user.getEmail(), user.getId());
+
+            // 2. Vérifier si l'utilisateur est autorisé à créer une structure.
+            if (user.getStructure() != null || user.getRole() != UserRole.SPECTATOR) {
+                log.warn("Tentative de création de structure par un utilisateur non autorisé: {} (ID: {})", user.getEmail(), user.getId());
+                throw new StructureCreationForbiddenException("L'utilisateur est déjà associé à une structure.");
+            }
+
+            // 3. Créer et sauvegarder la nouvelle structure.
+            Structure structure = structureMapper.toEntity(creationDto);
+            // Ici, vous pouvez ajouter une logique pour l'adresse, etc.
+            Structure savedStructure = structureRepository.save(structure);
+            log.info("Nouvelle structure créée: {} (ID: {})", savedStructure.getName(), savedStructure.getId());
+
+            // 4. Mettre à jour l'utilisateur pour en faire un administrateur de structure.
+            userRepository.upgradeUserToStructureAdmin(user.getId(), savedStructure.getId());
+            log.info("Utilisateur {} (ID: {}) promu administrateur de la structure {} (ID: {})", 
+                    user.getEmail(), user.getId(), savedStructure.getName(), savedStructure.getId());
+
+            // 5. Récupérer l'utilisateur mis à jour pour générer un nouveau token.
+            User updatedUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", user.getId()));
+
+            // 6. Générer un nouveau token JWT qui inclura le structureId.
+            String newJwt = jwtTokenProvider.generateToken(updatedUser);
+            log.debug("Nouveau token JWT généré pour l'utilisateur: {} (ID: {})", updatedUser.getEmail(), updatedUser.getId());
+
+            // 7. Préparer la réponse DTO avec le nouveau token.
+            StructureCreationResponseDto responseDto = new StructureCreationResponseDto();
+            responseDto.setStructureId(savedStructure.getId());
+            responseDto.setMessage("Structure créée avec succès. L'utilisateur a été promu Administrateur de Structure.");
+            responseDto.setAccessToken(newJwt);
+            responseDto.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
+
+            LoggingUtils.logMethodExit(log, "createStructure", responseDto);
+            return responseDto;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la création de la structure", e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        // 3. Créer et sauvegarder la nouvelle structure.
-        Structure structure = structureMapper.toEntity(creationDto);
-        // Ici, vous pouvez ajouter une logique pour l'adresse, etc.
-        Structure savedStructure = structureRepository.save(structure);
-
-        // 4. Mettre à jour l'utilisateur pour en faire un administrateur de structure.
-        userRepository.upgradeUserToStructureAdmin(user.getId(), savedStructure.getId());
-
-        // 5. Récupérer l'utilisateur mis à jour pour générer un nouveau token.
-        User updatedUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", user.getId()));
-
-        // 6. Générer un nouveau token JWT qui inclura le structureId.
-        String newJwt = jwtTokenProvider.generateToken(updatedUser);
-
-        // 7. Préparer la réponse DTO avec le nouveau token.
-        StructureCreationResponseDto responseDto = new StructureCreationResponseDto();
-        responseDto.setStructureId(savedStructure.getId());
-        responseDto.setMessage("Structure créée avec succès. L'utilisateur a été promu Administrateur de Structure.");
-        responseDto.setAccessToken(newJwt);
-        responseDto.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
-
-        return responseDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<StructureSummaryDto> getAllStructures(Pageable pageable, StructureSearchParamsDto params) {
+        LoggingUtils.logMethodEntry(log, "getAllStructures", "pageable", pageable, "params", params);
 
-        Specification<Structure> spec = StructureSpecification.getSpecification(params);
-        return structureRepository.findAll(spec, pageable)
-                .map(structure -> structureMapper.toSummaryDto(structure, fileStorageService));
+        try {
+            log.debug("Recherche de structures avec les paramètres: {}", params);
+            Specification<Structure> spec = StructureSpecification.getSpecification(params);
+            Page<StructureSummaryDto> result = structureRepository.findAll(spec, pageable)
+                    .map(structure -> structureMapper.toSummaryDto(structure, fileStorageService));
+
+            log.debug("Trouvé {} structures sur {} pages", result.getNumberOfElements(), result.getTotalPages());
+            LoggingUtils.logMethodExit(log, "getAllStructures", "Page with " + result.getNumberOfElements() + " elements");
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des structures", e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public StructureDetailResponseDto getStructureById(Long structureId) {
-        return structureRepository.findById(structureId)
-                .map(structure -> structureMapper.toDetailDto(structure, fileStorageService))
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "getStructureById", "structureId", structureId);
+
+        try {
+            log.debug("Recherche de la structure avec ID: {}", structureId);
+            StructureDetailResponseDto result = structureRepository.findById(structureId)
+                    .map(structure -> {
+                        log.debug("Structure trouvée: {} (ID: {})", structure.getName(), structure.getId());
+                        return structureMapper.toDetailDto(structure, fileStorageService);
+                    })
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            LoggingUtils.logMethodExit(log, "getStructureById", result);
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération de la structure avec ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Override
     public StructureDetailResponseDto updateStructure(Long structureId, StructureUpdateDto updateDto) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "updateStructure", "structureId", structureId, "updateDto", updateDto);
 
-        structureMapper.updateEntityFromDto(updateDto, structure);
+        try {
+            log.debug("Recherche de la structure à mettre à jour avec ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
 
-        if (updateDto.getTypeIds() != null && !updateDto.getTypeIds().isEmpty()) {
-            Set<StructureType> types = new HashSet<>(structureTypeRepository.findAllById(updateDto.getTypeIds()));
-            if (types.size() != updateDto.getTypeIds().size()) {
-                throw new BadRequestException("Un ou plusieurs IDs de type de structure fournis pour la mise à jour sont invalides.");
+            log.debug("Structure trouvée: {} (ID: {}). Mise à jour en cours...", structure.getName(), structure.getId());
+            structureMapper.updateEntityFromDto(updateDto, structure);
+
+            if (updateDto.getTypeIds() != null && !updateDto.getTypeIds().isEmpty()) {
+                log.debug("Mise à jour des types de structure: {}", updateDto.getTypeIds());
+                Set<StructureType> types = new HashSet<>(structureTypeRepository.findAllById(updateDto.getTypeIds()));
+                if (types.size() != updateDto.getTypeIds().size()) {
+                    log.warn("IDs de type de structure invalides fournis: {}", updateDto.getTypeIds());
+                    throw new BadRequestException("Un ou plusieurs IDs de type de structure fournis pour la mise à jour sont invalides.");
+                }
+                structure.setTypes(types);
             }
-            structure.setTypes(types);
+
+            if (updateDto.getAddress() != null) {
+                log.debug("Mise à jour de l'adresse de la structure");
+                addressMapper.updateAddressFromDto(updateDto.getAddress(), structure.getAddress());
+            }
+
+            Structure updatedStructure = structureRepository.save(structure);
+            log.info("Structure {} (ID: {}) mise à jour avec succès.", updatedStructure.getName(), structureId);
+
+            StructureDetailResponseDto result = structureMapper.toDetailDto(updatedStructure, fileStorageService);
+            LoggingUtils.logMethodExit(log, "updateStructure", result);
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la mise à jour de la structure avec ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        if (updateDto.getAddress() != null) {
-            addressMapper.updateAddressFromDto(updateDto.getAddress(), structure.getAddress());
-        }
-
-
-        Structure updatedStructure = structureRepository.save(structure);
-        logger.info("Structure {} (ID: {}) mise à jour.", updatedStructure.getName(), structureId);
-        return structureMapper.toDetailDto(updatedStructure, fileStorageService);
     }
 
     @Override
     @Transactional
     public void deleteStructure(Long structureId) {
-        log.warn("Début de la tentative de suppression de la structure ID: {}", structureId);
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "deleteStructure", "structureId", structureId);
 
-        // GARDE-FOU: Interdire la suppression si des événements sont encore actifs.
-        if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED))) {
-            throw new BadRequestException("Suppression impossible : Des événements actifs existent pour cette structure. " +
-                    "Pour supprimer la structure, vous devez d'abord :\n" +
-                    "1. Accéder à la liste des événements de votre structure\n" +
-                    "2. Annuler tous les événements actifs (statut PUBLISHED)\n" +
-                    "Une fois tous les événements actifs traités, vous pourrez supprimer la structure.");
+        try {
+            log.warn("Début de la tentative de suppression de la structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            // GARDE-FOU: Interdire la suppression si des événements sont encore actifs.
+            if (eventRepository.existsByStructureIdAndStatusIn(structureId, Set.of(EventStatus.PUBLISHED))) {
+                log.warn("Tentative de suppression d'une structure avec des événements actifs. Structure ID: {}", structureId);
+                throw new BadRequestException("Suppression impossible : Des événements actifs existent pour cette structure. " +
+                        "Pour supprimer la structure, vous devez d'abord :\n" +
+                        "1. Accéder à la liste des événements de votre structure\n" +
+                        "2. Annuler tous les événements actifs (statut PUBLISHED)\n" +
+                        "Une fois tous les événements actifs traités, vous pourrez supprimer la structure.");
+            }
+
+            // Sauvegarde des informations pour la notification avant l'anonymisation
+            String originalStructureName = structure.getName();
+
+            // NOUVELLE ÉTAPE : Récupérer les administrateurs pour la notification future.
+            List<User> administratorsToNotify = userRepository.findByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+            log.info("Trouvé {} administrateur(s) à notifier pour la structure ID: {}", administratorsToNotify.size(), structureId);
+
+            // 1. Dissolution des relations
+            log.info("Suppression des favoris pour la structure ID: {}", structureId);
+            favoriteRepository.deleteByStructureId(structureId);
+
+            // Dissolution de l'équipe - convertit tous les membres (y compris les admins) en SPECTATOR
+            log.info("Dissolution de l'équipe pour la structure ID: {}", structureId);
+            teamService.dissolveTeam(structureId);
+
+            // 2. Nettoyage des fichiers physiques
+            log.info("Nettoyage des fichiers pour la structure ID: {}", structureId);
+            if (StringUtils.hasText(structure.getLogoPath()))
+                fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
+            if (StringUtils.hasText(structure.getCoverPath()))
+                fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
+            if (structure.getGalleryImagePaths() != null) {
+                structure.getGalleryImagePaths().forEach(path -> fileStorageService.deleteFile(path, GALLERY_SUBDIR));
+            }
+
+            // 3. Anonymisation de l'entité Structure (Soft Delete)
+            log.info("Anonymisation de la structure ID: {}", structureId);
+            structure.setName("Structure supprimée (" + structure.getId() + ")");
+            structure.setDescription("Cette structure a été supprimée le " + Instant.now());
+            structure.setAddress(new StructureAddress("Rue supprimée", "Ville supprimée", "0", "Pays supprimé"));
+            structure.setPhone(null);
+            structure.setEmail("anonymized+" + structure.getId() + "@tickly.app");
+            structure.setWebsiteUrl(null);
+            structure.setLogoPath(null);
+            structure.setCoverPath(null);
+            structure.getGalleryImagePaths().clear();
+            structure.getSocialMediaLinks().clear();
+            structure.setActive(false);
+
+            structureRepository.save(structure);
+            log.info("Anonymisation de la structure ID: {} terminée.", structureId);
+
+            // 4. Communication finale aux administrateurs
+            // La dissociation manuelle est désormais gérée par teamService.dissolveTeam()
+            log.info("Envoi des notifications de suppression aux anciens administrateurs...");
+            administratorsToNotify.forEach(admin ->
+                    mailingService.sendStructureDeletionConfirmation(admin.getEmail(), admin.getFirstName(), originalStructureName)
+            );
+
+            log.warn("Suppression de la structure ID: {} terminée avec succès.", structureId);
+            LoggingUtils.logMethodExit(log, "deleteStructure");
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression de la structure avec ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        // Sauvegarde des informations pour la notification avant l'anonymisation
-        String originalStructureName = structure.getName();
-
-        // NOUVELLE ÉTAPE : Récupérer les administrateurs pour la notification future.
-        // Note : Vous devrez ajouter la méthode `findByStructureIdAndRole` à votre UserRepository.
-        List<User> administratorsToNotify = userRepository.findByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
-        log.info("Trouvé {} administrateur(s) à notifier pour la structure ID: {}", administratorsToNotify.size(), structureId);
-
-
-        // 1. Dissolution des relations
-        log.info("Suppression des favoris pour la structure ID: {}", structureId);
-        favoriteRepository.deleteByStructureId(structureId);
-
-        // Dissolution de l'équipe - convertit tous les membres (y compris les admins) en SPECTATOR
-        log.info("Dissolution de l'équipe pour la structure ID: {}", structureId);
-        teamService.dissolveTeam(structureId);
-
-        // 2. Nettoyage des fichiers physiques
-        log.info("Nettoyage des fichiers pour la structure ID: {}", structureId);
-        if (StringUtils.hasText(structure.getLogoPath()))
-            fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
-        if (StringUtils.hasText(structure.getCoverPath()))
-            fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
-        if (structure.getGalleryImagePaths() != null) {
-            structure.getGalleryImagePaths().forEach(path -> fileStorageService.deleteFile(path, GALLERY_SUBDIR));
-        }
-
-        // 3. Anonymisation de l'entité Structure (Soft Delete)
-        log.info("Anonymisation de la structure ID: {}", structureId);
-        structure.setName("Structure supprimée (" + structure.getId() + ")");
-        structure.setDescription("Cette structure a été supprimée le " + Instant.now());
-        structure.setAddress(new StructureAddress("Rue supprimée", "Ville supprimée", "0", "Pays supprimé"));
-        structure.setPhone(null);
-        structure.setEmail("anonymized+" + structure.getId() + "@tickly.app");
-        structure.setWebsiteUrl(null);
-        structure.setLogoPath(null);
-        structure.setCoverPath(null);
-        structure.getGalleryImagePaths().clear();
-        structure.getSocialMediaLinks().clear();
-        structure.setActive(false);
-
-        structureRepository.save(structure);
-        log.info("Anonymisation de la structure ID: {} terminée.", structureId);
-
-        // 4. Communication finale aux administrateurs
-        // La dissociation manuelle est désormais gérée par teamService.dissolveTeam()
-        log.info("Envoi des notifications de suppression aux anciens administrateurs...");
-        administratorsToNotify.forEach(admin ->
-                mailingService.sendStructureDeletionConfirmation(admin.getEmail(), admin.getFirstName(), originalStructureName)
-        );
-
-        log.warn("Suppression de la structure ID: {} terminée avec succès.", structureId);
     }
 
     @Override
     public FileUploadResponseDto updateStructureLogo(Long structureId, MultipartFile file) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "updateStructureLogo", "structureId", structureId, "file.name", file.getOriginalFilename());
 
-        if (StringUtils.hasText(structure.getLogoPath())) {
-            try {
-                fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
-            } catch (FileStorageException e) {
-                logger.warn("Ancien logo non trouvé ou impossible à supprimer pour la structure ID {}: {}", structureId, e.getMessage());
+        try {
+            log.debug("Recherche de la structure pour mise à jour du logo. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            if (StringUtils.hasText(structure.getLogoPath())) {
+                log.debug("Suppression de l'ancien logo pour la structure ID: {}", structureId);
+                try {
+                    fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
+                    log.debug("Ancien logo supprimé avec succès pour la structure ID: {}", structureId);
+                } catch (FileStorageException e) {
+                    log.warn("Ancien logo non trouvé ou impossible à supprimer pour la structure ID {}: {}", structureId, e.getMessage());
+                }
             }
+
+            log.debug("Stockage du nouveau logo pour la structure ID: {}", structureId);
+            String newLogoPath = fileStorageService.storeFile(file, LOGO_SUBDIR);
+            structure.setLogoPath(newLogoPath);
+            structureRepository.save(structure);
+            log.info("Logo mis à jour pour la structure {} (ID: {}). Nouveau chemin: {}", structure.getName(), structureId, newLogoPath);
+
+            FileUploadResponseDto result = new FileUploadResponseDto(
+                    file.getOriginalFilename(),
+                    fileStorageService.getFileUrl(newLogoPath, LOGO_SUBDIR),
+                    "Logo de la structure mis à jour avec succès."
+            );
+
+            LoggingUtils.logMethodExit(log, "updateStructureLogo", result);
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la mise à jour du logo pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        String newLogoPath = fileStorageService.storeFile(file, LOGO_SUBDIR);
-        structure.setLogoPath(newLogoPath);
-        structureRepository.save(structure);
-        logger.info("Logo mis à jour pour la structure {} (ID: {}). Nouveau chemin: {}", structure.getName(), structureId, newLogoPath);
-
-
-        return new FileUploadResponseDto(
-                file.getOriginalFilename(),
-                fileStorageService.getFileUrl(newLogoPath, LOGO_SUBDIR),
-                "Logo de la structure mis à jour avec succès."
-        );
     }
 
     @Override
     public FileUploadResponseDto updateStructureCover(Long structureId, MultipartFile file) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "updateStructureCover", "structureId", structureId, "file.name", file.getOriginalFilename());
 
-        if (StringUtils.hasText(structure.getCoverPath())) {
-            try {
-                fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
-            } catch (FileStorageException e) {
-                logger.warn("Ancienne image de couverture non trouvée ou impossible à supprimer pour la structure ID {}: {}", structureId, e.getMessage());
+        try {
+            log.debug("Recherche de la structure pour mise à jour de l'image de couverture. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            if (StringUtils.hasText(structure.getCoverPath())) {
+                log.debug("Suppression de l'ancienne image de couverture pour la structure ID: {}", structureId);
+                try {
+                    fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
+                    log.debug("Ancienne image de couverture supprimée avec succès pour la structure ID: {}", structureId);
+                } catch (FileStorageException e) {
+                    log.warn("Ancienne image de couverture non trouvée ou impossible à supprimer pour la structure ID {}: {}", structureId, e.getMessage());
+                }
             }
+
+            log.debug("Stockage de la nouvelle image de couverture pour la structure ID: {}", structureId);
+            String newCoverPath = fileStorageService.storeFile(file, COVER_SUBDIR);
+            structure.setCoverPath(newCoverPath);
+            structureRepository.save(structure);
+            log.info("Image de couverture mise à jour pour la structure {} (ID: {}). Nouveau chemin: {}", structure.getName(), structureId, newCoverPath);
+
+            FileUploadResponseDto result = new FileUploadResponseDto(
+                    file.getOriginalFilename(),
+                    fileStorageService.getFileUrl(newCoverPath, COVER_SUBDIR),
+                    "Image de couverture de la structure mise à jour avec succès."
+            );
+
+            LoggingUtils.logMethodExit(log, "updateStructureCover", result);
+            return result;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la mise à jour de l'image de couverture pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        String newCoverPath = fileStorageService.storeFile(file, COVER_SUBDIR);
-        structure.setCoverPath(newCoverPath);
-        structureRepository.save(structure);
-        logger.info("Image de couverture mise à jour pour la structure {} (ID: {}). Nouveau chemin: {}", structure.getName(), structureId, newCoverPath);
-
-        return new FileUploadResponseDto(
-                file.getOriginalFilename(),
-                fileStorageService.getFileUrl(newCoverPath, COVER_SUBDIR),
-                "Image de couverture de la structure mise à jour avec succès."
-        );
     }
 
     @Override
     public void removeStructureLogo(Long structureId) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
-
-        if (!StringUtils.hasText(structure.getLogoPath())) {
-            throw new ResourceNotFoundException("Logo", "structureId", structureId);
-        }
+        LoggingUtils.logMethodEntry(log, "removeStructureLogo", "structureId", structureId);
 
         try {
-            fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
-            structure.setLogoPath(null);
-            structureRepository.save(structure);
-            logger.info("Logo supprimé avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
-        } catch (FileStorageException e) {
-            logger.error("Impossible de supprimer le fichier logo pour la structure ID {}: {}", structureId, e.getMessage());
-            throw new BadRequestException("Impossible de supprimer le fichier logo: " + e.getMessage());
+            log.debug("Recherche de la structure pour suppression du logo. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            if (!StringUtils.hasText(structure.getLogoPath())) {
+                log.warn("Tentative de suppression d'un logo inexistant pour la structure ID: {}", structureId);
+                throw new ResourceNotFoundException("Logo", "structureId", structureId);
+            }
+
+            try {
+                log.debug("Suppression du fichier logo pour la structure ID: {}", structureId);
+                fileStorageService.deleteFile(structure.getLogoPath(), LOGO_SUBDIR);
+                structure.setLogoPath(null);
+                structureRepository.save(structure);
+                log.info("Logo supprimé avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
+                LoggingUtils.logMethodExit(log, "removeStructureLogo");
+            } catch (FileStorageException e) {
+                log.error("Impossible de supprimer le fichier logo pour la structure ID {}: {}", structureId, e.getMessage());
+                LoggingUtils.logException(log, "Erreur lors de la suppression du fichier logo", e);
+                throw new BadRequestException("Impossible de supprimer le fichier logo: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression du logo pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
     }
 
     @Override
     public void removeStructureCover(Long structureId) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
-
-        if (!StringUtils.hasText(structure.getCoverPath())) {
-            throw new ResourceNotFoundException("Image de couverture", "structureId", structureId);
-        }
+        LoggingUtils.logMethodEntry(log, "removeStructureCover", "structureId", structureId);
 
         try {
-            fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
-            structure.setCoverPath(null);
-            structureRepository.save(structure);
-            logger.info("Image de couverture supprimée avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
-        } catch (FileStorageException e) {
-            logger.error("Impossible de supprimer le fichier image de couverture pour la structure ID {}: {}", structureId, e.getMessage());
-            throw new BadRequestException("Impossible de supprimer le fichier image de couverture: " + e.getMessage());
+            log.debug("Recherche de la structure pour suppression de l'image de couverture. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            if (!StringUtils.hasText(structure.getCoverPath())) {
+                log.warn("Tentative de suppression d'une image de couverture inexistante pour la structure ID: {}", structureId);
+                throw new ResourceNotFoundException("Image de couverture", "structureId", structureId);
+            }
+
+            try {
+                log.debug("Suppression du fichier image de couverture pour la structure ID: {}", structureId);
+                fileStorageService.deleteFile(structure.getCoverPath(), COVER_SUBDIR);
+                structure.setCoverPath(null);
+                structureRepository.save(structure);
+                log.info("Image de couverture supprimée avec succès pour la structure {} (ID: {}).", structure.getName(), structureId);
+                LoggingUtils.logMethodExit(log, "removeStructureCover");
+            } catch (FileStorageException e) {
+                log.error("Impossible de supprimer le fichier image de couverture pour la structure ID {}: {}", structureId, e.getMessage());
+                LoggingUtils.logException(log, "Erreur lors de la suppression du fichier image de couverture", e);
+                throw new BadRequestException("Impossible de supprimer le fichier image de couverture: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression de l'image de couverture pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
     }
-
-//    @Override
-//    public FileUploadResponseDto addStructureGalleryImage(Long structureId, MultipartFile file) {
-//        Structure structure = structureRepository.findById(structureId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
-//
-//        String newImagePath = fileStorageService.storeFile(file, GALLERY_SUBDIR);
-//        structure.getGalleryImagePaths().add(newImagePath);
-//        structureRepository.save(structure);
-//        logger.info("Image ajoutée à la galerie pour la structure {} (ID: {}). Chemin: {}", structure.getName(), structureId, newImagePath);
-//
-//
-//        return new FileUploadResponseDto(
-//                file.getOriginalFilename(),
-//                fileStorageService.getFileUrl(newImagePath, GALLERY_SUBDIR),
-//                "Image ajoutée à la galerie de la structure avec succès."
-//        );
-//    }
 
     @Override
     @Transactional
     public List<FileUploadResponseDto> addStructureGalleryImages(Long structureId, MultipartFile[] files) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
+        LoggingUtils.logMethodEntry(log, "addStructureGalleryImages", "structureId", structureId, "files.length", files.length);
 
-        List<FileUploadResponseDto> results = new ArrayList<>();
-        List<String> successfulUploads = new ArrayList<>();
+        try {
+            log.debug("Recherche de la structure pour ajout d'images à la galerie. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
 
-        for (MultipartFile file : files) {
-            try {
-                // Validation du fichier
-                if (file.isEmpty()) {
+            List<FileUploadResponseDto> results = new ArrayList<>();
+            List<String> successfulUploads = new ArrayList<>();
+
+            log.debug("Traitement de {} fichiers pour la galerie de la structure ID: {}", files.length, structureId);
+            for (MultipartFile file : files) {
+                try {
+                    // Validation du fichier
+                    if (file.isEmpty()) {
+                        log.warn("Fichier vide ignoré: {}", file.getOriginalFilename());
+                        results.add(new FileUploadResponseDto(
+                                file.getOriginalFilename(),
+                                null,
+                                "Erreur: fichier vide"));
+                        continue;
+                    }
+
+                    log.debug("Stockage du fichier: {} pour la galerie de la structure ID: {}", file.getOriginalFilename(), structureId);
+                    // Stocker le fichier
+                    String filename = fileStorageService.storeFile(file, GALLERY_SUBDIR);
+                    String fileUrl = fileStorageService.getFileUrl(filename, GALLERY_SUBDIR);
+
+                    // Ajouter à la liste des uploads réussis
+                    successfulUploads.add(filename);
+                    log.debug("Fichier stocké avec succès: {}, URL: {}", filename, fileUrl);
+
+                    results.add(new FileUploadResponseDto(
+                            file.getOriginalFilename(),
+                            fileUrl,
+                            "Image ajoutée avec succès"));
+
+                } catch (Exception e) {
+                    log.error("Erreur lors de l'upload du fichier {}: {}", file.getOriginalFilename(), e.getMessage());
+                    LoggingUtils.logException(log, "Erreur lors de l'upload du fichier " + file.getOriginalFilename(), e);
                     results.add(new FileUploadResponseDto(
                             file.getOriginalFilename(),
                             null,
-                            "Erreur: fichier vide"));
-                    continue;
+                            "Erreur: " + e.getMessage()));
                 }
-
-                // Stocker le fichier
-                String filename = fileStorageService.storeFile(file, GALLERY_SUBDIR);
-                String fileUrl = fileStorageService.getFileUrl(filename, GALLERY_SUBDIR);
-
-                // Ajouter à la liste des uploads réussis
-                successfulUploads.add(filename);
-
-                results.add(new FileUploadResponseDto(
-                        file.getOriginalFilename(),
-                        fileUrl,
-                        "Image ajoutée avec succès"));
-
-            } catch (Exception e) {
-                logger.error("Erreur lors de l'upload du fichier {}: {}",
-                        file.getOriginalFilename(), e.getMessage());
-                results.add(new FileUploadResponseDto(
-                        file.getOriginalFilename(),
-                        null,
-                        "Erreur: " + e.getMessage()));
             }
-        }
 
-        // Ajouter tous les fichiers uploadés avec succès à la galerie
-        if (!successfulUploads.isEmpty()) {
-            structure.getGalleryImagePaths().addAll(successfulUploads);
-            structureRepository.save(structure);
-            logger.info("Ajout de {} images à la galerie de la structure {}",
-                    successfulUploads.size(), structureId);
-        }
+            // Ajouter tous les fichiers uploadés avec succès à la galerie
+            if (!successfulUploads.isEmpty()) {
+                log.debug("Ajout de {} images à la galerie de la structure ID: {}", successfulUploads.size(), structureId);
+                structure.getGalleryImagePaths().addAll(successfulUploads);
+                structureRepository.save(structure);
+                log.info("Ajout de {} images à la galerie de la structure {} réussi", successfulUploads.size(), structureId);
+            } else {
+                log.info("Aucune image n'a été ajoutée à la galerie de la structure ID: {}", structureId);
+            }
 
-        return results;
+            LoggingUtils.logMethodExit(log, "addStructureGalleryImages", results);
+            return results;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de l'ajout d'images à la galerie pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Override
     public void removeStructureGalleryImage(Long structureId, String imagePath) {
-        Structure structure = structureRepository.findById(structureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
-
-        // imagePath est le nom de fichier unique (ex: uuid.jpg)
-        if (!structure.getGalleryImagePaths().contains(imagePath)) {
-            throw new ResourceNotFoundException("Image", "path", imagePath + " in structure gallery " + structureId);
-        }
+        LoggingUtils.logMethodEntry(log, "removeStructureGalleryImage", "structureId", structureId, "imagePath", imagePath);
 
         try {
-            fileStorageService.deleteFile(imagePath, GALLERY_SUBDIR);
-            structure.getGalleryImagePaths().remove(imagePath);
-            structureRepository.save(structure);
-            logger.info("Image {} supprimée de la galerie pour la structure {} (ID: {}).", imagePath, structure.getName(), structureId);
-        } catch (FileStorageException e) {
-            logger.error("Impossible de supprimer le fichier image {} de la galerie pour la structure ID {}: {}", imagePath, structureId, e.getMessage());
-            throw new BadRequestException("Impossible de supprimer le fichier image de la galerie: " + e.getMessage());
+            log.debug("Recherche de la structure pour suppression d'image de galerie. Structure ID: {}", structureId);
+            Structure structure = structureRepository.findById(structureId)
+                    .orElseThrow(() -> {
+                        log.warn("Structure non trouvée avec ID: {}", structureId);
+                        return new ResourceNotFoundException("Structure", "id", structureId);
+                    });
+
+            // imagePath est le nom de fichier unique (ex: uuid.jpg)
+            if (!structure.getGalleryImagePaths().contains(imagePath)) {
+                log.warn("Tentative de suppression d'une image de galerie inexistante. Structure ID: {}, Image path: {}", structureId, imagePath);
+                throw new ResourceNotFoundException("Image", "path", imagePath + " in structure gallery " + structureId);
+            }
+
+            try {
+                log.debug("Suppression du fichier image de galerie: {} pour la structure ID: {}", imagePath, structureId);
+                fileStorageService.deleteFile(imagePath, GALLERY_SUBDIR);
+                structure.getGalleryImagePaths().remove(imagePath);
+                structureRepository.save(structure);
+                log.info("Image {} supprimée de la galerie pour la structure {} (ID: {}).", imagePath, structure.getName(), structureId);
+                LoggingUtils.logMethodExit(log, "removeStructureGalleryImage");
+            } catch (FileStorageException e) {
+                log.error("Impossible de supprimer le fichier image {} de la galerie pour la structure ID {}: {}", imagePath, structureId, e.getMessage());
+                LoggingUtils.logException(log, "Erreur lors de la suppression du fichier image de galerie", e);
+                throw new BadRequestException("Impossible de supprimer le fichier image de la galerie: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la suppression de l'image de galerie pour la structure ID: " + structureId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
         }
     }
 
@@ -440,7 +610,7 @@ public class StructureServiceImpl implements StructureService {
         StructureArea area = areaMapper.toEntity(creationDto);
         area.setStructure(structure);
         StructureArea savedArea = structureAreaRepository.save(area);
-        logger.info("Espace {} créé pour la structure {} (ID: {}).", savedArea.getName(), structure.getName(), structureId);
+        log.info("Espace {} créé pour la structure {} (ID: {}).", savedArea.getName(), structure.getName(), structureId);
         return areaMapper.toDto(savedArea);
     }
 
@@ -537,7 +707,7 @@ public class StructureServiceImpl implements StructureService {
         AudienceZoneTemplate template = audienceZoneTemplateMapper.toEntity(creationDto);
         template.setArea(area);
         AudienceZoneTemplate savedTemplate = audienceZoneTemplateRepository.save(template);
-        logger.info("Modèle de zone {} créé pour l'espace {} (ID: {}).", savedTemplate.getName(), area.getName(), areaId);
+        log.info("Modèle de zone {} créé pour l'espace {} (ID: {}).", savedTemplate.getName(), area.getName(), areaId);
         return audienceZoneTemplateMapper.toDto(savedTemplate);
     }
 

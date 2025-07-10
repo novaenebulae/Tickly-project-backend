@@ -52,9 +52,8 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
-    // TODO changer autorisations
     @PostMapping("/tickets/validate")
-    @PreAuthorize("hasAnyRole('RESERVATION_SERVICE', 'ORGANIZATION_SERVICE', 'STRUCTURE_ADMINISTRATOR')")
+    @PreAuthorize("@ticketSecurityService.canValidateTicket(#validationDto.scannedQrCodeValue, authentication)")
     @Operation(summary = "Valider un billet", description = "Valide un billet en utilisant la valeur scannée de son QR code. Nécessite des rôles de service spécifiques.")
     public ResponseEntity<TicketValidationResponseDto> validateTicket(@Valid @RequestBody TicketValidationRequestDto validationDto) {
         TicketValidationResponseDto response = ticketService.validateTicket(validationDto);

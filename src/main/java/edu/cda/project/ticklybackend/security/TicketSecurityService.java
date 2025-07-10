@@ -5,6 +5,8 @@ import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.util.UUID;
  */
 @Service("ticketSecurityService") // Nom du bean qui sera utilisé dans les expressions SpEL
 @RequiredArgsConstructor
+@Slf4j
 public class TicketSecurityService {
 
     private final TicketRepository ticketRepository;
@@ -40,6 +43,32 @@ public class TicketSecurityService {
                 .map(Ticket::getUser)
                 .map(User::getId)
                 .map(ownerId -> Objects.equals(ownerId, currentUser.getId()))
+                .orElse(false);
+    }
+
+    /**
+     * Vérifie si l'utilisateur authentifié a le droit de valider un billet.
+     * Pour valider un billet, l'utilisateur doit faire partie du personnel de la structure
+     * qui a créé l'événement associé au billet.
+     *
+     * @param qrCodeValue    La valeur du QR code du billet à valider.
+     * @param authentication L'objet Authentication de l'utilisateur authentifié.
+     * @return true si l'utilisateur peut valider le billet, false sinon.
+     */
+    @Transactional(readOnly = true)
+    public boolean canValidateTicket(String qrCodeValue, Authentication authentication) {
+        if (qrCodeValue == null || qrCodeValue.isBlank() || authentication == null) {
+            log.warn("Tentative de validation de billet avec des paramètres invalides");
+            return false;
+        }
+
+        return ticketRepository.findByQrCodeValue(qrCodeValue)
+                .map(ticket -> {
+                    Long structureId = ticket.getEvent().getStructure().getId();
+                    log.info("Vérification des permissions pour valider le billet {} de l'événement {} (structure {})",
+                            ticket.getId(), ticket.getEvent().getName(), structureId);
+                    return structureSecurityService.isStructureStaff(structureId, authentication);
+                })
                 .orElse(false);
     }
 

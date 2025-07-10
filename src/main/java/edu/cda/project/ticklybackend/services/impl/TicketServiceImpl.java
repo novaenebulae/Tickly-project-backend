@@ -14,11 +14,13 @@ import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
+import edu.cda.project.ticklybackend.security.TicketSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.PdfService;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
+import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,163 +45,207 @@ public class TicketServiceImpl implements TicketService {
     private final FileStorageService fileStorageService;
     private final PdfService pdfService;
     private final MailingService mailingService;
+    private final TicketSecurityService ticketSecurityService;
 
     @Override
     @Transactional
     public ReservationConfirmationDto createReservation(ReservationRequestDto requestDto) {
+        LoggingUtils.logMethodEntry(log, "createReservation", "requestDto", requestDto);
+
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        LoggingUtils.setUserId(currentUser.getId());
         log.info("L'utilisateur {} crée une réservation pour l'événement {}", currentUser.getEmail(), requestDto.getEventId());
 
-        Event event = eventRepository.findById(requestDto.getEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("Événement avec ID " + requestDto.getEventId() + " non trouvé."));
-
-        // Récupérer la zone d'audience directement depuis l'événement
-        EventAudienceZone zone = event.getAudienceZones().stream()
-                .filter(audienceZone -> audienceZone.getId().equals(requestDto.getAudienceZoneId()))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Zone d'audience avec ID " + requestDto.getAudienceZoneId() + " non trouvée."));
-
-        // Validation de la logique métier
-        if (event.getStatus() != EventStatus.PUBLISHED) {
-            throw new BadRequestException("Les billets ne peuvent être réservés que pour des événements PUBLIÉS.");
-        }
-        if (!zone.getEvent().getId().equals(event.getId())) {
-            throw new BadRequestException("La zone d'audience spécifiée n'appartient pas à l'événement demandé.");
-        }
-
-        // --- Vérification de la capacité ---
-        long existingTickets = ticketRepository.countByEventAudienceZoneId(zone.getId());
-        if (existingTickets + requestDto.getParticipants().size() > zone.getAllocatedCapacity()) {
-            throw new BadRequestException("Capacité insuffisante dans la zone sélectionnée.");
-        }
-        // --- Fin de la vérification de la capacité ---
-
-        Reservation reservation = new Reservation();
-        reservation.setUser(currentUser);
-
-        for (ParticipantInfoDto participant : requestDto.getParticipants()) {
-            Ticket ticket = new Ticket();
-            ticket.setEvent(event);
-            ticket.setEventAudienceZone(zone);
-            ticket.setUser(currentUser);
-            ticket.setParticipantFirstName(participant.getFirstName());
-            ticket.setParticipantLastName(participant.getLastName());
-            ticket.setParticipantEmail(participant.getEmail());
-
-            reservation.addTicket(ticket);
-        }
-
-        Reservation savedReservation = reservationRepository.save(reservation);
-        log.info("Réservation {} créée avec succès pour l'utilisateur {}.", savedReservation.getId(), currentUser.getEmail());
-
-        // Conversion en DTOs pour l'envoi des emails
-        List<TicketResponseDto> ticketDtos = buildTicketResponseDtoList(savedReservation.getTickets());
-
         try {
-            // Envoi du PDF complet à l'acheteur principal
-            byte[] pdfAllTickets = pdfService.generateTicketsPdfFromDto(ticketDtos);
-            if (pdfAllTickets.length > 0) {
-                mailingService.sendTickets(
-                        currentUser.getEmail(),
-                        currentUser.getFirstName(),
-                        event.getName(),
-                        pdfAllTickets
-                );
-                log.info("PDF de tous les billets envoyé à l'acheteur principal : {}", currentUser.getEmail());
+            Event event = eventRepository.findById(requestDto.getEventId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Événement avec ID " + requestDto.getEventId() + " non trouvé."));
+
+            // Récupérer la zone d'audience directement depuis l'événement
+            EventAudienceZone zone = event.getAudienceZones().stream()
+                    .filter(audienceZone -> audienceZone.getId().equals(requestDto.getAudienceZoneId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Zone d'audience avec ID " + requestDto.getAudienceZoneId() + " non trouvée."));
+
+            // Validation de la logique métier
+            if (event.getStatus() != EventStatus.PUBLISHED) {
+                throw new BadRequestException("Les billets ne peuvent être réservés que pour des événements PUBLIÉS.");
+            }
+            if (!zone.getEvent().getId().equals(event.getId())) {
+                throw new BadRequestException("La zone d'audience spécifiée n'appartient pas à l'événement demandé.");
             }
 
-            // Envoi des billets individuels aux participants qui le souhaitent
-            for (int i = 0; i < requestDto.getParticipants().size(); i++) {
-                ParticipantInfoDto participant = requestDto.getParticipants().get(i);
+            // --- Vérification de la capacité ---
+            long existingTickets = ticketRepository.countByEventAudienceZoneId(zone.getId());
+            if (existingTickets + requestDto.getParticipants().size() > zone.getAllocatedCapacity()) {
+                throw new BadRequestException("Capacité insuffisante dans la zone sélectionnée.");
+            }
+            // --- Fin de la vérification de la capacité ---
 
-                // Vérifier si le participant veut recevoir son billet par email
-                if (Boolean.TRUE.equals(participant.getSendTicketByEmail()) &&
-                        !participant.getEmail().equals(currentUser.getEmail())) {
+            Reservation reservation = new Reservation();
+            reservation.setUser(currentUser);
 
-                    TicketResponseDto individualTicket = ticketDtos.get(i);
-                    byte[] individualPdf = pdfService.generateSingleTicketPdfFromDto(individualTicket);
+            for (ParticipantInfoDto participant : requestDto.getParticipants()) {
+                Ticket ticket = new Ticket();
+                ticket.setEvent(event);
+                ticket.setEventAudienceZone(zone);
+                ticket.setUser(currentUser);
+                ticket.setParticipantFirstName(participant.getFirstName());
+                ticket.setParticipantLastName(participant.getLastName());
+                ticket.setParticipantEmail(participant.getEmail());
 
-                    if (individualPdf.length > 0) {
-                        String participantName = participant.getFirstName() + " " + participant.getLastName();
-                        mailingService.sendIndividualTicket(
-                                participant.getEmail(),
-                                participantName,
-                                event.getName(),
-                                individualPdf
-                        );
-                        log.info("Billet individuel envoyé à : {} pour l'événement {}",
-                                participant.getEmail(), event.getName());
+                reservation.addTicket(ticket);
+            }
+
+            Reservation savedReservation = reservationRepository.save(reservation);
+            log.info("Réservation {} créée avec succès pour l'utilisateur {}.", savedReservation.getId(), currentUser.getEmail());
+
+            // Conversion en DTOs pour l'envoi des emails
+            List<TicketResponseDto> ticketDtos = buildTicketResponseDtoList(savedReservation.getTickets());
+
+            try {
+                // Envoi du PDF complet à l'acheteur principal
+                byte[] pdfAllTickets = pdfService.generateTicketsPdfFromDto(ticketDtos);
+                if (pdfAllTickets.length > 0) {
+                    mailingService.sendTickets(
+                            currentUser.getEmail(),
+                            currentUser.getFirstName(),
+                            event.getName(),
+                            pdfAllTickets
+                    );
+                    log.info("PDF de tous les billets envoyé à l'acheteur principal : {}", currentUser.getEmail());
+                }
+
+                // Envoi des billets individuels aux participants qui le souhaitent
+                for (int i = 0; i < requestDto.getParticipants().size(); i++) {
+                    ParticipantInfoDto participant = requestDto.getParticipants().get(i);
+
+                    // Vérifier si le participant veut recevoir son billet par email
+                    if (Boolean.TRUE.equals(participant.getSendTicketByEmail()) &&
+                            !participant.getEmail().equals(currentUser.getEmail())) {
+
+                        TicketResponseDto individualTicket = ticketDtos.get(i);
+                        byte[] individualPdf = pdfService.generateSingleTicketPdfFromDto(individualTicket);
+
+                        if (individualPdf.length > 0) {
+                            String participantName = participant.getFirstName() + " " + participant.getLastName();
+                            mailingService.sendIndividualTicket(
+                                    participant.getEmail(),
+                                    participantName,
+                                    event.getName(),
+                                    individualPdf
+                            );
+                            log.info("Billet individuel envoyé à : {} pour l'événement {}",
+                                    participant.getEmail(), event.getName());
+                        }
                     }
                 }
+
+            } catch (Exception e) {
+                LoggingUtils.logException(log, "Erreur lors de la génération ou de l'envoi des PDFs pour la réservation " + 
+                        savedReservation.getId() + ". La réservation est confirmée mais l'envoi des emails a échoué", e);
             }
 
-        } catch (Exception e) {
-            log.error("Erreur lors de la génération ou de l'envoi des PDFs pour la réservation {}. " +
-                    "La réservation est confirmée mais l'envoi des emails a échoué.", savedReservation.getId(), e);
+            ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
+            confirmationDto.setReservationId(savedReservation.getId());
+            confirmationDto.setReservationDate(ZonedDateTime.ofInstant(savedReservation.getReservationDate(), ZoneOffset.UTC));
+            confirmationDto.setTickets(ticketDtos);
+
+            LoggingUtils.logMethodExit(log, "createReservation", confirmationDto);
+            return confirmationDto;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
-        confirmationDto.setReservationId(savedReservation.getId());
-        confirmationDto.setReservationDate(ZonedDateTime.ofInstant(savedReservation.getReservationDate(), ZoneOffset.UTC));
-        confirmationDto.setTickets(ticketDtos);
-
-        return confirmationDto;
     }
 
     @Override
     public List<TicketResponseDto> getMyTickets() {
-        User currentUser = authUtils.getCurrentAuthenticatedUser();
-        List<Ticket> tickets = ticketRepository.findByUserId(currentUser.getId());
-        return buildTicketResponseDtoList(tickets);
+        LoggingUtils.logMethodEntry(log, "getMyTickets");
+
+        try {
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            List<Ticket> tickets = ticketRepository.findByUserId(currentUser.getId());
+            List<TicketResponseDto> result = buildTicketResponseDtoList(tickets);
+
+            LoggingUtils.logMethodExit(log, "getMyTickets", result);
+            return result;
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 
     @Override
     public TicketResponseDto getTicketDetails(UUID ticketId) {
-        User currentUser = authUtils.getCurrentAuthenticatedUser();
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
+        LoggingUtils.logMethodEntry(log, "getTicketDetails", "ticketId", ticketId);
 
-        // Vérification de sécurité : l'utilisateur doit être le propriétaire
-        boolean isOwner = ticket.getUser().getId().equals(currentUser.getId());
-        if (!isOwner) {
-            throw new BadRequestException("Vous n'avez pas la permission de voir ce billet.");
+        try {
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            Ticket ticket = ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
+
+            // Vérification de sécurité : l'utilisateur doit être le propriétaire
+            boolean isOwner = ticket.getUser().getId().equals(currentUser.getId());
+            if (!isOwner) {
+                log.warn("Tentative d'accès non autorisé au billet {} par l'utilisateur {}", ticketId, currentUser.getEmail());
+                throw new BadRequestException("Vous n'avez pas la permission de voir ce billet.");
+            }
+
+            TicketResponseDto result = buildTicketResponseDto(ticket);
+            LoggingUtils.logMethodExit(log, "getTicketDetails", result);
+            return result;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        return buildTicketResponseDto(ticket);
     }
 
     @Override
     @Transactional
     public TicketValidationResponseDto validateTicket(TicketValidationRequestDto validationDto) {
-        User validator = authUtils.getCurrentAuthenticatedUser();
-        log.info("L'utilisateur {} tente de valider le billet avec la valeur QR : {}", validator.getEmail(), validationDto.getScannedQrCodeValue());
+        LoggingUtils.logMethodEntry(log, "validateTicket", "validationDto", validationDto);
 
-        Ticket ticket = ticketRepository.findByQrCodeValue(validationDto.getScannedQrCodeValue())
-                .orElseThrow(() -> new ResourceNotFoundException("Billet avec QR code " + validationDto.getScannedQrCodeValue() + " non trouvé."));
+        try {
+            User validator = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(validator.getId());
+            log.info("L'utilisateur {} tente de valider le billet avec la valeur QR : {}", validator.getEmail(), validationDto.getScannedQrCodeValue());
 
-        // Vérification de sécurité : le validateur doit avoir les droits sur la structure de l'événement.
-        log.warn("RISQUE DE SÉCURITÉ : La vérification des permissions pour la validation des billets est actuellement désactivée.");
+            Ticket ticket = ticketRepository.findByQrCodeValue(validationDto.getScannedQrCodeValue())
+                    .orElseThrow(() -> new ResourceNotFoundException("Billet avec QR code " + validationDto.getScannedQrCodeValue() + " non trouvé."));
 
-        if (ticket.getStatus() != TicketStatus.VALID) {
-            log.warn("La validation a échoué pour le billet {}. Statut actuel : {}.", ticket.getId(), ticket.getStatus());
-            throw new BadRequestException("Le billet n'est pas valide. Statut actuel : " + ticket.getStatus());
+            // Vérification de sécurité : le validateur doit avoir les droits sur la structure de l'événement.
+            if (!ticketSecurityService.canValidateTicket(validationDto.getScannedQrCodeValue(), authUtils.getCurrentAuthentication())) {
+                log.warn("Tentative de validation de billet non autorisée par l'utilisateur {}", validator.getEmail());
+                throw new BadRequestException("Vous n'avez pas les droits nécessaires pour valider ce billet.");
+            }
+
+            if (ticket.getStatus() != TicketStatus.VALID) {
+                log.warn("La validation a échoué pour le billet {}. Statut actuel : {}.", ticket.getId(), ticket.getStatus());
+                throw new BadRequestException("Le billet n'est pas valide. Statut actuel : " + ticket.getStatus());
+            }
+
+            ticket.setStatus(TicketStatus.USED);
+            ticketRepository.save(ticket);
+            log.info("Billet {} validé avec succès par l'utilisateur {}.", ticket.getId(), validator.getEmail());
+
+            ParticipantInfoDto participant = new ParticipantInfoDto();
+            participant.setFirstName(ticket.getParticipantFirstName());
+            participant.setLastName(ticket.getParticipantLastName());
+            participant.setEmail(ticket.getParticipantEmail());
+
+            TicketValidationResponseDto result = new TicketValidationResponseDto(
+                    ticket.getId(),
+                    ticket.getStatus(),
+                    "Billet validé avec succès.",
+                    participant
+            );
+
+            LoggingUtils.logMethodExit(log, "validateTicket", result);
+            return result;
+        } finally {
+            LoggingUtils.clearContext();
         }
-
-        ticket.setStatus(TicketStatus.USED);
-        ticketRepository.save(ticket);
-        log.info("Billet {} validé avec succès par l'utilisateur {}.", ticket.getId(), validator.getEmail());
-
-        ParticipantInfoDto participant = new ParticipantInfoDto();
-        participant.setFirstName(ticket.getParticipantFirstName());
-        participant.setLastName(ticket.getParticipantLastName());
-        participant.setEmail(ticket.getParticipantEmail());
-
-        return new TicketValidationResponseDto(
-                ticket.getId(),
-                ticket.getStatus(),
-                "Billet validé avec succès.",
-                participant
-        );
     }
 
     // Méthode d'aide pour construire les URL complètes des photos

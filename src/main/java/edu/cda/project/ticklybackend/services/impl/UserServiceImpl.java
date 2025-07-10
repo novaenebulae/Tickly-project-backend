@@ -69,48 +69,57 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserProfileResponseDto getUserProfile(Long userId) {
+        log.debug("Récupération du profil utilisateur ID: {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        log.debug("Profil utilisateur ID: {} récupéré avec succès", userId);
         return userMapper.userToUserProfileResponseDto(user);
     }
 
     @Override
     @Transactional
     public UserProfileResponseDto updateUserProfile(Long userId, UserProfileUpdateDto updateDto) {
+        log.info("Mise à jour du profil utilisateur ID: {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         if (StringUtils.hasText(updateDto.getFirstName())) {
             user.setFirstName(updateDto.getFirstName());
+            log.debug("Prénom mis à jour pour l'utilisateur ID: {}", userId);
         }
         if (StringUtils.hasText(updateDto.getLastName())) {
             user.setLastName(updateDto.getLastName());
+            log.debug("Nom de famille mis à jour pour l'utilisateur ID: {}", userId);
         }
         if (StringUtils.hasText(updateDto.getEmail()) && !Objects.equals(user.getEmail(), updateDto.getEmail())) {
             if (userRepository.existsByEmail(updateDto.getEmail())) {
+                log.warn("Tentative de mise à jour avec une adresse email déjà utilisée: {}", updateDto.getEmail());
                 throw new BadRequestException("L'adresse email '" + updateDto.getEmail() + "' est déjà utilisée.");
             }
+            log.debug("Email mis à jour pour l'utilisateur ID: {} de {} à {}", userId, user.getEmail(), updateDto.getEmail());
             user.setEmail(updateDto.getEmail());
         }
 
-
         User updatedUser = userRepository.save(user);
+        log.info("Profil utilisateur ID: {} mis à jour avec succès", userId);
         return userMapper.userToUserProfileResponseDto(updatedUser);
     }
 
     @Override
     @Transactional
     public String updateUserAvatar(Long userId, MultipartFile file) {
+        log.info("Mise à jour de l'avatar pour l'utilisateur ID: {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         // Supprimer l'ancien avatar s'il existe
         if (StringUtils.hasText(user.getAvatarPath())) {
+            log.debug("Suppression de l'ancien avatar: {} pour l'utilisateur ID: {}", user.getAvatarPath(), userId);
             try {
                 fileStorageService.deleteFile(user.getAvatarPath(), AVATAR_SUBDIRECTORY);
             } catch (Exception e) {
                 // Log l'erreur mais continuer, car l'important est de sauvegarder le nouveau
-                System.err.println("Erreur lors de la suppression de l'ancien avatar : " + e.getMessage());
+                log.warn("Erreur lors de la suppression de l'ancien avatar pour l'utilisateur ID {}: {}", userId, e.getMessage());
             }
         }
 
@@ -119,6 +128,7 @@ public class UserServiceImpl implements UserService {
         user.setAvatarPath(newAvatarPath);
         userRepository.save(user);
 
+        log.info("Avatar mis à jour avec succès pour l'utilisateur ID: {}", userId);
         return fileStorageService.getFileUrl(newAvatarPath, AVATAR_SUBDIRECTORY);
     }
 
@@ -143,7 +153,9 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public List<UserFavoriteStructureDto> getCurrentUserFavoriteStructures() {
         Long userId = authUtils.getCurrentAuthenticatedUserId();
+        log.debug("Récupération des structures favorites pour l'utilisateur ID: {}", userId);
         List<UserFavoriteStructure> favorites = favoriteRepository.findByUserId(userId);
+        log.debug("{} structures favorites trouvées pour l'utilisateur ID: {}", favorites.size(), userId);
         // On passe fileStorageService en contexte pour que MapStruct puisse l'utiliser dans les mappers imbriqués
         return userMapper.userFavoriteStructuresToUserFavoriteStructureDtos(favorites, fileStorageService);
     }
@@ -152,12 +164,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserFavoriteStructureDto addFavoriteStructure(Long userId, Long structureId) {
+        log.info("Ajout de la structure ID: {} aux favoris de l'utilisateur ID: {}", structureId, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
 
         if (favoriteRepository.existsByUserIdAndStructureId(userId, structureId)) {
+            log.warn("La structure ID: {} est déjà dans les favoris de l'utilisateur ID: {}", structureId, userId);
             throw new BadRequestException("Cette structure est déjà dans vos favoris.");
         }
 
@@ -165,22 +179,28 @@ public class UserServiceImpl implements UserService {
         favorite.setUser(user);
         favorite.setStructure(structure);
         UserFavoriteStructure savedFavorite = favoriteRepository.save(favorite);
+        log.info("Structure ID: {} ajoutée aux favoris de l'utilisateur ID: {} avec succès", structureId, userId);
         return userMapper.userFavoriteStructureToUserFavoriteStructureDto(savedFavorite, fileStorageService);
     }
 
     @Override
     @Transactional
     public void removeFavoriteStructure(Long userId, Long structureId) {
+        log.info("Suppression de la structure ID: {} des favoris de l'utilisateur ID: {}", structureId, userId);
         if (!userRepository.existsById(userId)) {
+            log.warn("Utilisateur ID: {} non trouvé lors de la suppression des favoris", userId);
             throw new ResourceNotFoundException("User", "id", userId);
         }
         if (!structureRepository.existsById(structureId)) {
+            log.warn("Structure ID: {} non trouvée lors de la suppression des favoris", structureId);
             throw new ResourceNotFoundException("Structure", "id", structureId);
         }
         if (!favoriteRepository.existsByUserIdAndStructureId(userId, structureId)) {
+            log.warn("Favori non trouvé pour l'utilisateur ID: {} et la structure ID: {}", userId, structureId);
             throw new ResourceNotFoundException("FavoriteStructure", "userId/structureId", userId + "/" + structureId);
         }
         favoriteRepository.deleteByUserIdAndStructureId(userId, structureId);
+        log.info("Structure ID: {} supprimée des favoris de l'utilisateur ID: {} avec succès", structureId, userId);
     }
 
     // Méthodes pour l'utilisateur courant
@@ -188,6 +208,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserProfileResponseDto getCurrentUserProfile() {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.debug("Récupération du profil de l'utilisateur authentifié ID: {}", currentUser.getId());
         return getUserProfile(currentUser.getId());
     }
 
@@ -195,6 +216,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserProfileResponseDto updateCurrentUserProfile(UserProfileUpdateDto updateDto) {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.info("Mise à jour du profil de l'utilisateur authentifié ID: {}", currentUser.getId());
         return updateUserProfile(currentUser.getId(), updateDto);
     }
 
@@ -202,6 +224,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public String updateCurrentUserAvatar(MultipartFile file) {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.info("Mise à jour de l'avatar de l'utilisateur authentifié ID: {}", currentUser.getId());
         return updateUserAvatar(currentUser.getId(), file);
     }
 
@@ -210,6 +233,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserFavoriteStructureDto addCurrentUserFavoriteStructure(Long structureId) {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.info("Ajout de la structure ID: {} aux favoris de l'utilisateur authentifié ID: {}", structureId, currentUser.getId());
         return addFavoriteStructure(currentUser.getId(), structureId);
     }
 
@@ -217,6 +241,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void removeCurrentUserFavoriteStructure(Long structureId) {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.info("Suppression de la structure ID: {} des favoris de l'utilisateur authentifié ID: {}", structureId, currentUser.getId());
         removeFavoriteStructure(currentUser.getId(), structureId);
     }
 
@@ -224,31 +249,38 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void requestAccountDeletion() {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
+        log.info("Demande de suppression de compte pour l'utilisateur ID: {}", currentUser.getId());
 
         // GARDE-FOU: Passation de pouvoir pour un administrateur de structure
         if (currentUser instanceof StructureAdministratorUser admin) {
             Structure managedStructure = admin.getStructure();
             // Vérifie s'il gère une structure qui est toujours active
             if (managedStructure != null && managedStructure.isActive()) {
+                log.debug("Vérification des droits d'administration pour la structure ID: {}", managedStructure.getId());
                 long adminCount = teamService.countAdminsForStructure(managedStructure.getId());
+                log.debug("Nombre d'administrateurs pour la structure ID: {}: {}", managedStructure.getId(), adminCount);
 
                 // S'il est le seul admin (ou si le compte est 0 pour une raison quelconque, on est prudent), on bloque.
                 if (adminCount <= 1) {
+                    log.warn("Suppression de compte refusée pour l'utilisateur ID: {} car il est le seul administrateur de la structure ID: {}", 
+                            currentUser.getId(), managedStructure.getId());
                     throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
                             + managedStructure.getName() + "'. Avant de supprimer votre compte, vous devez soit :\n" +
                             "1. Promouvoir un autre membre de l'équipe au rôle d'administrateur via l'interface de gestion d'équipe\n" +
                             "2. Supprimer définitivement la structure si elle n'est plus utilisée\n" +
                             "Ces actions peuvent être effectuées depuis le tableau de bord de votre structure.");
                 }
-
             }
         }
 
         // Si le garde-fou est passé, on continue le processus de demande de suppression
+        log.debug("Création du token de suppression de compte pour l'utilisateur ID: {}", currentUser.getId());
         VerificationToken deletionToken = tokenService.createToken(currentUser, TokenType.ACCOUNT_DELETION_CONFIRMATION, Duration.ofHours(1), null);
         String deletionLink = "/users/confirm-deletion?token=" + deletionToken.getToken();
 
+        log.debug("Envoi de l'email de confirmation de suppression de compte à {}", currentUser.getEmail());
         mailingService.sendAccountDeletionRequest(currentUser.getEmail(), currentUser.getFirstName(), deletionLink);
+        log.info("Demande de suppression de compte initiée avec succès pour l'utilisateur ID: {}", currentUser.getId());
     }
 
     @Override
