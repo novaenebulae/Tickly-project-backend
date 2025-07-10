@@ -648,50 +648,6 @@ VALUES (3, 'fcmetz_1.jpg'),
 
 
 -- ######################################################
--- # 16. PEUPLEMENT DE LA TABLE `reservations`          #
--- ######################################################
--- Création de réservations groupant plusieurs billets pour différents utilisateurs.
-
-INSERT INTO reservations (id, user_id, reservation_date, total_amount)
-VALUES
--- Réservation d'Inès Michel (ID 9) pour le concert à l'Arsenal (Event 1)
-(1, 9, NOW() - INTERVAL 10 DAY, 0.00),
--- Réservation de Julien Garcia (ID 10) pour le match du FC Metz (Event 3)
-(2, 10, NOW() - INTERVAL 5 DAY, 0.00),
--- Réservation de Karine Lefebvre (ID 11) pour le festival à la BAM (Event 2)
-(3, 11, NOW() - INTERVAL 3 DAY, 0.00),
--- Autre réservation d'Inès Michel (ID 9) pour le concert Pop aux Arènes (Event 8)
-(4, 9, NOW() - INTERVAL 2 DAY, 0.00),
--- Réservation de Léo Roux (ID 12) pour l'exposition à Pompidou (Event 6)
-(5, 12, NOW() - INTERVAL 1 DAY, 0.00);
-
-
--- ######################################################
--- # 17. PEUPLEMENT DE LA TABLE `tickets`               #
--- ######################################################
--- Création des billets individuels associés aux réservations.
--- Les UUIDs pour les ID de billets sont générés ici pour la démonstration.
--- En pratique, la base de données ou l'application les générerait.
-
-INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
-                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
-VALUES
--- Billets pour la Réservation 1 (Inès Michel, Event 1, Zone 1 - Parterre)
-(UUID_TO_BIN(UUID()), 1, 1, 9, 1, UUID(), 'Inès', 'Michel', 'ines.michel@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 1)),
-(UUID_TO_BIN(UUID()), 1, 1, 9, 1, UUID(), 'Lucas', 'Petit', 'lucas.petit@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 1)),
-
--- Billets pour la Réservation 2 (Julien Garcia, Event 3, Zone 5 - Tribune Sud)
-(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Julien', 'Garcia', 'julien.garcia@email.com', 'VALID',
- (SELECT reservation_date FROM reservations WHERE id = 2)),
-(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Emma', 'Leroy', 'emma.leroy@email.com', 'USED',
- (SELECT reservation_date FROM reservations WHERE id = 2)),
-(UUID_TO_BIN(UUID()), 3, 5, 10, 2, UUID(), 'Hugo', 'Martinez', 'hugo.martinez@email.com', 'CANCELLED',
- (SELECT reservation_date FROM reservations WHERE id = 2));
-
-
--- ######################################################
 -- # 18. PEUPLEMENT DE LA TABLE `friendships`           #
 -- ######################################################
 -- Ajout de relations d'amitié entre les utilisateurs.
@@ -907,181 +863,320 @@ VALUES (30, 20, 18, 200), -- Nuit du Blues & Soul (Caveau)
        (39, 29, 17, 350);
 -- Ciné-Concert (Chapelle)
 
-
 -- ###################################################################
--- # 5. DONNÉES DE BILLETS POUR LES STATISTIQUES                     #
+-- # 5. DONNÉES DE BILLETS POUR LES STATISTIQUES (VERSION CORRIGÉE)  #
 -- ###################################################################
+-- Objectif: Fournir un jeu de données riche et cohérent pour les statistiques de l'événement 20,
+-- en simulant des réservations réalistes sur une période donnée.
+-- L'événement 20 "Nuit du Blues & Soul" a une capacité allouée de 200 places (event_audience_zone_id = 30).
+-- Toutes les réservations et tous les billets ci-dessous sont pour cet événement.
 
--- Réservations et Billets pour l'événement 20 "Nuit du Blues & Soul"
--- Objectif: Tester le remplissage des zones et la répartition des statuts.
-INSERT INTO reservations (id, user_id, reservation_date, total_amount)
-VALUES (10, 9, NOW() - INTERVAL 20 DAY, 0.00),
-       (11, 10, NOW() - INTERVAL 18 DAY, 0.00),
-       (12, 26, NOW() - INTERVAL 15 DAY, 0.00);
+-- Suppression des données de réservation et de billetterie précédemment générées pour les événements 20 et 21
+-- pour garantir un état propre avant la nouvelle insertion.
+DELETE
+FROM tickets
+WHERE event_id IN (20, 21);
+DELETE
+FROM reservations
+WHERE id >= 10;
+ALTER TABLE reservations
+    AUTO_INCREMENT = 10;
 
--- Insertion de 100 billets 'USED'
+
+-- ######################################################################
+-- # A. PEUPLEMENT POUR ÉVÉNEMENT 20 : "Nuit du Blues & Soul" (ID 20)   #
+-- ######################################################################
+-- Création de réservations détaillées pour simuler une montée en charge réaliste.
+
+INSERT INTO reservations (id, user_id, reservation_date)
+VALUES
+-- Vague 1: Réservations initiales (peu après la mise en ligne de l'événement)
+(10, 9, NOW() - INTERVAL 28 DAY),  -- Inès Michel (ID 9), 2 billets
+(11, 26, NOW() - INTERVAL 25 DAY), -- Nadia Henry (ID 26), 4 billets
+-- Vague 2: Intérêt croissant
+(12, 10, NOW() - INTERVAL 20 DAY), -- Julien Garcia (ID 10), 3 billets (dont 1 annulé)
+(13, 11, NOW() - INTERVAL 18 DAY), -- Karine Lefebvre (ID 11), 1 billet
+(14, 27, NOW() - INTERVAL 15 DAY), -- Olivier Perrin (ID 27), 2 billets
+-- Vague 3: Pic de réservations
+(15, 12, NOW() - INTERVAL 10 DAY), -- Léo Roux (ID 12), 5 billets
+(16, 9, NOW() - INTERVAL 9 DAY),   -- Inès Michel (ID 9), nouvelle réservation pour des amis, 3 billets
+(17, 10, NOW() - INTERVAL 8 DAY),  -- Julien Garcia (ID 10), 2 billets annulés
+(18, 26, NOW() - INTERVAL 7 DAY),  -- Nadia Henry (ID 26), 6 billets
+-- Vague 4: Dernières places
+(19, 11, NOW() - INTERVAL 3 DAY),  -- Karine Lefebvre (ID 11), 2 billets
+(20, 27, NOW() - INTERVAL 1 DAY);
+-- Olivier Perrin (ID 27), 1 billet
+
+-- Création des billets associés à chaque réservation pour l'événement 20.
+-- Total de billets VALIDES: 21
+-- Total de billets ANNULÉS: 5
+-- Taux de remplissage (valide / capacité): 21 / 200 = 10.5% (ceci est un exemple, nous allons en ajouter plus)
+
+-- Let's generate a more significant number of tickets to be realistic.
+-- Total: 155 Billet (140 VALIDES, 15 ANNULÉS) -> Taux de remplissage de 70%
+
+-- Billets pour la Réservation 10 (Inès Michel, 2 billets)
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 100)
-SELECT UUID_TO_BIN(UUID()),
-       20,
-       30,
-       9,
-       10,
-       UUID(),
-       'User',
-       'A',
-       'a@test.com',
-       'USED',
-       (SELECT reservation_date FROM reservations WHERE id = 10)
-FROM a;
+VALUES (UUID_TO_BIN(UUID()), 20, 30, 9, 10, UUID(), 'Inès', 'Michel', 'ines.michel@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 10)),
+       (UUID_TO_BIN(UUID()), 20, 30, 9, 10, UUID(), 'Ami', 'Un', 'ami1@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 10));
 
--- Insertion de 40 billets 'VALID'
+-- Billets pour la Réservation 11 (Nadia Henry, 4 billets)
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 40)
-SELECT UUID_TO_BIN(UUID()),
-       20,
-       30,
-       10,
-       11,
-       UUID(),
-       'User',
-       'B',
-       'b@test.com',
-       'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 11)
-FROM a;
-
--- Insertion de 10 billets 'CANCELLED'
-INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
-                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 10)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 5)
 SELECT UUID_TO_BIN(UUID()),
        20,
        30,
        26,
-       12,
+       11,
        UUID(),
-       'User',
-       'C',
-       'c@test.com',
-       'CANCELLED',
-       (SELECT reservation_date FROM reservations WHERE id = 12)
+       'Participant',
+       CONCAT('Nadia', n),
+       'nadia.henry@email.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 11)
 FROM a;
 
+-- Billets pour la Réservation 12 (Julien Garcia, 2 valides, 1 annulé)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+VALUES (UUID_TO_BIN(UUID()), 20, 30, 10, 12, UUID(), 'Julien', 'Garcia', 'julien.garcia@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 12)),
+       (UUID_TO_BIN(UUID()), 20, 30, 10, 12, UUID(), 'Ami', 'Deux', 'ami2@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 12)),
+       (UUID_TO_BIN(UUID()), 20, 30, 10, 12, UUID(), 'Ami', 'Trois', 'ami3@email.com', 'CANCELLED',
+        (SELECT reservation_date FROM reservations WHERE id = 12));
 
--- Réservations et Billets pour l'événement 21 "Scène Ouverte Poésie & Slam"
--- Objectif: Tester l'évolution des réservations dans le temps.
-INSERT INTO reservations (id, user_id, reservation_date, total_amount)
-VALUES (14, 9, NOW() - INTERVAL 24 DAY, 0.00),
-       (15, 10, NOW() - INTERVAL 20 DAY, 0.00),
-       (16, 11, NOW() - INTERVAL 15 DAY, 0.00),
-       (17, 12, NOW() - INTERVAL 10 DAY, 0.00),
-       (18, 26, NOW() - INTERVAL 5 DAY, 0.00),
-       (19, 27, NOW() - INTERVAL 2 DAY, 0.00);
+-- Billets pour la Réservation 13 (Karine Lefebvre, 1 billet)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+VALUES (UUID_TO_BIN(UUID()), 20, 30, 11, 13, UUID(), 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 13));
+
+-- Billets pour la Réservation 14 (Olivier Perrin, 2 billets)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 3)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       27,
+       14,
+       UUID(),
+       'Participant',
+       CONCAT('Olivier', n),
+       'olivier.perrin@email.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 14)
+FROM a;
+
+-- Billets pour la Réservation 15 (Léo Roux, 4 valides, 1 annulé)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+VALUES (UUID_TO_BIN(UUID()), 20, 30, 12, 15, UUID(), 'Léo', 'Roux', 'leo.roux@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 15)),
+       (UUID_TO_BIN(UUID()), 20, 30, 12, 15, UUID(), 'Ami', 'Quatre', 'ami4@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 15)),
+       (UUID_TO_BIN(UUID()), 20, 30, 12, 15, UUID(), 'Ami', 'Cinq', 'ami5@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 15)),
+       (UUID_TO_BIN(UUID()), 20, 30, 12, 15, UUID(), 'Ami', 'Six', 'ami6@email.com', 'VALID',
+        (SELECT reservation_date FROM reservations WHERE id = 15)),
+       (UUID_TO_BIN(UUID()), 20, 30, 12, 15, UUID(), 'Ami', 'Sept', 'ami7@email.com', 'CANCELLED',
+        (SELECT reservation_date FROM reservations WHERE id = 15));
+
+-- Billets pour la Réservation 16 (Inès Michel, 3 billets)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 4)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       9,
+       16,
+       UUID(),
+       'Invité',
+       CONCAT('Ines', n),
+       'ines.michel@email.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 16)
+FROM a;
+
+-- Billets pour la Réservation 17 (Julien Garcia, 2 billets annulés)
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 3)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       10,
+       17,
+       UUID(),
+       'Annulation',
+       CONCAT('Julien', n),
+       'julien.garcia@email.com',
+       'CANCELLED',
+       (SELECT reservation_date FROM reservations WHERE id = 17)
+FROM a;
+
+-- Insertion de 120 billets 'VALID' supplémentaires pour atteindre un remplissage élevé
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 121)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       26,
+       18,
+       UUID(),
+       'Spectateur',
+       CONCAT('Anonyme', n),
+       'spectateur@test.com',
+       'VALID',
+       (SELECT reservation_date FROM reservations WHERE id = 18)
+FROM a;
+
+-- Insertion de 10 billets 'CANCELLED' supplémentaires
+INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
+                     participant_first_name, participant_last_name, participant_email, status, reservation_date)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 11)
+SELECT UUID_TO_BIN(UUID()),
+       20,
+       30,
+       11,
+       19,
+       UUID(),
+       'Annulation',
+       CONCAT('Tardive', n),
+       'annulation@test.com',
+       'CANCELLED',
+       (SELECT reservation_date FROM reservations WHERE id = 19)
+FROM a;
+
+-- Total final pour l'événement 20 :
+-- BILLETS VALIDES : 2 + 4 + 2 + 1 + 2 + 4 + 3 + 120 = 138
+-- BILLETS ANNULÉS: 1 + 1 + 2 + 10 = 14
+-- TOTAL BILLETS ÉMIS: 152
+-- TAUX DE REMPLISSAGE: 138 / 200 = 69%
+
+
+-- ###############################################################################
+-- # B. PEUPLEMENT POUR ÉVÉNEMENT 21 : "Scène Ouverte Poésie & Slam" (ID 21)     #
+-- ###############################################################################
+-- L'objectif reste de tester l'évolution des réservations dans le temps.
+
+INSERT INTO reservations (id, user_id, reservation_date)
+VALUES (21, 9, NOW() - INTERVAL 24 DAY),
+       (22, 10, NOW() - INTERVAL 20 DAY),
+       (23, 11, NOW() - INTERVAL 15 DAY),
+       (24, 12, NOW() - INTERVAL 10 DAY),
+       (25, 26, NOW() - INTERVAL 5 DAY),
+       (26, 27, NOW() - INTERVAL 2 DAY);
 
 -- Jour 1 (-24d): 20 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 20)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 21)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        9,
-       14,
+       21,
        UUID(),
        'User',
        'D',
        'd@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 14)
+       (SELECT reservation_date FROM reservations WHERE id = 21)
 FROM a;
 
 -- Jour 2 (-20d): 30 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 30)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 31)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        10,
-       15,
+       22,
        UUID(),
        'User',
        'E',
        'e@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 15)
+       (SELECT reservation_date FROM reservations WHERE id = 22)
 FROM a;
 
 -- Jour 3 (-15d): 50 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 50)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 51)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        11,
-       16,
+       23,
        UUID(),
        'User',
        'F',
        'f@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 16)
+       (SELECT reservation_date FROM reservations WHERE id = 23)
 FROM a;
 
 -- Jour 4 (-10d): 40 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 40)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 41)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        12,
-       17,
+       24,
        UUID(),
        'User',
        'G',
        'g@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 17)
+       (SELECT reservation_date FROM reservations WHERE id = 24)
 FROM a;
 
 -- Jour 5 (-5d): 60 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 60)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 61)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        26,
-       18,
+       25,
        UUID(),
        'User',
        'H',
        'h@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 18)
+       (SELECT reservation_date FROM reservations WHERE id = 25)
 FROM a;
 
 -- Jour 6 (-2d): 25 billets
 INSERT INTO tickets (id, event_id, event_audience_zone_id, user_id, reservation_id, qr_code_value,
                      participant_first_name, participant_last_name, participant_email, status, reservation_date)
-WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 25)
+WITH RECURSIVE a(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM a WHERE n < 26)
 SELECT UUID_TO_BIN(UUID()),
        21,
        31,
        27,
-       19,
+       26,
        UUID(),
        'User',
        'I',
        'i@test.com',
        'VALID',
-       (SELECT reservation_date FROM reservations WHERE id = 19)
+       (SELECT reservation_date FROM reservations WHERE id = 26)
 FROM a;
+
 
 -- Réactivation des contraintes de clés étrangères
 SET FOREIGN_KEY_CHECKS = 1;

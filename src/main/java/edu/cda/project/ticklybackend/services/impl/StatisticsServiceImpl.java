@@ -283,7 +283,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     /**
      * Generate a chart of zone fill rates for an event.
-     * 
+     *
      * @param zoneFillRates List of zone fill rate data points
      * @return A chart data object for zone fill rates
      */
@@ -338,7 +338,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     /**
      * Generate a chart of zone fill rates for an event.
-     * 
+     *
      * @param eventId The ID of the event
      * @return A chart data object for zone fill rates
      */

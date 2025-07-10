@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +39,6 @@ public class Reservation {
     @CreationTimestamp
     @Column(name = "reservation_date", nullable = false, updatable = false)
     private Instant reservationDate;
-
-    @Column(name = "total_amount", precision = 10, scale = 2)
-    private BigDecimal totalAmount;
 
     /**
      * Ajoute un billet à la réservation et établit la relation bidirectionnelle.

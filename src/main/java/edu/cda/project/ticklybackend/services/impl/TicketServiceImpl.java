@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -77,7 +76,6 @@ public class TicketServiceImpl implements TicketService {
 
         Reservation reservation = new Reservation();
         reservation.setUser(currentUser);
-        reservation.setTotalAmount(BigDecimal.ZERO); // Événements gratuits pour l'instant
 
         for (ParticipantInfoDto participant : requestDto.getParticipants()) {
             Ticket ticket = new Ticket();

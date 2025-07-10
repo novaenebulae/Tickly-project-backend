@@ -13,17 +13,12 @@ with a checkbox [ ] that can be checked off when completed.
 [ ] Implement API request throttling to prevent DoS attacks
 [ ] Conduct a thorough security audit of the application
 
-### Performance
-
-[ ] Optimize database queries with proper indexing
-[ ] Review and optimize N+1 query issues in service implementations
-[ ] Add pagination for all list endpoints that might return large datasets
-[ ] Optimize file storage and retrieval operations
-
 ### Scalability
 
-[ ] Refactor stateful operations to be stateless where possible
-[ ] Containerize the application for easier deployment and scaling
+[ ] Containerize the application for easier deployment and scaling :
+
+- Nginx Reverse proxy (Load Balancer) to Nginx static server + Java Container connected to MySQL server
+- Only have to add the nginx reverse proxy as the rest is actually containerized.
 
 ### Resilience
 
@@ -33,9 +28,8 @@ with a checkbox [ ] that can be checked off when completed.
 
 ### Testing
 
-[ ] Increase unit test coverage (aim for at least 80%)
+[ ] Increase unit test coverage (aim for at least 60%)
 [ ] Set up automated testing in CI/CD pipeline
-[ ] Implement contract tests for API endpoints
 
 ### Code Organization
 
@@ -44,7 +38,6 @@ with a checkbox [ ] that can be checked off when completed.
 [ ] Standardize exception handling across the application
 [ ] Implement consistent logging strategy with appropriate log levels
 [ ] Organize imports and remove unused dependencies
-[ ] Review and refactor complex methods (>30 lines) into smaller, more manageable pieces
 
 ### Documentation
 
@@ -76,8 +69,12 @@ with a checkbox [ ] that can be checked off when completed.
 [ ] Implement infrastructure as code for all environments
 [ ] Set up proper environment separation (dev, test, staging, production)
 
+[ ] Setup backend deployment environment :
+
+HTTPS =>  Nginx reverse proxy -> Java container -> MySQL
+| | |
+|--> Nginx Static -> Static files |-> Private files
+
 ### Deployment
 
 [ ] Optimize Docker container configuration
-[ ] Implement blue-green deployment strategy
-[ ] Implement secrets management solution
