@@ -69,10 +69,6 @@ public class TeamMemberMapperTest {
         teamMember.setStatus(TeamMemberStatus.ACTIVE);
         teamMember.setInvitedAt(testInstant);
         teamMember.setJoinedAt(testInstant);
-
-        // Mock file storage service
-        when(fileStorageService.getFileUrl(anyString(), eq("avatars")))
-                .thenAnswer(invocation -> "http://example.com/avatars/" + invocation.getArgument(0));
     }
 
     @Test
@@ -87,6 +83,10 @@ public class TeamMemberMapperTest {
 
     @Test
     void toDto_ShouldMapCorrectly() {
+        // Setup mock for this test only
+        when(fileStorageService.getFileUrl(anyString(), eq("avatars")))
+                .thenAnswer(invocation -> "http://example.com/avatars/" + invocation.getArgument(0));
+
         // Act
         TeamMemberDto result = teamMemberMapper.toDto(teamMember, fileStorageService);
 

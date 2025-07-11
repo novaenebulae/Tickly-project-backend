@@ -197,11 +197,14 @@ public class FriendshipServiceImpl implements FriendshipService {
             LoggingUtils.setUserId(currentUserId);
             log.debug("ID de l'utilisateur courant: {}", currentUserId);
 
-            Friendship friendship = friendshipRepository.findFriendshipBetweenUsers(currentUserId, friendUserId)
-                    .orElseThrow(() -> {
-                        LoggingUtils.logException(log, "Relation d'amitié non trouvée entre les utilisateurs ID: " + currentUserId + " et " + friendUserId, null);
-                        return new ResourceNotFoundException("Friendship", "friendId", friendUserId);
-                    });
+            // Explicitly handle the case when friendship is not found to ensure ResourceNotFoundException is thrown
+            var friendshipOpt = friendshipRepository.findFriendshipBetweenUsers(currentUserId, friendUserId);
+            if (friendshipOpt.isEmpty()) {
+                log.warn("Relation d'amitié non trouvée entre les utilisateurs ID: {} et {}", currentUserId, friendUserId);
+                throw new ResourceNotFoundException("Friendship", "friendId", friendUserId);
+            }
+
+            Friendship friendship = friendshipOpt.get();
             log.debug("Relation d'amitié trouvée: ID={}, statut={}", friendship.getId(), friendship.getStatus());
 
             if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
@@ -216,6 +219,10 @@ public class FriendshipServiceImpl implements FriendshipService {
                     currentUserId, friendUserId);
 
             LoggingUtils.logMethodExit(log, "removeFriend");
+        } catch (ResourceNotFoundException | BadRequestException e) {
+            // Rethrow these exceptions directly without wrapping
+            LoggingUtils.logException(log, "Erreur lors de la suppression d'un ami", e);
+            throw e;
         } catch (Exception e) {
             LoggingUtils.logException(log, "Erreur lors de la suppression d'un ami", e);
             throw e;

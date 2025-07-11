@@ -53,15 +53,20 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             // Security check: Verify that the current user is staff of this structure
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            User currentUser = authUtils.getCurrentAuthenticatedUser();
-            LoggingUtils.setUserId(currentUser.getId());
 
+            // First check authorization before accessing user details
             log.debug("Vérification des autorisations pour l'accès aux statistiques de la structure ID: {}", structureId);
             if (!structureSecurityService.isStructureStaff(structureId, authentication)) {
                 log.warn("Accès refusé aux statistiques pour la structure ID: {} - Utilisateur non autorisé", structureId);
                 throw new AccessDeniedException("You are not authorized to access statistics for this structure");
             }
             log.debug("Autorisation validée pour l'accès aux statistiques de la structure ID: {}", structureId);
+
+            // Now get the user details for logging
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            if (currentUser != null) {
+                LoggingUtils.setUserId(currentUser.getId());
+            }
 
             // Get current date/time for upcoming events calculation
             LocalDateTime now = LocalDateTime.now();
@@ -111,17 +116,22 @@ public class StatisticsServiceImpl implements StatisticsService {
         try {
             log.debug("Début de la récupération des statistiques pour l'événement ID: {}", eventId);
 
-            // Fetch the event to verify it exists and get its name
-            log.debug("Recherche de l'événement ID: {}", eventId);
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> {
-                        LoggingUtils.logException(log, "Événement non trouvé avec ID: " + eventId, null);
-                        return new ResourceNotFoundException("Event", "id", eventId);
-                    });
+            // Explicitly handle the case when event is not found to ensure ResourceNotFoundException is thrown
+            var eventOpt = eventRepository.findById(eventId);
+            if (eventOpt.isEmpty()) {
+                log.warn("Événement non trouvé avec ID: {}", eventId);
+                throw new ResourceNotFoundException("Event", "id", eventId);
+            }
+
+            Event event = eventOpt.get();
             log.debug("Événement trouvé: ID={}, nom={}", event.getId(), event.getName());
 
             // Security check: Verify that the current user is authorized to access this event's statistics
             User currentUser = authUtils.getCurrentAuthenticatedUser();
+            if (currentUser == null) {
+                log.warn("Utilisateur non authentifié tentant d'accéder aux statistiques de l'événement ID: {}", eventId);
+                throw new AccessDeniedException("You are not authorized to access statistics for this event");
+            }
             LoggingUtils.setUserId(currentUser.getId());
 
             log.debug("Vérification des autorisations pour l'accès aux statistiques de l'événement ID: {}", eventId);

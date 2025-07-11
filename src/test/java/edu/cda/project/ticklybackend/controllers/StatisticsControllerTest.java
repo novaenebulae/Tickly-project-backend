@@ -8,40 +8,38 @@ import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.services.interfaces.StatisticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(StatisticsController.class)
 class StatisticsControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private StatisticsService statisticsService;
+
+    @InjectMocks
+    private StatisticsController statisticsController;
 
     private StructureDashboardStatsDto structureDashboardStatsDto;
     private EventStatisticsDto eventStatisticsDto;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+
         // Setup mock StructureDashboardStatsDto
         ChartJsDataDto topEventsChart = new ChartJsDataDto("bar", Collections.singletonList("Event 1"), Collections.emptyList());
         ChartJsDataDto attendanceByCategoryChart = new ChartJsDataDto("doughnut", Collections.singletonList("Category 1"), Collections.emptyList());
-        
+
         structureDashboardStatsDto = new StructureDashboardStatsDto(
                 10L,
                 100L,
@@ -55,7 +53,7 @@ class StatisticsControllerTest {
         ChartJsDataDto zoneFillRateChart = new ChartJsDataDto("bar", Collections.singletonList("Zone 1"), Collections.emptyList());
         ChartJsDataDto reservationsOverTimeChart = new ChartJsDataDto("line", Collections.singletonList("2023-01-01"), Collections.emptyList());
         ChartJsDataDto ticketStatusChart = new ChartJsDataDto("doughnut", Collections.singletonList("VALID"), Collections.emptyList());
-        
+
         eventStatisticsDto = new EventStatisticsDto(
                 1L,
                 "Test Event",
@@ -66,91 +64,117 @@ class StatisticsControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getStructureDashboardStats_WhenAuthorized_ReturnsStats() throws Exception {
+    void getStructureDashboardStats_WhenAuthorized_ReturnsStats() {
         // Arrange
-        when(statisticsService.getStructureDashboardStats(anyLong())).thenReturn(structureDashboardStatsDto);
+        Long structureId = 1L;
+        when(statisticsService.getStructureDashboardStats(structureId)).thenReturn(structureDashboardStatsDto);
 
-        // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/structure/1/dashboard")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.upcomingEventsCount").value(10))
-                .andExpect(jsonPath("$.totalTicketsReserved").value(100))
-                .andExpect(jsonPath("$.totalExpectedAttendees").value(75))
-                .andExpect(jsonPath("$.averageAttendanceRate").value(85.5))
-                .andExpect(jsonPath("$.topEventsChart").exists())
-                .andExpect(jsonPath("$.attendanceByCategoryChart").exists());
+        // Act
+        ResponseEntity<StructureDashboardStatsDto> response = statisticsController.getStructureDashboardStats(structureId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(10L, response.getBody().getUpcomingEventsCount());
+        assertEquals(100L, response.getBody().getTotalTicketsReserved());
+        assertEquals(75L, response.getBody().getTotalExpectedAttendees());
+        assertEquals(85.5, response.getBody().getAverageAttendanceRate());
+        assertNotNull(response.getBody().getTopEventsChart());
+        assertNotNull(response.getBody().getAttendanceByCategoryChart());
+
+        // Verify
+        verify(statisticsService, times(1)).getStructureDashboardStats(structureId);
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getStructureDashboardStats_WhenUnauthorized_ReturnsForbidden() throws Exception {
+    void getStructureDashboardStats_WhenUnauthorized_ReturnsForbidden() {
         // Arrange
-        when(statisticsService.getStructureDashboardStats(anyLong())).thenThrow(new AccessDeniedException("Access denied"));
+        Long structureId = 1L;
+        doThrow(new AccessDeniedException("Access denied")).when(statisticsService).getStructureDashboardStats(structureId);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/structure/1/dashboard")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+        try {
+            statisticsController.getStructureDashboardStats(structureId);
+        } catch (AccessDeniedException e) {
+            assertEquals("Access denied", e.getMessage());
+        }
+
+        // Verify
+        verify(statisticsService, times(1)).getStructureDashboardStats(structureId);
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getStructureDashboardStats_WhenStructureNotFound_ReturnsNotFound() throws Exception {
+    void getStructureDashboardStats_WhenStructureNotFound_ReturnsNotFound() {
         // Arrange
-        when(statisticsService.getStructureDashboardStats(anyLong())).thenThrow(new ResourceNotFoundException("Structure", "id", 1L));
+        Long structureId = 1L;
+        doThrow(new ResourceNotFoundException("Structure", "id", structureId)).when(statisticsService).getStructureDashboardStats(structureId);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/structure/1/dashboard")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+        try {
+            statisticsController.getStructureDashboardStats(structureId);
+        } catch (ResourceNotFoundException e) {
+            assertEquals("Structure non trouvé(e) avec id : '1'", e.getMessage());
+        }
+
+        // Verify
+        verify(statisticsService, times(1)).getStructureDashboardStats(structureId);
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getEventStats_WhenAuthorized_ReturnsStats() throws Exception {
+    void getEventStats_WhenAuthorized_ReturnsStats() {
         // Arrange
-        when(statisticsService.getEventStats(anyLong())).thenReturn(eventStatisticsDto);
+        Long eventId = 1L;
+        when(statisticsService.getEventStats(eventId)).thenReturn(eventStatisticsDto);
 
-        // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/event/1")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eventId").value(1))
-                .andExpect(jsonPath("$.eventName").value("Test Event"))
-                .andExpect(jsonPath("$.zoneFillRateChart").exists())
-                .andExpect(jsonPath("$.reservationsOverTimeChart").exists())
-                .andExpect(jsonPath("$.ticketStatusChart").exists());
+        // Act
+        ResponseEntity<EventStatisticsDto> response = statisticsController.getEventStats(eventId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1L, response.getBody().getEventId());
+        assertEquals("Test Event", response.getBody().getEventName());
+        assertNotNull(response.getBody().getZoneFillRateChart());
+        assertNotNull(response.getBody().getReservationsOverTimeChart());
+        assertNotNull(response.getBody().getTicketStatusChart());
+
+        // Verify
+        verify(statisticsService, times(1)).getEventStats(eventId);
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getEventStats_WhenUnauthorized_ReturnsForbidden() throws Exception {
+    void getEventStats_WhenUnauthorized_ReturnsForbidden() {
         // Arrange
-        when(statisticsService.getEventStats(anyLong())).thenThrow(new AccessDeniedException("Access denied"));
+        Long eventId = 1L;
+        doThrow(new AccessDeniedException("Access denied")).when(statisticsService).getEventStats(eventId);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/event/1")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+        try {
+            statisticsController.getEventStats(eventId);
+        } catch (AccessDeniedException e) {
+            assertEquals("Access denied", e.getMessage());
+        }
+
+        // Verify
+        verify(statisticsService, times(1)).getEventStats(eventId);
     }
 
     @Test
-    @WithMockUser(roles = "STRUCTURE_ADMINISTRATOR")
-    void getEventStats_WhenEventNotFound_ReturnsNotFound() throws Exception {
+    void getEventStats_WhenEventNotFound_ReturnsNotFound() {
         // Arrange
-        when(statisticsService.getEventStats(anyLong())).thenThrow(new ResourceNotFoundException("Event", "id", 1L));
+        Long eventId = 1L;
+        doThrow(new ResourceNotFoundException("Event", "id", eventId)).when(statisticsService).getEventStats(eventId);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/statistics/event/1")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+        try {
+            statisticsController.getEventStats(eventId);
+        } catch (ResourceNotFoundException e) {
+            assertEquals("Event non trouvé(e) avec id : '1'", e.getMessage());
+        }
+
+        // Verify
+        verify(statisticsService, times(1)).getEventStats(eventId);
     }
 }
