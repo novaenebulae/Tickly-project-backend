@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.services.impl;
 
+import edu.cda.project.ticklybackend.AbstractIntegrationTest;
 import edu.cda.project.ticklybackend.dtos.structure.StructureSummaryDto;
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
@@ -34,7 +35,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceImplTest {
+public class UserServiceImplTest extends AbstractIntegrationTest {
 
     @Mock
     private UserRepository userRepository;

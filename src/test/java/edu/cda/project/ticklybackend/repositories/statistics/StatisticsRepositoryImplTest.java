@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.repositories.statistics;
 
+import edu.cda.project.ticklybackend.AbstractIntegrationTest;
 import edu.cda.project.ticklybackend.dtos.statistics.ZoneFillRateDataPointDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -21,7 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class StatisticsRepositoryImplTest {
+class StatisticsRepositoryImplTest extends AbstractIntegrationTest {
 
     @Mock
     private EntityManager entityManager;
