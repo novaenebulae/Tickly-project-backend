@@ -1,0 +1,46 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  build-push-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Test Application
+        run: ./mvnw test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Backend API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: novaenebulae/tickly-backend:latest
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/tickly-deployment
+            docker-compose pull backend
+            docker-compose up -d --no-deps backend
+            docker image prune -f
