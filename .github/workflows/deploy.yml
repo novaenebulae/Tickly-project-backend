@@ -7,6 +7,20 @@ on:
 jobs:
   build-push-and-deploy:
     runs-on: ubuntu-latest
+    services:
+      # Crée un conteneur nommé "mysql"
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306 # Le port sera mappé à un port aléatoire sur l'hôte
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -p secret"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,7 +31,15 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Test Application
+      - name: Test Application with Service Container
+        # On injecte les variables d'environnement pour que les tests se connectent au bon conteneur
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          MYSQL_DATABASE_NAME: testdb
+          MYSQL_USER: root
+          MYSQL_ROOT_PASSWORD: secret
+          JWT_SECRET: 047e5e53c908a85c8da4673a41826682166c9a413098634a721fa403a4584450
         run: ./mvnw test
 
       - name: Login to Docker Hub
