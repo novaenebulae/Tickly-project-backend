@@ -29,5 +29,10 @@ public abstract class AbstractIntegrationTest {
         registry.add("jwt.secret", () -> "O1axdTNTzgrKfQKzrgzgSgQj71F3IIzdzdzdve5glsnbXwkVCKn0kzgzgcdn5209zrgzrg2602");
         registry.add("jwt.expiration.access-token-ms", () -> "3600000");
         registry.add("file.upload-dir", () -> "target/uploads");
+
+        registry.add("tickly.mail.gmail.client-id", () -> "dummy-google-client-id");
+        registry.add("tickly.mail.gmail.client-secret", () -> "dummy-google-client-secret");
+        registry.add("tickly.mail.gmail.refresh-token", () -> "dummy-google-refresh-token");
+
     }
 }
