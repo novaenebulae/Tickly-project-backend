@@ -5,6 +5,7 @@ package edu.cda.project.ticklybackend.services.interfaces;
  */
 public interface MailingService {
 
+
     /**
      * Envoie un e-mail de validation de compte à un nouvel utilisateur.
      *
