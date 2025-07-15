@@ -1,6 +1,5 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.AbstractIntegrationTest;
 import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
 import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
@@ -39,7 +38,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AuthServiceImplTest extends AbstractIntegrationTest {
+class AuthServiceImplTest {
 
     @Mock
     private UserRepository userRepository;

@@ -1,5 +1,6 @@
 package edu.cda.project.ticklybackend.services.impl;
 
+import edu.cda.project.ticklybackend.AbstractIntegrationTest;
 import edu.cda.project.ticklybackend.exceptions.FileStorageException;
 import edu.cda.project.ticklybackend.services.files.FileStorageProperties;
 import org.junit.jupiter.api.AfterEach;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class FileStorageServiceImplTest {
+class FileStorageServiceImplTest extends AbstractIntegrationTest {
 
     private FileStorageServiceImpl fileStorageService;
     private FileStorageProperties fileStorageProperties;

@@ -28,5 +28,6 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MySQLDialect");
         registry.add("jwt.secret", () -> "O1axdTNTzgrKfQKzrgzgSgQj71F3IIzdzdzdve5glsnbXwkVCKn0kzgzgcdn5209zrgzrg2602");
         registry.add("jwt.expiration.access-token-ms", () -> "3600000");
+        registry.add("file.upload-dir", () -> "target/uploads");
     }
 }

@@ -1,6 +1,5 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.AbstractIntegrationTest;
 import edu.cda.project.ticklybackend.dtos.statistics.EventStatisticsDto;
 import edu.cda.project.ticklybackend.dtos.statistics.StructureDashboardStatsDto;
 import edu.cda.project.ticklybackend.dtos.statistics.ZoneFillRateDataPointDto;
@@ -34,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class StatisticsServiceImplTest extends AbstractIntegrationTest {
+class StatisticsServiceImplTest {
 
     @Mock
     private StatisticsRepository statisticsRepository;
