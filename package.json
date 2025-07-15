@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "openapi-to-md": "^1.0.26",
+    "swagger-markdown": "^2.3.2"
+  }
+}
