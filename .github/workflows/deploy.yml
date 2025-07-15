@@ -17,7 +17,7 @@ jobs:
         ports:
           - 3306 # Le port sera mappé à un port aléatoire sur l'hôte
         options: >-
-          --health-cmd "mysqladmin ping -h localhost -p secret"
+          --health-cmd "mysqladmin ping -h localhost --user=root --password=secret"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
