@@ -10,8 +10,8 @@ import edu.cda.project.ticklybackend.mappers.event.EventMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventCategory;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
+import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventCategoryRepository;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
@@ -34,7 +34,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 

@@ -1,8 +1,10 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.dtos.auth.*;
+import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
+import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
+import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
+import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
 import edu.cda.project.ticklybackend.enums.TokenType;
-import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;

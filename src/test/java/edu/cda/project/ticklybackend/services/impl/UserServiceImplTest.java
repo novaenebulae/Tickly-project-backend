@@ -107,12 +107,12 @@ public class UserServiceImplTest {
         favoriteStructureDto = new UserFavoriteStructureDto();
         favoriteStructureDto.setId(1L);
         favoriteStructureDto.setUserId(userId);
-        
+
         // Create structure summary DTO for the favorite
         StructureSummaryDto structureSummaryDto = new StructureSummaryDto();
         structureSummaryDto.setId(structureId);
         structureSummaryDto.setName("Test Structure");
-        
+
         favoriteStructureDto.setStructure(structureSummaryDto);
     }
 
@@ -166,7 +166,7 @@ public class UserServiceImplTest {
         String fileUrl = "http://example.com/images/avatar.jpg";
         String filePath = "avatar.jpg";
         MultipartFile mockFile = mock(MultipartFile.class);
-        
+
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(testUser);
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(fileStorageService.storeFile(any(MultipartFile.class), eq("avatars"))).thenReturn(filePath);
@@ -195,7 +195,7 @@ public class UserServiceImplTest {
         favorites.add(testFavorite);
         List<UserFavoriteStructureDto> favoriteDtos = new ArrayList<>();
         favoriteDtos.add(favoriteStructureDto);
-        
+
         when(authUtils.getCurrentAuthenticatedUserId()).thenReturn(userId);
         when(favoriteRepository.findByUserId(userId)).thenReturn(favorites);
         when(userMapper.userFavoriteStructuresToUserFavoriteStructureDtos(eq(favorites), any(FileStorageService.class))).thenReturn(favoriteDtos);

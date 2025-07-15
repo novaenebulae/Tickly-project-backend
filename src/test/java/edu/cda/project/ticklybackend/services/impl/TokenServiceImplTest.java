@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
-import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
+import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,9 +80,9 @@ class TokenServiceImplTest {
 
         // Act
         VerificationToken result = tokenService.createToken(
-                testUser, 
-                TokenType.EMAIL_VALIDATION, 
-                Duration.ofHours(24), 
+                testUser,
+                TokenType.EMAIL_VALIDATION,
+                Duration.ofHours(24),
                 null
         );
 
@@ -111,9 +111,9 @@ class TokenServiceImplTest {
 
         // Act
         VerificationToken result = tokenService.createToken(
-                null, 
-                TokenType.TEAM_INVITATION, 
-                Duration.ofHours(48), 
+                null,
+                TokenType.TEAM_INVITATION,
+                Duration.ofHours(48),
                 testPayload
         );
 
@@ -281,7 +281,8 @@ class TokenServiceImplTest {
     void getPayload_WithInvalidJson_ShouldThrowInvalidTokenException() throws JsonProcessingException {
         // Arrange
         when(objectMapper.readValue(eq(testPayload), any(TypeReference.class)))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {});
+                .thenThrow(new JsonProcessingException("Invalid JSON") {
+                });
 
         // Act & Assert
         InvalidTokenException exception = assertThrows(

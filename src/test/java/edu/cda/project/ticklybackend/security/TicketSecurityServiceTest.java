@@ -15,9 +15,8 @@ import org.springframework.security.core.Authentication;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,16 +43,16 @@ public class TicketSecurityServiceTest {
     void setUp() {
         // Create test data
         validQrCode = UUID.randomUUID().toString();
-        
+
         structure = new Structure();
         structure.setId(1L);
         structure.setName("Test Structure");
-        
+
         event = new Event();
         event.setId(1L);
         event.setName("Test Event");
         event.setStructure(structure);
-        
+
         ticket = new Ticket();
         ticket.setId(UUID.randomUUID());
         ticket.setQrCodeValue(validQrCode);

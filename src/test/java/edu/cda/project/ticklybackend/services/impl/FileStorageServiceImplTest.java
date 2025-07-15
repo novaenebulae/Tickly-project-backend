@@ -13,19 +13,19 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class FileStorageServiceImplTest {
 
     private FileStorageServiceImpl fileStorageService;
     private FileStorageProperties fileStorageProperties;
-    
+
     @TempDir
     Path tempDir;
-    
+
     private final String STATIC_BASE_URL = "http://localhost/static/";
     private final String TEST_SUBDIRECTORY = "test-subdir";
     private final String TEST_FILENAME = "test-file.txt";
@@ -37,7 +37,7 @@ class FileStorageServiceImplTest {
         fileStorageProperties = mock(FileStorageProperties.class);
         when(fileStorageProperties.getUploadDir()).thenReturn(tempDir.toString());
         when(fileStorageProperties.getStaticBaseUrl()).thenReturn(STATIC_BASE_URL);
-        
+
         // Create the FileStorageServiceImpl instance
         fileStorageService = new FileStorageServiceImpl(fileStorageProperties);
     }
@@ -72,7 +72,7 @@ class FileStorageServiceImplTest {
         // Assert
         assertNotNull(storedFilename);
         assertTrue(storedFilename.endsWith(".txt"));
-        
+
         // Verify the file was stored
         Path storedFilePath = tempDir.resolve(TEST_SUBDIRECTORY).resolve(storedFilename);
         assertTrue(Files.exists(storedFilePath));
@@ -172,7 +172,7 @@ class FileStorageServiceImplTest {
         );
         String storedFilename = fileStorageService.storeFile(file, TEST_SUBDIRECTORY);
         Path storedFilePath = tempDir.resolve(TEST_SUBDIRECTORY).resolve(storedFilename);
-        
+
         // Verify file exists before deletion
         assertTrue(Files.exists(storedFilePath));
 

@@ -12,7 +12,6 @@ import edu.cda.project.ticklybackend.models.structure.AudienceZoneTemplate;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Reservation;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
-import edu.cda.project.ticklybackend.models.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
