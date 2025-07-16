@@ -4,7 +4,7 @@
 -- #                                                                    #
 -- ######################################################################
 -- Ce script est conçu pour être exécuté par Spring Boot au démarrage.
--- Il doit être placé dans le répertoire `src/main/resources` et nommé `data.sql`.
+-- Il doit être placé dans le répertoire `src/main/resources` et nommé `init_test_db.sql`.
 -- L'ordre des insertions est crucial pour respecter les contraintes de clés étrangères.
 
 -- Désactivation des contraintes de clés étrangères pour permettre l'insertion dans un ordre flexible
@@ -706,7 +706,7 @@ VALUES (1, 11, UUID(), 'EMAIL_VALIDATION', NOW() + INTERVAL 1 DAY, 0, NULL), -- 
 -- #                                                                    #
 -- ######################################################################
 -- Ce script ajoute des données complètes pour la structure avec l'ID 6.
--- Il est conçu pour être ajouté à la fin de votre fichier data.sql existant.
+-- Il est conçu pour être ajouté à la fin de votre fichier init_test_db.sql existant.
 
 -- ###################################################################
 -- # 1. UTILISATEURS SUPPLÉMENTAIRES POUR L'ÉQUIPE ET LES AMIS       #
