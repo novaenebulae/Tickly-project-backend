@@ -34,5 +34,9 @@ public abstract class AbstractIntegrationTest {
         registry.add("tickly.mail.gmail.client-secret", () -> "dummy-google-client-secret");
         registry.add("tickly.mail.gmail.refresh-token", () -> "dummy-google-refresh-token");
 
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.sql.init.mode", () -> "always");
+        registry.add("spring.jpa.defer-datasource-initialization", () -> "true");
+
     }
 }
