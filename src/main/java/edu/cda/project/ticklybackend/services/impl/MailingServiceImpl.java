@@ -26,7 +26,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -188,18 +191,28 @@ public class MailingServiceImpl implements MailingService {
 
     @Async
     @Override
-    public void sendTickets(String to, String userName, String eventName, byte[] pdfAttachment) {
-        LoggingUtils.logMethodEntry(log, "sendTickets", "to", to, "userName", userName, "eventName", eventName);
+    public void sendTickets(String to, String userName, String eventName, List<UUID> ticketIds, String frontendBaseUrl) {
+        LoggingUtils.logMethodEntry(log, "sendTickets", "to", to, "userName", userName, "eventName", eventName, "ticketIds", ticketIds);
         try {
-            log.debug("Préparation de l'email d'envoi de billets pour: {} (événement: {})", to, eventName);
+            log.debug("Préparation de l'email d'envoi de liens de billets pour: {} (événement: {})", to, eventName);
             final String subject = "Vos billets pour l'événement : " + eventName;
+            
+            // Créer les liens vers les billets
+            List<String> ticketLinks = ticketIds.stream()
+                .map(id -> frontendBaseUrl + "/tickets/view/" + id)
+                .collect(Collectors.toList());
+            
             Context context = new Context();
             context.setVariable("userName", userName);
             context.setVariable("eventName", eventName);
-            String attachmentName = "billets-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
-            sendHtmlEmail(to, subject, "emails/ticket-receipt.html", context, pdfAttachment, attachmentName);
+            context.setVariable("ticketLinks", ticketLinks);
+            context.setVariable("frontendBaseUrl", frontendBaseUrl);
+            
+            sendHtmlEmail(to, subject, "emails/ticket-receipt.html", context, null, null);
+            
+            log.info("Email avec liens de billets envoyé à {} pour l'événement {}", to, eventName);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Échec de l'envoi de l'email avec billets à " + to +
+            LoggingUtils.logException(log, "Échec de l'envoi de l'email avec liens de billets à " + to +
                     " pour l'événement " + eventName, e);
         } finally {
             LoggingUtils.clearContext();
@@ -208,18 +221,26 @@ public class MailingServiceImpl implements MailingService {
 
     @Async
     @Override
-    public void sendIndividualTicket(String to, String participantName, String eventName, byte[] pdfAttachment) {
-        LoggingUtils.logMethodEntry(log, "sendIndividualTicket", "to", to, "participantName", participantName, "eventName", eventName);
+    public void sendIndividualTicket(String to, String participantName, String eventName, UUID ticketId, String frontendBaseUrl) {
+        LoggingUtils.logMethodEntry(log, "sendIndividualTicket", "to", to, "participantName", participantName, "eventName", eventName, "ticketId", ticketId);
         try {
-            log.debug("Préparation de l'email d'envoi de billet individuel pour: {} (participant: {}, événement: {})", to, participantName, eventName);
+            log.debug("Préparation de l'email d'envoi de lien de billet individuel pour: {} (participant: {}, événement: {})", to, participantName, eventName);
             final String subject = "Votre billet pour l'événement : " + eventName;
+            
+            // Créer le lien vers le billet
+            String ticketLink = frontendBaseUrl + "/tickets/view/" + ticketId;
+            
             Context context = new Context();
             context.setVariable("participantName", participantName);
             context.setVariable("eventName", eventName);
-            String attachmentName = "billet-" + eventName.replaceAll("\\s+", "_").toLowerCase() + ".pdf";
-            sendHtmlEmail(to, subject, "emails/individual-ticket.html", context, pdfAttachment, attachmentName);
+            context.setVariable("ticketLink", ticketLink);
+            context.setVariable("frontendBaseUrl", frontendBaseUrl);
+            
+            sendHtmlEmail(to, subject, "emails/individual-ticket.html", context, null, null);
+            
+            log.info("Email avec lien de billet individuel envoyé à {} pour l'événement {}", to, eventName);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Échec de l'envoi de l'email avec billet individuel à " + to +
+            LoggingUtils.logException(log, "Échec de l'envoi de l'email avec lien de billet individuel à " + to +
                     " pour l'événement " + eventName, e);
         } finally {
             LoggingUtils.clearContext();

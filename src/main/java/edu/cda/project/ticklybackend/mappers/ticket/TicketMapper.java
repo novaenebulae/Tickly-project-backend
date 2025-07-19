@@ -26,6 +26,9 @@ public interface TicketMapper {
     @Mapping(source = "eventAudienceZone.template.name", target = "audienceZoneSnapshot.name")
     @Mapping(source = "eventAudienceZone.template.seatingType", target = "audienceZoneSnapshot.seatingType")
 
+    @Mapping(source = "event.structure.id", target = "structureSnapshot.id")
+    @Mapping(source = "event.structure.name", target = "structureSnapshot.name")
+    @Mapping(source = "event.structure.logoPath", target = "structureSnapshot.logoUrl")
     @Mapping(source = "participantFirstName", target = "participant.firstName")
     @Mapping(source = "participantLastName", target = "participant.lastName")
     @Mapping(source = "participantEmail", target = "participant.email")

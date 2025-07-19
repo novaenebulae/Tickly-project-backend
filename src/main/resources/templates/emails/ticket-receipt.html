@@ -5,11 +5,21 @@
 <div id="email-content-wrapper">
     <h2>Bonjour <span th:text="${userName}">Utilisateur</span>,</h2>
     <p>
-        Excellente nouvelle ! Vous trouverez en pièce jointe vos billets pour l'événement :
-        <strong><span th:text="${eventName}">Nom de l'événement</span></strong>.
+        Excellente nouvelle ! Vous pouvez accéder à vos billets pour l'événement :
+        <strong><span th:text="${eventName}">Nom de l'événement</span></strong> en cliquant sur les liens ci-dessous.
     </p>
+    <div style="margin: 20px 0;">
+        <p><strong>Vos billets :</strong></p>
+        <ul th:if="${ticketLinks != null}">
+            <li th:each="link, stat : ${ticketLinks}">
+                <a th:href="${link}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: bold;">
+                    Billet #<span th:text="${stat.count}">1</span> - Cliquez ici pour voir et télécharger
+                </a>
+            </li>
+        </ul>
+    </div>
     <p>
-        Veuillez conserver ce PDF en lieu sûr. Vous devrez le présenter (imprimé ou sur votre smartphone) pour accéder à
+        Veuillez conserver ces liens en lieu sûr. Vous devrez présenter vos billets (imprimés ou sur votre smartphone) pour accéder à
         l'événement.
     </p>
     <p>

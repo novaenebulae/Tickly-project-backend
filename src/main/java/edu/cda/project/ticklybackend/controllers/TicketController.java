@@ -3,7 +3,6 @@ package edu.cda.project.ticklybackend.controllers;
 import edu.cda.project.ticklybackend.dtos.ticket.*;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/ticketing")
 @Tag(name = "API de Billetterie", description = "Endpoints pour la réservation, la consultation et la validation des billets.")
-@SecurityRequirement(name = "bearerAuth")
 public class TicketController {
 
     private final TicketService ticketService;
@@ -46,9 +44,19 @@ public class TicketController {
     @GetMapping("/tickets/{ticketId}")
     // L'utilisateur doit être le propriétaire du billet
     @PreAuthorize("@ticketSecurityService.isTicketOwner(#ticketId, authentication.principal)")
-    @Operation(summary = "Obtenir les détails d'un billet", description = "Récupère les détails d'un billet spécifique. L'utilisateur doit être le propriétaire du billet.")
+    @Operation(summary = "Obtenir les détails d'un billet (authentifié)", description = "Récupère les détails d'un billet spécifique. L'utilisateur doit être le propriétaire du billet.")
     public ResponseEntity<TicketResponseDto> getTicketDetails(@PathVariable UUID ticketId) {
         TicketResponseDto ticket = ticketService.getTicketDetails(ticketId);
+        return ResponseEntity.ok(ticket);
+    }
+
+    @GetMapping("/public/tickets/{ticketId}")
+    @Operation(summary = "Obtenir les détails d'un billet par UUID (public)",
+            description = "Récupère les détails d'un billet spécifique en utilisant son UUID. " +
+                    "Cet endpoint est public et ne nécessite pas d'authentification. " +
+                    "La sécurité est assurée par l'UUID du billet qui est difficile à deviner.")
+    public ResponseEntity<TicketResponseDto> getPublicTicketDetails(@PathVariable UUID ticketId) {
+        TicketResponseDto ticket = ticketService.getPublicTicketDetails(ticketId);
         return ResponseEntity.ok(ticket);
     }
 

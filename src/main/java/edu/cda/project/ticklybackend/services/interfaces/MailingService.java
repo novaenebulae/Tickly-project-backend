@@ -1,5 +1,8 @@
 package edu.cda.project.ticklybackend.services.interfaces;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Service pour gérer l'envoi de tous les e-mails transactionnels de l'application.
  */
@@ -51,27 +54,29 @@ public interface MailingService {
     void sendAccountDeletionConfirmation(String to, String userName);
 
     /**
-     * Envoie un ou plusieurs billets d'événement en pièce jointe PDF.
+     * Envoie un ou plusieurs billets d'événement sous forme de liens vers l'application frontend.
      *
-     * @param to            L'adresse e-mail du destinataire.
-     * @param userName      Le nom du destinataire.
-     * @param eventName     Le nom de l'événement.
-     * @param pdfAttachment Le contenu du PDF des billets.
+     * @param to        L'adresse e-mail du destinataire.
+     * @param userName  Le nom du destinataire.
+     * @param eventName Le nom de l'événement.
+     * @param ticketIds Liste des UUIDs des billets à inclure dans l'email.
+     * @param frontendBaseUrl URL de base de l'application frontend.
      */
-    void sendTickets(String to, String userName, String eventName, byte[] pdfAttachment);
+    void sendTickets(String to, String userName, String eventName, List<UUID> ticketIds, String frontendBaseUrl);
 
     void sendEventCancelledNotification(String to, String userName, String eventName);
 
     void sendStructureDeletionConfirmation(String to, String adminName, String structureName);
 
     /**
-     * Envoie un billet individuel par email à un participant.
+     * Envoie un billet individuel par email à un participant sous forme de lien vers l'application frontend.
      *
      * @param to              Email du destinataire
      * @param participantName Nom complet du participant
      * @param eventName       Nom de l'événement
-     * @param pdfAttachment   Fichier PDF du billet
+     * @param ticketId        UUID du billet à inclure dans l'email
+     * @param frontendBaseUrl URL de base de l'application frontend
      */
-    void sendIndividualTicket(String to, String participantName, String eventName, byte[] pdfAttachment);
+    void sendIndividualTicket(String to, String participantName, String eventName, UUID ticketId, String frontendBaseUrl);
 
 }

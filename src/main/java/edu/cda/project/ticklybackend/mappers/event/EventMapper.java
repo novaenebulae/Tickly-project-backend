@@ -29,6 +29,8 @@ public abstract class EventMapper {
     @Mapping(target = "eventPhotoPaths", ignore = true)
     @Mapping(target = "status", constant = "DRAFT")
     @Mapping(target = "audienceZones", ignore = true) // Géré manuellement dans le service
+    @Mapping(target = "featuredEvent", source = "isFeaturedEvent", defaultValue = "false")
+    @Mapping(target = "displayOnHomepage", source = "displayOnHomepage", defaultValue = "false")
     public abstract Event toEntity(EventCreationDto dto);
 
     @Mapping(target = "mainPhotoUrl", source = "mainPhotoPath", qualifiedByName = "buildEventMainPhotoUrl")

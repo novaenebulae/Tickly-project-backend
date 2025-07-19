@@ -11,8 +11,16 @@
 
     <p>Bonjour <span th:text="${participantName}">Participant</span>,</p>
 
-    <p>Vous trouverez en pièce jointe votre billet pour l'événement :</p>
+    <p>Vous pouvez accéder à votre billet pour l'événement :</p>
     <p><strong th:text="${eventName}">Nom de l'événement</strong></p>
+    
+    <div style="margin: 20px 0; text-align: center;">
+        <a th:if="${ticketLink != null}" th:href="${ticketLink}" target="_blank" 
+           style="display: inline-block; background-color: #3498db; color: white; padding: 12px 24px; 
+                  text-decoration: none; border-radius: 4px; font-weight: bold;">
+            Voir et télécharger mon billet
+        </a>
+    </div>
 
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3>📋 Instructions importantes :</h3>

@@ -26,11 +26,21 @@ public interface TicketService {
 
     /**
      * Récupère les détails d'un billet spécifique par son ID.
+     * Vérifie que l'utilisateur authentifié est le propriétaire du billet.
      *
      * @param ticketId L'UUID du billet.
      * @return les détails du billet.
      */
     TicketResponseDto getTicketDetails(UUID ticketId);
+    
+    /**
+     * Récupère les détails d'un billet spécifique par son ID sans vérification d'authentification.
+     * Utilisé pour l'accès public aux billets via leur UUID.
+     *
+     * @param ticketId L'UUID du billet.
+     * @return les détails du billet.
+     */
+    TicketResponseDto getPublicTicketDetails(UUID ticketId);
 
     /**
      * Valide un billet en utilisant la valeur de son QR code scanné.

@@ -79,13 +79,6 @@ public class Ticket {
     @Column(name = "reservation_date", nullable = false)
     private Instant reservationDate;
 
-//    @Column(precision = 10, scale = 2)
-//    private BigDecimal price;
-
-//    @Size(max = 50)
-//    @Column(name = "seat_number", length = 50)
-//    private String seatNumber;
-
     @PrePersist
     protected void onCreate() {
         this.reservationDate = Instant.now();

@@ -31,14 +31,11 @@ public class TicketResponseDto {
     @Schema(description = "Instantané des détails de la zone d'audience pour ce billet.")
     private AudienceZoneTicketSnapshotDto audienceZoneSnapshot;
 
+    @Schema(description = "Instantané des détails de la structure pour ce billet.")
+    private StructureTicketSnapshotDto structureSnapshot;
+
     @Schema(description = "Date et heure de la réservation.", example = "2025-06-18T10:00:00")
     private ZonedDateTime reservation_date_time;
-
-//    @Schema(description = "Prix du billet.", example = "45.50")
-//    private BigDecimal price;
-
-//    @Schema(description = "Numéro de siège assigné, le cas échéant.", example = "A-12")
-//    private String seatNumber;
 
     @Data
     @Schema(name = "EventTicketSnapshot", description = "Instantané des informations clés de l'événement.")
@@ -56,5 +53,13 @@ public class TicketResponseDto {
         private Long audienceZoneId;
         private String name;
         private SeatingType seatingType;
+    }
+
+    @Data
+    @Schema(name = "StructureTicketSnapshot", description = "Instantané des informations clés de la structure.")
+    public static class StructureTicketSnapshotDto {
+        private Long id;
+        private String name;
+        private String logoUrl;
     }
 }

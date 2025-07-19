@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -67,7 +69,32 @@ public class TicketSecurityService {
                     Long structureId = ticket.getEvent().getStructure().getId();
                     log.info("Vérification des permissions pour valider le billet {} de l'événement {} (structure {})",
                             ticket.getId(), ticket.getEvent().getName(), structureId);
-                    return structureSecurityService.isStructureStaff(structureId, authentication);
+
+                    // Vérification du personnel de la structure
+                    boolean isStaffMember = structureSecurityService.isStructureStaff(structureId, authentication);
+
+                    if (!isStaffMember) {
+                        log.warn("L'utilisateur n'est pas membre du personnel de la structure {}", structureId);
+                        return false;
+                    }
+
+                    // Vérification de la fenêtre de temps valide (1h avant le début jusqu'à la fin de l'événement)
+                    Instant now = Instant.now();
+                    Instant eventStart = ticket.getEvent().getStartDate();
+                    Instant eventEnd = ticket.getEvent().getEndDate();
+                    Instant validationWindowStart = eventStart.minus(Duration.ofHours(1));
+
+                    boolean isInValidTimeWindow = now.isAfter(validationWindowStart) && now.isBefore(eventEnd);
+
+                    if (!isInValidTimeWindow) {
+                        log.warn("Tentative de validation du billet {} en dehors de la fenêtre de temps valide. " +
+                                "Heure actuelle: {}, Début de l'événement: {}, Fin de l'événement: {}", 
+                                ticket.getId(), now, eventStart, eventEnd);
+                        return false;
+                    }
+
+                    log.info("Validation du billet {} autorisée", ticket.getId());
+                    return true;
                 })
                 .orElse(false);
     }

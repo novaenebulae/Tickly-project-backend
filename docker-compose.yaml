@@ -1,91 +1,75 @@
 services:
-  # Service MySQL (défini précédemment)
-  mysql_db:
-    image: mysql:8.0
-    container_name: mysql_db_container
+  # 1. Le Reverse Proxy (point d'entrée)
+  proxy:
+    build: ./proxy # Construit l'image du proxy localement sur le VPS
+    container_name: tickly_proxy
     restart: unless-stopped
-    healthcheck:
-      # Commande pour vérifier si MySQL est prêt
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_ROOT_PASSWORD}" ]
-      interval: 10s   # Vérifier toutes les 10 secondes
-      timeout: 5s     # Attendre 5 secondes pour une réponse
-      retries: 5      # Essayer 5 fois avant de déclarer l'échec
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # Mot de passe root de MySQL
-      MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}      # Nom de la base de données à créer
-    ports:
-      - "${MYSQL_PORT}:3306" # Mappe le port de l'hôte au port 3306 du conteneur MySQL
-    volumes:
-      - mysql_data_volume:/var/lib/mysql # Persistance des données MySQL
-    networks:
-      - app_network # Connexion au réseau personnalisé 'app_network'
-
-  # Service Application Java (Spring Boot)
-  app_java:
-    build:
-      context: . # Chemin vers le répertoire racine du projet (contenant le Dockerfile de l'app Java)
-      dockerfile: Dockerfile # Nom du Dockerfile à utiliser (par défaut 'Dockerfile')
-    container_name: app_java_container
-    restart: unless-stopped
-    depends_on:
-      mysql_db:
-        condition: service_healthy
-      # Attention: 'depends_on' ne garantit pas que MySQL soit prêt à accepter des connexions.
-    environment:
-      # Ces variables sont utilisées par application.properties pour se connecter à MySQL
-      MYSQL_DATABASE_NAME: ${MYSQL_DATABASE_NAME}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      EXECUTE_SQL_DDL: ${EXECUTE_SQL_DDL}
-      EXECUTE_SQL_INSERT: ${EXECUTE_SQL_INSERT}
-      FILE_UPLOAD_DIR: /app/uploads # Chemin A L'INTERIEUR du conteneur app_java
-      FILE_STATIC_BASE_URL: http://localhost/static # Ou votre URL de production
-
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN}
-
-      # D'autres variables d'environnement pour l'application peuvent être ajoutées ici
-      # Par exemple, pour activer un profil Spring spécifique :
-      # SPRING_PROFILES_ACTIVE: dev
-    ports:
-      # Mappe le port 8080 de l'hôte au port 8080 de l'application Java.
-      # Ce mapping est optionnel si l'accès se fait uniquement via Nginx.
-      # Cependant, il est utile pour le débogage direct de l'application sans passer par Nginx.
-      - "8080:8080"
-    volumes:
-      # Monte le volume nommé 'tickly_uploads_data' dans /app/uploads à l'intérieur du conteneur app_java
-      - tickly_uploads_data:/app/uploads
-    networks:
-      - app_network
-
-  # Service Nginx (Reverse Proxy)
-  nginx_proxy:
-    build:
-      context: ./nginx # Chemin vers le répertoire 'nginx/' (contenant le Dockerfile de Nginx et default.conf)
-      dockerfile: Dockerfile # Nom du Dockerfile à utiliser
-    container_name: nginx_proxy_container
-    restart: unless-stopped
-    depends_on:
-      - app_java # S'assure que le service 'app_java' est démarré avant 'nginx_proxy'
-    ports:
-      - "80:80"   # Mappe le port 80 de l'hôte au port 80 du conteneur Nginx (HTTP)
-      # Pour HTTPS, vous mapperez également le port 443 :
-      # - "443:443"
     volumes:
       # Monte le volume tickly_uploads_data en lecture seule pour Nginx
       # La structure du volume doit être identique à celle utilisée par l'application Java
-      - tickly_uploads_data:/var/www/html/static:ro # 'ro' pour read-only
+      - tickly_uploads:/var/www/html/static:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app_network
+    depends_on:
+      - backend
+
+  # 3. Le Backend (API Java)
+  backend:
+    build:
+      context: . # Chemin vers le répertoire racine du projet (contenant le Dockerfile de l'app Java)
+      dockerfile: Dockerfile # Nom du Dockerfile à utiliser (par défaut 'Dockerfile')
+    container_name: tickly_backend
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE_NAME=${MYSQL_DATABASE_NAME}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REFRESH_TOKEN=${GOOGLE_REFRESH_TOKEN}
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL}
+    volumes:
+      # Monte le volume pour que l'app puisse écrire les fichiers uploadés
+      - tickly_uploads:/app/uploads
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 4. La Base de Données (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: tickly_db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/10_schema.sql
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/20_data.sql
     networks:
       - app_network
 
-# Définition des volumes nommés
 volumes:
-  mysql_data_volume: { } # Volume pour persister les données MySQL
-  tickly_uploads_data: { } # Déclaration du volume nommé pour les uploads
+  mysql_data: { }
+  tickly_uploads: { }
 
-# Définition des réseaux personnalisés
 networks:
   app_network:
-    driver: bridge # Utilise le pilote de réseau 'bridge' par défaut,
-    # créant un réseau isolé pour cette application.
+    driver: bridge

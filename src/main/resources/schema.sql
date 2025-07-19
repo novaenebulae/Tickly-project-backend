@@ -1,3 +1,7 @@
+SET NAMES 'utf8mb4';
+SET CHARACTER SET utf8mb4;
+SET collation_connection = 'utf8mb4_unicode_ci';
+
 create table if not exists audience_zone_template
 (
     id           bigint auto_increment
@@ -7,7 +11,7 @@ create table if not exists audience_zone_template
     name         varchar(100)                         not null,
     seating_type enum ('MIXED', 'SEATED', 'STANDING') not null,
     area_id      bigint                               not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists event_audience_zone
 (
@@ -16,7 +20,7 @@ create table if not exists event_audience_zone
     allocated_capacity int    not null,
     event_id           bigint not null,
     template_id        bigint not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table event_audience_zone
     add constraint FKfct4kt54yjw62qhtjik42e5a9
@@ -27,7 +31,7 @@ create table if not exists event_categories
     id   bigint auto_increment
         primary key,
     name varchar(255) not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table event_categories
     add constraint UK1et3muobyw9w9dur2ww8bvhh7
@@ -37,13 +41,13 @@ create table if not exists event_gallery_images
 (
     event_id   bigint       not null,
     image_path varchar(255) null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists event_has_categories
 (
     event_id    bigint not null,
     category_id bigint not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table event_has_categories
     add primary key (event_id, category_id);
@@ -56,7 +60,7 @@ create table if not exists event_tags
 (
     event_id bigint       not null,
     tag      varchar(255) null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists events
 (
@@ -80,7 +84,7 @@ create table if not exists events
     updated_at          datetime(6)                                                                           not null,
     creator_id          bigint                                                                                not null,
     structure_id        bigint                                                                                not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table event_audience_zone
     add constraint FK3rrj9t1eu8kv5ua6jox32b80h
@@ -107,7 +111,7 @@ create table if not exists friendships
     updated_at  datetime(6)                                                                not null,
     receiver_id bigint                                                                     not null,
     sender_id   bigint                                                                     not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table friendships
     add constraint UKbjhqa0q4d3irkedtrwyuh74a0
@@ -119,7 +123,7 @@ create table if not exists reservations
         primary key,
     reservation_date datetime(6) not null,
     user_id          bigint      not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists structure_areas
 (
@@ -130,7 +134,7 @@ create table if not exists structure_areas
     max_capacity int          not null,
     name         varchar(255) not null,
     structure_id bigint       not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table audience_zone_template
     add constraint FKfcdg35x9rmlx7ivdprwqkkp8m
@@ -143,13 +147,13 @@ create table if not exists structure_gallery_images
 (
     structure_id bigint       not null,
     image_path   varchar(512) null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists structure_has_types
 (
     structure_id bigint not null,
     type_id      bigint not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table structure_has_types
     add primary key (structure_id, type_id);
@@ -158,7 +162,7 @@ create table if not exists structure_social_media_links
 (
     structure_id bigint        not null,
     link         varchar(2048) null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists structure_types
 (
@@ -166,7 +170,7 @@ create table if not exists structure_types
         primary key,
     icon varchar(255) null,
     name varchar(100) not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table structure_has_types
     add constraint FKcjpsajedkwf3ky0p2lk8hlif9
@@ -194,7 +198,7 @@ create table if not exists structures
     phone       varchar(30)   null,
     updated_at  datetime(6)   not null,
     website_url varchar(2048) null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table events
     add constraint FKi6fc9rbvaqu2oc1kib5psv74g
@@ -227,7 +231,7 @@ create table if not exists team_members
     status     enum ('ACTIVE', 'PENDING_INVITATION')                                                        not null,
     team_id    bigint                                                                                       not null,
     user_id    bigint                                                                                       null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 create table if not exists teams
 (
@@ -235,7 +239,7 @@ create table if not exists teams
         primary key,
     name         varchar(255) not null,
     structure_id bigint       not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table team_members
     add constraint FKtgca08el3ofisywcf11f0f76t
@@ -262,7 +266,7 @@ create table if not exists tickets
     event_audience_zone_id bigint                                         not null,
     reservation_id         bigint                                         not null,
     user_id                bigint                                         null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table tickets
     add primary key (id);
@@ -290,7 +294,7 @@ create table if not exists user_favorite_structures
     added_at     datetime(6) not null,
     structure_id bigint      not null,
     user_id      bigint      not null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table user_favorite_structures
     add constraint UK6535moi5ddjvbj9uhgey5lf6h
@@ -316,7 +320,7 @@ create table if not exists users
     role               enum ('ORGANIZATION_SERVICE', 'RESERVATION_SERVICE', 'SPECTATOR', 'STRUCTURE_ADMINISTRATOR') not null,
     updated_at         datetime(6)                                                                                  not null,
     structure_id       bigint                                                                                       null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table events
     add constraint FK7ljm71n1057envlomdxcni5hs
@@ -365,7 +369,7 @@ create table if not exists verification_tokens
     token       varchar(255)                                                                                    not null,
     token_type  enum ('ACCOUNT_DELETION_CONFIRMATION', 'EMAIL_VALIDATION', 'PASSWORD_RESET', 'TEAM_INVITATION') not null,
     user_id     bigint                                                                                          null
-);
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 alter table verification_tokens
     add constraint UK6q9nsb665s9f8qajm3j07kd1e

@@ -33,7 +33,8 @@ public class SecurityConfig {
             "/api/v1/event-categories",
             "/api/v1/structures/**",
             "/api/v1/structure-types",
-            "/api/v1/auth/validate-email"
+            "/api/v1/auth/validate-email",
+            "/api/v1/ticketing/public/tickets/**"
     };
 
     private static final String[] PUBLIC_POST_URLS = {

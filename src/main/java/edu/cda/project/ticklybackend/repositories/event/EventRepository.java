@@ -67,4 +67,31 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
      * @return A list of past events
      */
     List<Event> findByStructureIdAndEndDateBeforeAndDeletedFalse(Long structureId, Instant endDate);
+
+    /**
+     * Checks if there are any conflicting events in the same areas and time slots.
+     * A conflict occurs when an event is scheduled in the same area with overlapping time slots.
+     *
+     * @param structureId The ID of the structure
+     * @param startDate The start date of the event to check
+     * @param endDate The end date of the event to check
+     * @param areaIds The IDs of the areas to check
+     * @param excludeEventId Optional event ID to exclude from the check (for updates)
+     * @return A list of conflicting events, empty if no conflicts
+     */
+    @Query("SELECT e FROM Event e " +
+           "JOIN e.audienceZones az " +
+           "JOIN az.template t " +
+           "WHERE e.structure.id = :structureId " +
+           "AND e.deleted = false " +
+           "AND e.status != 'CANCELLED' " +
+           "AND t.area.id IN :areaIds " +
+           "AND (:excludeEventId IS NULL OR e.id != :excludeEventId) " +
+           "AND NOT (e.endDate <= :startDate OR e.startDate >= :endDate)")
+    List<Event> findConflictingEvents(
+            @Param("structureId") Long structureId,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate,
+            @Param("areaIds") Set<Long> areaIds,
+            @Param("excludeEventId") Long excludeEventId);
 }

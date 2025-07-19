@@ -84,6 +84,49 @@ public class EventServiceImpl implements EventService {
             throw new BadRequestException("Une ou plusieurs catégories spécifiées n'existent pas.");
         }
 
+        // Vérification des zones d'audience
+        if (creationDto.getAudienceZones() == null || creationDto.getAudienceZones().isEmpty()) {
+            throw new BadRequestException("Un événement doit avoir au moins une zone d'audience configurée.");
+        }
+
+        // Récupérer les templates et extraire les IDs des zones (areas)
+        Set<Long> templateIds = creationDto.getAudienceZones().stream()
+                .map(EventAudienceZoneConfigDto::getTemplateId)
+                .collect(Collectors.toSet());
+
+        List<AudienceZoneTemplate> templates = templateRepository.findAllById(templateIds);
+
+        // Vérifier que tous les templates existent
+        if (templates.size() != templateIds.size()) {
+            throw new BadRequestException("Un ou plusieurs modèles de zone d'audience spécifiés n'existent pas.");
+        }
+
+        // Extraire les IDs des zones (areas)
+        Set<Long> areaIds = templates.stream()
+                .map(template -> template.getArea().getId())
+                .collect(Collectors.toSet());
+
+        // Vérifier les conflits avec d'autres événements
+        List<Event> conflictingEvents = eventRepository.findConflictingEvents(
+                structure.getId(),
+                creationDto.getStartDate().toInstant(),
+                creationDto.getEndDate().toInstant(),
+                areaIds,
+                null // pas d'événement à exclure pour une création
+        );
+
+        if (!conflictingEvents.isEmpty()) {
+            String conflictingEventNames = conflictingEvents.stream()
+                    .map(Event::getName)
+                    .collect(Collectors.joining(", "));
+
+            throw new BadRequestException(
+                    "Impossible de créer l'événement : conflit avec d'autres événements programmés " +
+                    "dans les mêmes zones et créneaux horaires. " +
+                    "Événements en conflit : " + conflictingEventNames
+            );
+        }
+
         Event event = eventMapper.toEntity(creationDto);
         event.setCreator(creator);
         event.setStructure(structure);
@@ -91,13 +134,9 @@ public class EventServiceImpl implements EventService {
 
         event.setStatus(EventStatus.DRAFT); // Set default status
 
-        if (creationDto.getAudienceZones() != null && !creationDto.getAudienceZones().isEmpty()) {
-            List<EventAudienceZone> audienceZones = processAudienceZoneConfigs(creationDto.getAudienceZones(), structure.getId());
-            audienceZones.forEach(zone -> zone.setEvent(event));
-            event.setAudienceZones(audienceZones);
-        } else {
-            throw new BadRequestException("Un événement doit avoir au moins une zone d'audience configurée.");
-        }
+        List<EventAudienceZone> audienceZones = processAudienceZoneConfigs(creationDto.getAudienceZones(), structure.getId());
+        audienceZones.forEach(zone -> zone.setEvent(event));
+        event.setAudienceZones(audienceZones);
 
         Event savedEvent = eventRepository.save(event);
         EventDetailResponseDto result = eventMapper.toDetailDto(savedEvent);

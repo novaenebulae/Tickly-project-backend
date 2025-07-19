@@ -17,12 +17,12 @@ import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.security.TicketSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
-import edu.cda.project.ticklybackend.services.interfaces.PdfService;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,9 +43,11 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
     private final AuthUtils authUtils;
     private final FileStorageService fileStorageService;
-    private final PdfService pdfService;
     private final MailingService mailingService;
     private final TicketSecurityService ticketSecurityService;
+    
+    @Value("${tickly.mail.frontend-base-url}")
+    private String frontendBaseUrl;
 
     @Override
     @Transactional
@@ -103,19 +105,24 @@ public class TicketServiceImpl implements TicketService {
             List<TicketResponseDto> ticketDtos = buildTicketResponseDtoList(savedReservation.getTickets());
 
             try {
-                // Envoi du PDF complet à l'acheteur principal
-                byte[] pdfAllTickets = pdfService.generateTicketsPdfFromDto(ticketDtos);
-                if (pdfAllTickets.length > 0) {
+                // Récupérer les UUIDs des billets pour l'envoi des emails
+                List<UUID> ticketIds = savedReservation.getTickets().stream()
+                    .map(Ticket::getId)
+                    .collect(Collectors.toList());
+                
+                // Envoi des liens de billets à l'acheteur principal
+                if (!ticketIds.isEmpty()) {
                     mailingService.sendTickets(
                             currentUser.getEmail(),
                             currentUser.getFirstName(),
                             event.getName(),
-                            pdfAllTickets
+                            ticketIds,
+                            frontendBaseUrl
                     );
-                    log.info("PDF de tous les billets envoyé à l'acheteur principal : {}", currentUser.getEmail());
+                    log.info("Liens de billets envoyés à l'acheteur principal : {}", currentUser.getEmail());
                 }
 
-                // Envoi des billets individuels aux participants qui le souhaitent
+                // Envoi des liens de billets individuels aux participants qui le souhaitent
                 for (int i = 0; i < requestDto.getParticipants().size(); i++) {
                     ParticipantInfoDto participant = requestDto.getParticipants().get(i);
 
@@ -123,25 +130,23 @@ public class TicketServiceImpl implements TicketService {
                     if (Boolean.TRUE.equals(participant.getSendTicketByEmail()) &&
                             !participant.getEmail().equals(currentUser.getEmail())) {
 
-                        TicketResponseDto individualTicket = ticketDtos.get(i);
-                        byte[] individualPdf = pdfService.generateSingleTicketPdfFromDto(individualTicket);
-
-                        if (individualPdf.length > 0) {
-                            String participantName = participant.getFirstName() + " " + participant.getLastName();
-                            mailingService.sendIndividualTicket(
-                                    participant.getEmail(),
-                                    participantName,
-                                    event.getName(),
-                                    individualPdf
-                            );
-                            log.info("Billet individuel envoyé à : {} pour l'événement {}",
-                                    participant.getEmail(), event.getName());
-                        }
+                        Ticket ticket = savedReservation.getTickets().get(i);
+                        String participantName = participant.getFirstName() + " " + participant.getLastName();
+                        
+                        mailingService.sendIndividualTicket(
+                                participant.getEmail(),
+                                participantName,
+                                event.getName(),
+                                ticket.getId(),
+                                frontendBaseUrl
+                        );
+                        log.info("Lien de billet individuel envoyé à : {} pour l'événement {}",
+                                participant.getEmail(), event.getName());
                     }
                 }
 
             } catch (Exception e) {
-                LoggingUtils.logException(log, "Erreur lors de la génération ou de l'envoi des PDFs pour la réservation " + 
+                LoggingUtils.logException(log, "Erreur lors de l'envoi des emails avec liens de billets pour la réservation " +
                         savedReservation.getId() + ". La réservation est confirmée mais l'envoi des emails a échoué", e);
             }
 
@@ -195,6 +200,24 @@ public class TicketServiceImpl implements TicketService {
 
             TicketResponseDto result = buildTicketResponseDto(ticket);
             LoggingUtils.logMethodExit(log, "getTicketDetails", result);
+            return result;
+        } finally {
+            LoggingUtils.clearContext();
+        }
+    }
+    
+    @Override
+    public TicketResponseDto getPublicTicketDetails(UUID ticketId) {
+        LoggingUtils.logMethodEntry(log, "getPublicTicketDetails", "ticketId", ticketId);
+
+        try {
+            log.info("Accès public au billet avec ID: {}", ticketId);
+            
+            Ticket ticket = ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
+
+            TicketResponseDto result = buildTicketResponseDto(ticket);
+            LoggingUtils.logMethodExit(log, "getPublicTicketDetails", result);
             return result;
         } finally {
             LoggingUtils.clearContext();
@@ -254,6 +277,10 @@ public class TicketServiceImpl implements TicketService {
         if (dto.getEventSnapshot() != null && dto.getEventSnapshot().getMainPhotoUrl() != null) {
             String fullUrl = fileStorageService.getFileUrl(dto.getEventSnapshot().getMainPhotoUrl(), "events/main");
             dto.getEventSnapshot().setMainPhotoUrl(fullUrl);
+        }
+        if (dto.getEventSnapshot() != null && dto.getStructureSnapshot().getLogoUrl() != null) {
+            String fullUrl = fileStorageService.getFileUrl(dto.getStructureSnapshot().getLogoUrl(), "structures/logos");
+            dto.getStructureSnapshot().setLogoUrl(fullUrl);
         }
         return dto;
     }

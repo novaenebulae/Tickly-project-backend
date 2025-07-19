@@ -25,9 +25,9 @@ with a checkbox [ ] that can be checked off when completed.
 
 ### Testing
 
-[ ] Increase unit test coverage (aim for 60%)
-[ ] Add integration tests for critical workflows
-[ ] Set up automated testing in CI/CD pipeline
+[X] Increase unit test coverage (aim for 60%)
+[X] Add integration tests for critical workflows
+[X] Set up automated testing in CI/CD pipeline
 
 ### Code Organization
 
@@ -58,3 +58,7 @@ with a checkbox [ ] that can be checked off when completed.
 [X] Implement email verification workflow for new user registrations
 [ ] Add password strength requirements and validation
 [ ] Enhance error messages to be more user-friendly
+
+Ticket validation system : 
+
+

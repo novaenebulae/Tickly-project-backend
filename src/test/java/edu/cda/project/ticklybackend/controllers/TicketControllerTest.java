@@ -1,8 +1,10 @@
 package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dtos.ticket.ParticipantInfoDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
 import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationRequestDto;
 import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationResponseDto;
+import edu.cda.project.ticklybackend.enums.SeatingType;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +32,12 @@ class TicketControllerTest {
 
     private TicketValidationRequestDto validationRequestDto;
     private TicketValidationResponseDto validationResponseDto;
+    private TicketResponseDto ticketResponseDto;
+    private TicketResponseDto.AudienceZoneTicketSnapshotDto audienceZoneTicketsnapshot;
+    private TicketResponseDto.EventTicketSnapshotDto eventTicketSnapshotDto;
+    private TicketResponseDto.StructureTicketSnapshotDto structureTicketSnapshotDto;
+    private ParticipantInfoDto participantInfoDto;
+
     private UUID ticketId;
     private String validQrCode;
 
@@ -56,6 +65,31 @@ class TicketControllerTest {
         validationResponseDto.setStatus(TicketStatus.USED);
         validationResponseDto.setMessage("Billet validé avec succès.");
         validationResponseDto.setParticipant(participantInfoDto);
+
+        participantInfoDto = new ParticipantInfoDto();
+        participantInfoDto.setFirstName("John");
+        participantInfoDto.setLastName("Doe");
+        participantInfoDto.setEmail("john.doe@example.com");
+
+        audienceZoneTicketsnapshot = new TicketResponseDto.AudienceZoneTicketSnapshotDto();
+        audienceZoneTicketsnapshot.setAudienceZoneId(1L);
+        audienceZoneTicketsnapshot.setName("General Admission");
+        audienceZoneTicketsnapshot.setSeatingType(SeatingType.MIXED);
+
+        eventTicketSnapshotDto = new TicketResponseDto.EventTicketSnapshotDto();
+        eventTicketSnapshotDto.setEventId(1L);
+        eventTicketSnapshotDto.setName("Test Event");
+        eventTicketSnapshotDto.setStartDate(ZonedDateTime.parse("2025-07-20T19:00:00Z"));
+
+        structureTicketSnapshotDto = new TicketResponseDto.StructureTicketSnapshotDto();
+        structureTicketSnapshotDto.setId(1L);
+        structureTicketSnapshotDto.setName("Test venue");
+
+        // Create ticket response DTO for getTicketDetails tests
+        ticketResponseDto = new TicketResponseDto();
+        ticketResponseDto.setId(ticketId);
+        ticketResponseDto.setStatus(TicketStatus.VALID);
+        ticketResponseDto.setQrCodeValue(validQrCode);
     }
 
     @Test
