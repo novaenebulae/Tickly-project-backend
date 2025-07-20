@@ -77,7 +77,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             long totalTicketsReserved = countTotalTicketsReserved(structureId);
             long totalExpectedAttendees = countExpectedAttendees(structureId, now);
             double averageAttendanceRate = calculateAverageAttendanceRate(structureId);
-            log.debug("KPIs calculés pour la structure ID: {}: événements à venir={}, tickets réservés={}, participants attendus={}, taux de participation moyen={}%", 
+            log.debug("KPIs calculés pour la structure ID: {}: événements à venir={}, tickets réservés={}, participants attendus={}, taux de participation moyen={}%",
                     structureId, upcomingEventsCount, totalTicketsReserved, totalExpectedAttendees, averageAttendanceRate);
 
             // Generate charts
@@ -136,7 +136,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             log.debug("Vérification des autorisations pour l'accès aux statistiques de l'événement ID: {}", eventId);
             if (!eventSecurityService.isOwner(eventId, currentUser)) {
-                log.warn("Accès refusé aux statistiques pour l'événement ID: {} - Utilisateur ID: {} non autorisé", 
+                log.warn("Accès refusé aux statistiques pour l'événement ID: {} - Utilisateur ID: {} non autorisé",
                         eventId, currentUser.getId());
                 throw new AccessDeniedException("You are not authorized to access statistics for this event");
             }
@@ -160,7 +160,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             long uniqueReservationAmount = statisticsRepository.countUniqueReservationsByEventId(eventId);
             long attributedTicketsAmount = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
             long scannedTicketsNumber = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
-            log.debug("KPIs calculés pour l'événement ID: {}: taux de remplissage={}%, réservations uniques={}, tickets attribués={}, tickets scannés={}", 
+            log.debug("KPIs calculés pour l'événement ID: {}: taux de remplissage={}%, réservations uniques={}, tickets attribués={}, tickets scannés={}",
                     eventId, fillPercentage, uniqueReservationAmount, attributedTicketsAmount, scannedTicketsNumber);
 
             // Create and return the DTO with all data
@@ -183,6 +183,59 @@ public class StatisticsServiceImpl implements StatisticsService {
             return dto;
         } catch (Exception e) {
             LoggingUtils.logException(log, "Erreur lors de la récupération des statistiques pour l'événement ID: " + eventId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EventTicketStatisticsDto getEventTicketStats(Long eventId) {
+        LoggingUtils.logMethodEntry(log, "getEventTicketStats", "eventId", eventId);
+
+        try {
+            log.debug("Début de la récupération des statistiques simplifiées pour l'événement ID: {}", eventId);
+
+            // Explicitly handle the case when event is not found to ensure ResourceNotFoundException is thrown
+            var eventOpt = eventRepository.findById(eventId);
+            if (eventOpt.isEmpty()) {
+                log.warn("Événement non trouvé avec ID: {}", eventId);
+                throw new ResourceNotFoundException("Event", "id", eventId);
+            }
+
+            Event event = eventOpt.get();
+            log.debug("Événement trouvé: ID={}, nom={}", event.getId(), event.getName());
+
+            // Calculate KPIs
+            log.debug("Calcul des KPIs simplifiés pour l'événement ID: {}", eventId);
+            long remainingTickets = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
+            long scannedTickets = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
+            long totalTickets = remainingTickets + scannedTickets;
+            
+            // Calculate the correct fill rate as the percentage of USED tickets compared to total tickets
+            double fillRate = calculateTicketUsagePercentage(scannedTickets, totalTickets);
+
+            log.debug("KPIs simplifiés calculés pour l'événement ID: {}: taux d'utilisation={}%, tickets totaux={}, tickets scannés={}, tickets restants={}",
+                    eventId, fillRate, totalTickets, scannedTickets, remainingTickets);
+
+            // Create and return the simplified DTO
+            log.debug("Création du DTO de statistiques simplifiées pour l'événement ID: {}", eventId);
+            EventTicketStatisticsDto dto = new EventTicketStatisticsDto(
+                    eventId,
+                    event.getName(),
+                    totalTickets,
+                    scannedTickets,
+                    remainingTickets,
+                    fillRate
+            );
+
+            log.info("Statistiques simplifiées générées avec succès pour l'événement ID: {}, nom: {}", eventId, event.getName());
+
+            LoggingUtils.logMethodExit(log, "getEventTicketStats", dto);
+            return dto;
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des statistiques simplifiées pour l'événement ID: " + eventId, e);
             throw e;
         } finally {
             LoggingUtils.clearContext();
@@ -220,6 +273,31 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             double result = (double) totalTicketsSold / totalCapacity * 100;
             LoggingUtils.logMethodExit(log, "calculateFillPercentage", result);
+            return result;
+        } finally {
+            // No need to clear context for private methods called by public methods that already handle context
+        }
+    }
+
+    /**
+     * Calculate the percentage of used tickets compared to total tickets.
+     * This is the ratio of scanned (used) tickets to total tickets (valid + used).
+     *
+     * @param scannedTickets Number of scanned (used) tickets
+     * @param totalTickets Total number of tickets (valid + used)
+     * @return The usage percentage as a value between 0 and 100
+     */
+    private double calculateTicketUsagePercentage(long scannedTickets, long totalTickets) {
+        LoggingUtils.logMethodEntry(log, "calculateTicketUsagePercentage", "scannedTickets", scannedTickets, "totalTickets", totalTickets);
+
+        try {
+            if (totalTickets == 0) {
+                LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", 0.0);
+                return 0.0;
+            }
+
+            double result = (double) scannedTickets / totalTickets * 100;
+            LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", result);
             return result;
         } finally {
             // No need to clear context for private methods called by public methods that already handle context

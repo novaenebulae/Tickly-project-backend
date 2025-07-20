@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -25,4 +26,7 @@ public class TicketValidationResponseDto {
 
     @Schema(description = "Informations sur le participant pour une vérification rapide.")
     private ParticipantInfoDto participant;
+
+    @Schema(description = "Heure de validation du ticket.")
+    private Instant validatedAt;
 }

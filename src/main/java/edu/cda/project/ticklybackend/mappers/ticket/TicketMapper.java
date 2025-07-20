@@ -32,6 +32,7 @@ public interface TicketMapper {
     @Mapping(source = "participantFirstName", target = "participant.firstName")
     @Mapping(source = "participantLastName", target = "participant.lastName")
     @Mapping(source = "participantEmail", target = "participant.email")
+    @Mapping(source = "validationDate", target = "validatedAt")
     TicketResponseDto toDto(Ticket ticket);
 
     List<TicketResponseDto> toDtoList(List<Ticket> tickets);
