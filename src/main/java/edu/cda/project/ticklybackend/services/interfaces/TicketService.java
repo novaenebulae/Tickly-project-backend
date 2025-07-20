@@ -1,6 +1,12 @@
 package edu.cda.project.ticklybackend.services.interfaces;
 
-import edu.cda.project.ticklybackend.dtos.ticket.*;
+import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationConfirmationDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationRequestDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationResponseDto;
+import edu.cda.project.ticklybackend.enums.TicketStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,7 +38,7 @@ public interface TicketService {
      * @return les détails du billet.
      */
     TicketResponseDto getTicketDetails(UUID ticketId);
-    
+
     /**
      * Récupère les détails d'un billet spécifique par son ID sans vérification d'authentification.
      * Utilisé pour l'accès public aux billets via leur UUID.
@@ -43,10 +49,23 @@ public interface TicketService {
     TicketResponseDto getPublicTicketDetails(UUID ticketId);
 
     /**
-     * Valide un billet en utilisant la valeur de son QR code scanné.
+     * Récupère une liste paginée de billets pour un événement spécifique.
+     * Permet de filtrer par statut et de rechercher par nom, email ou UUID du billet.
      *
-     * @param validationDto DTO contenant la valeur du QR code scanné.
-     * @return un DTO de réponse avec le résultat de la validation.
+     * @param eventId L'ID de l'événement.
+     * @param status  Le statut des billets à filtrer (optionnel).
+     * @param search  Terme de recherche pour filtrer les billets (optionnel).
+     * @param pageable Informations de pagination.
+     * @return une réponse paginée contenant les détails des billets.
      */
-    TicketValidationResponseDto validateTicket(TicketValidationRequestDto validationDto);
+    PaginatedResponseDto<TicketResponseDto> getEventTickets(Long eventId, TicketStatus status, String search, Pageable pageable);
+
+    /**
+     * Valide un billet spécifique en changeant son statut à USED.
+     *
+     * @param ticketId L'UUID du billet à valider.
+     * @return un DTO contenant le résultat de la validation.
+     */
+    TicketValidationResponseDto validateTicket(UUID ticketId);
+
 }

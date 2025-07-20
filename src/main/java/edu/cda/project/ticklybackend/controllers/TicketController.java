@@ -1,6 +1,8 @@
 package edu.cda.project.ticklybackend.controllers;
 
-import edu.cda.project.ticklybackend.dtos.ticket.*;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationConfirmationDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationRequestDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
 import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,11 +62,4 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
-    @PostMapping("/tickets/validate")
-    @PreAuthorize("@ticketSecurityService.canValidateTicket(#validationDto.scannedQrCodeValue, authentication)")
-    @Operation(summary = "Valider un billet", description = "Valide un billet en utilisant la valeur scannée de son QR code. Nécessite des rôles de service spécifiques.")
-    public ResponseEntity<TicketValidationResponseDto> validateTicket(@Valid @RequestBody TicketValidationRequestDto validationDto) {
-        TicketValidationResponseDto response = ticketService.validateTicket(validationDto);
-        return ResponseEntity.ok(response);
-    }
 }

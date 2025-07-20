@@ -1,9 +1,10 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationRequestDto;
+import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ParticipantInfoDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
 import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationResponseDto;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
-import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.ticket.TicketMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
@@ -11,8 +12,12 @@ import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.repositories.event.EventRepository;
+import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.security.TicketSecurityService;
+import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
+import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +25,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +46,12 @@ public class TicketServiceImplTest {
     private TicketRepository ticketRepository;
 
     @Mock
+    private ReservationRepository reservationRepository;
+
+    @Mock
+    private EventRepository eventRepository;
+
+    @Mock
     private TicketMapper ticketMapper;
 
     @Mock
@@ -43,6 +59,12 @@ public class TicketServiceImplTest {
 
     @Mock
     private TicketSecurityService ticketSecurityService;
+
+    @Mock
+    private FileStorageService fileStorageService;
+
+    @Mock
+    private MailingService mailingService;
 
     @Mock
     private Authentication authentication;
@@ -57,7 +79,6 @@ public class TicketServiceImplTest {
     private Structure structure;
     private String validQrCode;
     private String invalidQrCode;
-    private TicketValidationRequestDto validationRequestDto;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +98,9 @@ public class TicketServiceImplTest {
         event.setId(1L);
         event.setName("Test Event");
         event.setStructure(structure);
+        // Set event dates for validation tests
+        event.setStartDate(Instant.now().plusSeconds(3600)); // 1 hour from now
+        event.setEndDate(Instant.now().plusSeconds(7200));   // 2 hours from now
 
         validTicket = new Ticket();
         validTicket.setId(UUID.randomUUID());
@@ -95,96 +119,263 @@ public class TicketServiceImplTest {
         invalidTicket.setParticipantFirstName("Jane");
         invalidTicket.setParticipantLastName("Smith");
         invalidTicket.setParticipantEmail("jane.smith@example.com");
-
-        validationRequestDto = new TicketValidationRequestDto();
-        validationRequestDto.setScannedQrCodeValue(validQrCode);
     }
 
     @Test
-    void validateTicket_WithValidQrCodeAndAuthorizedUser_ShouldReturnValidationResponse() {
+    void validateTicket_ValidTicket_ShouldReturnSuccessResponse() {
         // Arrange
+        UUID ticketId = validTicket.getId();
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
-        when(authUtils.getCurrentAuthentication()).thenReturn(authentication);
-        when(ticketRepository.findByQrCodeValue(validQrCode)).thenReturn(Optional.of(validTicket));
-        when(ticketSecurityService.canValidateTicket(validQrCode, authentication)).thenReturn(true);
-
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(validTicket));
+        
         // Act
-        TicketValidationResponseDto response = ticketService.validateTicket(validationRequestDto);
-
+        TicketValidationResponseDto response = ticketService.validateTicket(ticketId);
+        
         // Assert
         assertNotNull(response);
-        assertEquals(validTicket.getId(), response.getTicketId());
-        assertEquals(TicketStatus.USED, response.getStatus()); // Status should be changed to USED
+        assertEquals(ticketId, response.getTicketId());
+        assertEquals(TicketStatus.USED, response.getStatus());
         assertEquals("Billet validé avec succès.", response.getMessage());
-        assertNotNull(response.getParticipant());
-        assertEquals("John", response.getParticipant().getFirstName());
-        assertEquals("Doe", response.getParticipant().getLastName());
-        assertEquals("john.doe@example.com", response.getParticipant().getEmail());
-
-        // Verify
-        verify(ticketRepository, times(1)).findByQrCodeValue(validQrCode);
-        verify(ticketSecurityService, times(1)).canValidateTicket(validQrCode, authentication);
-        verify(ticketRepository, times(1)).save(validTicket);
+        
+        // Verify ticket was updated
+        verify(ticketRepository).save(validTicket);
+        assertEquals(TicketStatus.USED, validTicket.getStatus());
+        assertNotNull(validTicket.getValidationDate());
     }
-
+    
     @Test
-    void validateTicket_WithInvalidQrCode_ShouldThrowResourceNotFoundException() {
+    void validateTicket_AlreadyUsedTicket_ShouldReturnErrorResponse() {
         // Arrange
-        String nonExistentQrCode = "non-existent-qr-code";
-        TicketValidationRequestDto invalidRequestDto = new TicketValidationRequestDto();
-        invalidRequestDto.setScannedQrCodeValue(nonExistentQrCode);
-
+        UUID ticketId = invalidTicket.getId();
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
-        when(ticketRepository.findByQrCodeValue(nonExistentQrCode)).thenReturn(Optional.empty());
-
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(invalidTicket));
+        
+        // Act
+        TicketValidationResponseDto response = ticketService.validateTicket(ticketId);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals(ticketId, response.getTicketId());
+        assertEquals(TicketStatus.USED, response.getStatus());
+        assertEquals("Ce billet a déjà été utilisé.", response.getMessage());
+        
+        // Verify ticket was not updated
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+    
+    @Test
+    void validateTicket_NonExistentTicket_ShouldThrowException() {
+        // Arrange
+        UUID nonExistentTicketId = UUID.randomUUID();
+        when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
+        when(ticketRepository.findById(nonExistentTicketId)).thenReturn(Optional.empty());
+        
         // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
-            ticketService.validateTicket(invalidRequestDto);
+            ticketService.validateTicket(nonExistentTicketId);
         });
-
-        // Verify
-        verify(ticketRepository, times(1)).findByQrCodeValue(nonExistentQrCode);
+    }
+    
+    @Test
+    void validateTicket_ExpiredEvent_ShouldReturnErrorResponse() {
+        // Arrange
+        UUID ticketId = validTicket.getId();
+        
+        // Create an event that has already ended
+        Event expiredEvent = new Event();
+        expiredEvent.setId(2L);
+        expiredEvent.setName("Expired Event");
+        expiredEvent.setStructure(structure);
+        expiredEvent.setStartDate(Instant.now().minusSeconds(7200)); // 2 hours ago
+        expiredEvent.setEndDate(Instant.now().minusSeconds(3600));   // 1 hour ago
+        
+        Ticket expiredTicket = new Ticket();
+        expiredTicket.setId(ticketId);
+        expiredTicket.setQrCodeValue(validQrCode);
+        expiredTicket.setEvent(expiredEvent);
+        expiredTicket.setStatus(TicketStatus.VALID);
+        expiredTicket.setParticipantFirstName("John");
+        expiredTicket.setParticipantLastName("Doe");
+        expiredTicket.setParticipantEmail("john.doe@example.com");
+        
+        when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(expiredTicket));
+        
+        // Act
+        TicketValidationResponseDto response = ticketService.validateTicket(ticketId);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals(ticketId, response.getTicketId());
+        assertEquals(TicketStatus.VALID, response.getStatus());
+        assertEquals("L'événement est terminé, le billet ne peut plus être validé.", response.getMessage());
+        
+        // Verify ticket was not updated
         verify(ticketRepository, never()).save(any(Ticket.class));
     }
-
+    
     @Test
-    void validateTicket_WithUnauthorizedUser_ShouldThrowBadRequestException() {
+    void getEventTickets_WithoutFilters_ShouldReturnPaginatedTickets() {
         // Arrange
+        Long eventId = event.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+        
+        // Create a list of tickets for the event
+        Ticket ticket1 = new Ticket();
+        ticket1.setId(UUID.randomUUID());
+        ticket1.setEvent(event);
+        ticket1.setStatus(TicketStatus.VALID);
+        ticket1.setParticipantFirstName("Alice");
+        ticket1.setParticipantLastName("Johnson");
+        ticket1.setParticipantEmail("alice@example.com");
+        
+        Ticket ticket2 = new Ticket();
+        ticket2.setId(UUID.randomUUID());
+        ticket2.setEvent(event);
+        ticket2.setStatus(TicketStatus.USED);
+        ticket2.setParticipantFirstName("Bob");
+        ticket2.setParticipantLastName("Smith");
+        ticket2.setParticipantEmail("bob@example.com");
+        
+        List<Ticket> tickets = Arrays.asList(ticket1, ticket2);
+        
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
-        when(authUtils.getCurrentAuthentication()).thenReturn(authentication);
-        when(ticketRepository.findByQrCodeValue(validQrCode)).thenReturn(Optional.of(validTicket));
-        when(ticketSecurityService.canValidateTicket(validQrCode, authentication)).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(BadRequestException.class, () -> {
-            ticketService.validateTicket(validationRequestDto);
-        });
-
-        // Verify
-        verify(ticketRepository, times(1)).findByQrCodeValue(validQrCode);
-        verify(ticketSecurityService, times(1)).canValidateTicket(validQrCode, authentication);
-        verify(ticketRepository, never()).save(any(Ticket.class));
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(ticketRepository.findAllByEventId(eventId)).thenReturn(tickets);
+        
+        // Mock the DTO conversion
+        TicketResponseDto dto1 = new TicketResponseDto();
+        dto1.setId(ticket1.getId());
+        TicketResponseDto dto2 = new TicketResponseDto();
+        dto2.setId(ticket2.getId());
+        
+        when(ticketMapper.toDto(ticket1)).thenReturn(dto1);
+        when(ticketMapper.toDto(ticket2)).thenReturn(dto2);
+        
+        // Act
+        PaginatedResponseDto<TicketResponseDto> result = ticketService.getEventTickets(eventId, null, null, pageable);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getTotalItems());
+        assertEquals(2, result.getItems().size());
+        assertEquals(0, result.getCurrentPage());
+        assertEquals(10, result.getPageSize());
+        assertEquals(1, result.getTotalPages());
     }
-
+    
     @Test
-    void validateTicket_WithAlreadyUsedTicket_ShouldThrowBadRequestException() {
+    void getEventTickets_FilteredByStatus_ShouldReturnFilteredTickets() {
         // Arrange
-        TicketValidationRequestDto invalidRequestDto = new TicketValidationRequestDto();
-        invalidRequestDto.setScannedQrCodeValue(invalidQrCode);
-
+        Long eventId = event.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+        
+        // Create a list of tickets for the event with different statuses
+        Ticket validTicket1 = new Ticket();
+        validTicket1.setId(UUID.randomUUID());
+        validTicket1.setEvent(event);
+        validTicket1.setStatus(TicketStatus.VALID);
+        validTicket1.setParticipantFirstName("Alice");
+        validTicket1.setParticipantLastName("Johnson");
+        validTicket1.setParticipantEmail("alice@example.com");
+        
+        Ticket validTicket2 = new Ticket();
+        validTicket2.setId(UUID.randomUUID());
+        validTicket2.setEvent(event);
+        validTicket2.setStatus(TicketStatus.VALID);
+        validTicket2.setParticipantFirstName("Charlie");
+        validTicket2.setParticipantLastName("Brown");
+        validTicket2.setParticipantEmail("charlie@example.com");
+        
+        Ticket usedTicket = new Ticket();
+        usedTicket.setId(UUID.randomUUID());
+        usedTicket.setEvent(event);
+        usedTicket.setStatus(TicketStatus.USED);
+        usedTicket.setParticipantFirstName("Bob");
+        usedTicket.setParticipantLastName("Smith");
+        usedTicket.setParticipantEmail("bob@example.com");
+        
+        List<Ticket> allTickets = Arrays.asList(validTicket1, validTicket2, usedTicket);
+        
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
-        when(authUtils.getCurrentAuthentication()).thenReturn(authentication);
-        when(ticketRepository.findByQrCodeValue(invalidQrCode)).thenReturn(Optional.of(invalidTicket));
-        when(ticketSecurityService.canValidateTicket(invalidQrCode, authentication)).thenReturn(true);
-
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(ticketRepository.findAllByEventId(eventId)).thenReturn(allTickets);
+        
+        // Mock the DTO conversion
+        TicketResponseDto dto1 = new TicketResponseDto();
+        dto1.setId(validTicket1.getId());
+        TicketResponseDto dto2 = new TicketResponseDto();
+        dto2.setId(validTicket2.getId());
+        
+        when(ticketMapper.toDto(validTicket1)).thenReturn(dto1);
+        when(ticketMapper.toDto(validTicket2)).thenReturn(dto2);
+        
+        // Act - Filter by VALID status
+        PaginatedResponseDto<TicketResponseDto> result = ticketService.getEventTickets(eventId, TicketStatus.VALID, null, pageable);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getTotalItems());
+        assertEquals(2, result.getItems().size());
+    }
+    
+    @Test
+    void getEventTickets_FilteredBySearch_ShouldReturnMatchingTickets() {
+        // Arrange
+        Long eventId = event.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+        String searchTerm = "alice";
+        
+        // Create a list of tickets for the event with different names
+        Ticket ticket1 = new Ticket();
+        ticket1.setId(UUID.randomUUID());
+        ticket1.setEvent(event);
+        ticket1.setStatus(TicketStatus.VALID);
+        ticket1.setParticipantFirstName("Alice");
+        ticket1.setParticipantLastName("Johnson");
+        ticket1.setParticipantEmail("alice@example.com");
+        
+        Ticket ticket2 = new Ticket();
+        ticket2.setId(UUID.randomUUID());
+        ticket2.setEvent(event);
+        ticket2.setStatus(TicketStatus.VALID);
+        ticket2.setParticipantFirstName("Bob");
+        ticket2.setParticipantLastName("Smith");
+        ticket2.setParticipantEmail("bob@example.com");
+        
+        List<Ticket> allTickets = Arrays.asList(ticket1, ticket2);
+        
+        when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(ticketRepository.findAllByEventId(eventId)).thenReturn(allTickets);
+        
+        // Mock the DTO conversion
+        TicketResponseDto dto1 = new TicketResponseDto();
+        dto1.setId(ticket1.getId());
+        
+        when(ticketMapper.toDto(ticket1)).thenReturn(dto1);
+        
+        // Act - Search for "alice"
+        PaginatedResponseDto<TicketResponseDto> result = ticketService.getEventTickets(eventId, null, searchTerm, pageable);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalItems());
+        assertEquals(1, result.getItems().size());
+    }
+    
+    @Test
+    void getEventTickets_NonExistentEvent_ShouldThrowException() {
+        // Arrange
+        Long nonExistentEventId = 999L;
+        Pageable pageable = PageRequest.of(0, 10);
+        
+        when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
+        when(eventRepository.findById(nonExistentEventId)).thenReturn(Optional.empty());
+        
         // Act & Assert
-        assertThrows(BadRequestException.class, () -> {
-            ticketService.validateTicket(invalidRequestDto);
+        assertThrows(ResourceNotFoundException.class, () -> {
+            ticketService.getEventTickets(nonExistentEventId, null, null, pageable);
         });
-
-        // Verify
-        verify(ticketRepository, times(1)).findByQrCodeValue(invalidQrCode);
-        verify(ticketSecurityService, times(1)).canValidateTicket(invalidQrCode, authentication);
-        verify(ticketRepository, never()).save(any(Ticket.class));
     }
 }

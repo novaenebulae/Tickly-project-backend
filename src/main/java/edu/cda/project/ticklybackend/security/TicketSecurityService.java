@@ -1,8 +1,10 @@
 package edu.cda.project.ticklybackend.security;
 
 
+import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
+import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class TicketSecurityService {
 
     private final TicketRepository ticketRepository;
+    private final EventRepository eventRepository;
     private final StructureSecurityService structureSecurityService; // On réutilise le service existant
 
     /**
@@ -99,4 +102,47 @@ public class TicketSecurityService {
                 .orElse(false);
     }
 
+    /**
+     * Vérifie si l'utilisateur authentifié a le droit de valider des billets pour un événement spécifique.
+     * Pour valider des billets d'un événement, l'utilisateur doit faire partie du personnel de la structure
+     * qui a créé l'événement.
+     *
+     * @param eventId        L'ID de l'événement.
+     * @param authentication L'objet Authentication de l'utilisateur authentifié.
+     * @return true si l'utilisateur peut valider des billets pour cet événement, false sinon.
+     */
+    @Transactional(readOnly = true)
+    public boolean canValidateEventTickets(Long eventId, Authentication authentication) {
+        if (eventId == null || authentication == null) {
+            log.warn("Tentative de validation de billets avec des paramètres invalides");
+            return false;
+        }
+
+        return eventRepository.findById(eventId)
+                .map(event -> {
+                    Long structureId = event.getStructure().getId();
+                    log.info("Vérification des permissions pour valider les billets de l'événement {} (structure {})",
+                            event.getName(), structureId);
+
+                    // Vérification du personnel de la structure
+                    boolean isStaffMember = structureSecurityService.isStructureStaff(structureId, authentication);
+
+                    if (!isStaffMember) {
+                        log.warn("L'utilisateur n'est pas membre du personnel de la structure {}", structureId);
+                        return false;
+                    }
+
+                    // Vérification que l'événement n'est pas terminé
+                    Instant now = Instant.now();
+                    Instant eventEnd = event.getEndDate();
+                    if (now.isAfter(eventEnd)) {
+                        log.warn("Tentative de validation de billets pour un événement terminé: {}", event.getName());
+                        return false;
+                    }
+
+                    log.info("Validation des billets pour l'événement {} autorisée", event.getName());
+                    return true;
+                })
+                .orElse(false);
+    }
 }

@@ -34,7 +34,8 @@ public class SecurityConfig {
             "/api/v1/structures/**",
             "/api/v1/structure-types",
             "/api/v1/auth/validate-email",
-            "/api/v1/ticketing/public/tickets/**"
+            "/api/v1/ticketing/public/tickets/**",
+            "/api/v1/ws-tickly/**"
     };
 
     private static final String[] PUBLIC_POST_URLS = {

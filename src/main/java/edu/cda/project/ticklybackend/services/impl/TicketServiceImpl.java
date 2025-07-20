@@ -1,6 +1,11 @@
 package edu.cda.project.ticklybackend.services.impl;
 
-import edu.cda.project.ticklybackend.dtos.ticket.*;
+import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ParticipantInfoDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationConfirmationDto;
+import edu.cda.project.ticklybackend.dtos.ticket.ReservationRequestDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationResponseDto;
 import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
@@ -23,11 +28,17 @@ import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,7 +56,7 @@ public class TicketServiceImpl implements TicketService {
     private final FileStorageService fileStorageService;
     private final MailingService mailingService;
     private final TicketSecurityService ticketSecurityService;
-    
+
     @Value("${tickly.mail.frontend-base-url}")
     private String frontendBaseUrl;
 
@@ -107,9 +118,9 @@ public class TicketServiceImpl implements TicketService {
             try {
                 // Récupérer les UUIDs des billets pour l'envoi des emails
                 List<UUID> ticketIds = savedReservation.getTickets().stream()
-                    .map(Ticket::getId)
-                    .collect(Collectors.toList());
-                
+                        .map(Ticket::getId)
+                        .collect(Collectors.toList());
+
                 // Envoi des liens de billets à l'acheteur principal
                 if (!ticketIds.isEmpty()) {
                     mailingService.sendTickets(
@@ -132,7 +143,7 @@ public class TicketServiceImpl implements TicketService {
 
                         Ticket ticket = savedReservation.getTickets().get(i);
                         String participantName = participant.getFirstName() + " " + participant.getLastName();
-                        
+
                         mailingService.sendIndividualTicket(
                                 participant.getEmail(),
                                 participantName,
@@ -205,14 +216,14 @@ public class TicketServiceImpl implements TicketService {
             LoggingUtils.clearContext();
         }
     }
-    
+
     @Override
     public TicketResponseDto getPublicTicketDetails(UUID ticketId) {
         LoggingUtils.logMethodEntry(log, "getPublicTicketDetails", "ticketId", ticketId);
 
         try {
             log.info("Accès public au billet avec ID: {}", ticketId);
-            
+
             Ticket ticket = ticketRepository.findById(ticketId)
                     .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
 
@@ -224,44 +235,105 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    @Override
-    @Transactional
-    public TicketValidationResponseDto validateTicket(TicketValidationRequestDto validationDto) {
-        LoggingUtils.logMethodEntry(log, "validateTicket", "validationDto", validationDto);
 
-        try {
-            User validator = authUtils.getCurrentAuthenticatedUser();
-            LoggingUtils.setUserId(validator.getId());
-            log.info("L'utilisateur {} tente de valider le billet avec la valeur QR : {}", validator.getEmail(), validationDto.getScannedQrCodeValue());
-
-            Ticket ticket = ticketRepository.findByQrCodeValue(validationDto.getScannedQrCodeValue())
-                    .orElseThrow(() -> new ResourceNotFoundException("Billet avec QR code " + validationDto.getScannedQrCodeValue() + " non trouvé."));
-
-            // Vérification de sécurité : le validateur doit avoir les droits sur la structure de l'événement.
-            if (!ticketSecurityService.canValidateTicket(validationDto.getScannedQrCodeValue(), authUtils.getCurrentAuthentication())) {
-                log.warn("Tentative de validation de billet non autorisée par l'utilisateur {}", validator.getEmail());
-                throw new BadRequestException("Vous n'avez pas les droits nécessaires pour valider ce billet.");
-            }
-
-            if (ticket.getStatus() != TicketStatus.VALID) {
-                log.warn("La validation a échoué pour le billet {}. Statut actuel : {}.", ticket.getId(), ticket.getStatus());
-                throw new BadRequestException("Le billet n'est pas valide. Statut actuel : " + ticket.getStatus());
-            }
-
-            ticket.setStatus(TicketStatus.USED);
-            ticketRepository.save(ticket);
-            log.info("Billet {} validé avec succès par l'utilisateur {}.", ticket.getId(), validator.getEmail());
-
+    // Méthode d'aide pour construire les URL complètes des photos et s'assurer que tous les champs sont correctement initialisés
+    private TicketResponseDto buildTicketResponseDto(Ticket ticket) {
+        TicketResponseDto dto = ticketMapper.toDto(ticket);
+        
+        // S'assurer que le participant est initialisé
+        if (dto.getParticipant() == null) {
             ParticipantInfoDto participant = new ParticipantInfoDto();
             participant.setFirstName(ticket.getParticipantFirstName());
             participant.setLastName(ticket.getParticipantLastName());
             participant.setEmail(ticket.getParticipantEmail());
+            dto.setParticipant(participant);
+        }
+        
+        // Construire les URLs complètes des photos
+        if (dto.getEventSnapshot() != null && dto.getEventSnapshot().getMainPhotoUrl() != null) {
+            String fullUrl = fileStorageService.getFileUrl(dto.getEventSnapshot().getMainPhotoUrl(), "events/main");
+            dto.getEventSnapshot().setMainPhotoUrl(fullUrl);
+        }
+        
+        if (dto.getStructureSnapshot() != null && dto.getStructureSnapshot().getLogoUrl() != null) {
+            String fullUrl = fileStorageService.getFileUrl(dto.getStructureSnapshot().getLogoUrl(), "structures/logos");
+            dto.getStructureSnapshot().setLogoUrl(fullUrl);
+        }
+        
+        return dto;
+    }
 
+    private List<TicketResponseDto> buildTicketResponseDtoList(List<Ticket> tickets) {
+        return tickets.stream()
+                .map(this::buildTicketResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TicketValidationResponseDto validateTicket(UUID ticketId) {
+        LoggingUtils.logMethodEntry(log, "validateTicket", "ticketId", ticketId);
+
+        try {
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            Ticket ticket = ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
+
+            // Vérification que le billet est valide
+            if (ticket.getStatus() != TicketStatus.VALID) {
+                log.warn("Tentative de validation d'un billet {} avec statut {}", ticketId, ticket.getStatus());
+                
+                ParticipantInfoDto participantInfo = new ParticipantInfoDto();
+                participantInfo.setFirstName(ticket.getParticipantFirstName());
+                participantInfo.setLastName(ticket.getParticipantLastName());
+                participantInfo.setEmail(ticket.getParticipantEmail());
+                
+                return new TicketValidationResponseDto(
+                        ticket.getId(),
+                        ticket.getStatus(),
+                        "Ce billet a déjà été " + (ticket.getStatus() == TicketStatus.USED ? "utilisé" : "annulé") + ".",
+                        participantInfo
+                );
+            }
+
+            // Vérification que l'événement n'est pas terminé
+            Instant now = Instant.now();
+            Instant eventEnd = ticket.getEvent().getEndDate();
+            if (now.isAfter(eventEnd)) {
+                log.warn("Tentative de validation d'un billet {} pour un événement terminé", ticketId);
+                
+                ParticipantInfoDto participantInfo = new ParticipantInfoDto();
+                participantInfo.setFirstName(ticket.getParticipantFirstName());
+                participantInfo.setLastName(ticket.getParticipantLastName());
+                participantInfo.setEmail(ticket.getParticipantEmail());
+                
+                return new TicketValidationResponseDto(
+                        ticket.getId(),
+                        ticket.getStatus(),
+                        "L'événement est terminé, le billet ne peut plus être validé.",
+                        participantInfo
+                );
+            }
+
+            // Validation du billet
+            ticket.setStatus(TicketStatus.USED);
+            ticket.setValidationDate(Instant.now());
+            ticketRepository.save(ticket);
+
+            log.info("Billet {} validé avec succès par {}", ticketId, currentUser.getEmail());
+
+            ParticipantInfoDto participantInfo = new ParticipantInfoDto();
+            participantInfo.setFirstName(ticket.getParticipantFirstName());
+            participantInfo.setLastName(ticket.getParticipantLastName());
+            participantInfo.setEmail(ticket.getParticipantEmail());
+            
             TicketValidationResponseDto result = new TicketValidationResponseDto(
                     ticket.getId(),
-                    ticket.getStatus(),
+                    TicketStatus.USED,
                     "Billet validé avec succès.",
-                    participant
+                    participantInfo
             );
 
             LoggingUtils.logMethodExit(log, "validateTicket", result);
@@ -271,23 +343,57 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    // Méthode d'aide pour construire les URL complètes des photos
-    private TicketResponseDto buildTicketResponseDto(Ticket ticket) {
-        TicketResponseDto dto = ticketMapper.toDto(ticket);
-        if (dto.getEventSnapshot() != null && dto.getEventSnapshot().getMainPhotoUrl() != null) {
-            String fullUrl = fileStorageService.getFileUrl(dto.getEventSnapshot().getMainPhotoUrl(), "events/main");
-            dto.getEventSnapshot().setMainPhotoUrl(fullUrl);
-        }
-        if (dto.getEventSnapshot() != null && dto.getStructureSnapshot().getLogoUrl() != null) {
-            String fullUrl = fileStorageService.getFileUrl(dto.getStructureSnapshot().getLogoUrl(), "structures/logos");
-            dto.getStructureSnapshot().setLogoUrl(fullUrl);
-        }
-        return dto;
-    }
+    @Override
+    public PaginatedResponseDto<TicketResponseDto> getEventTickets(Long eventId, TicketStatus status, String search, Pageable pageable) {
+        LoggingUtils.logMethodEntry(log, "getEventTickets", "eventId", eventId, "status", status, "search", search);
 
-    private List<TicketResponseDto> buildTicketResponseDtoList(List<Ticket> tickets) {
-        return tickets.stream()
-                .map(this::buildTicketResponseDto)
-                .collect(Collectors.toList());
+        try {
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            LoggingUtils.setUserId(currentUser.getId());
+
+            // Vérifier que l'événement existe
+            Event event = eventRepository.findById(eventId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Événement avec ID " + eventId + " non trouvé."));
+
+            // Récupérer tous les billets pour l'événement
+            List<Ticket> allTickets = ticketRepository.findAllByEventId(eventId);
+            
+            // Filtrer par statut si spécifié
+            if (status != null) {
+                allTickets = allTickets.stream()
+                        .filter(ticket -> ticket.getStatus() == status)
+                        .collect(Collectors.toList());
+            }
+            
+            // Filtrer par terme de recherche si spécifié
+            if (StringUtils.hasText(search)) {
+                String searchLower = search.toLowerCase();
+                allTickets = allTickets.stream()
+                        .filter(ticket -> 
+                            (ticket.getParticipantFirstName() != null && ticket.getParticipantFirstName().toLowerCase().contains(searchLower)) ||
+                            (ticket.getParticipantLastName() != null && ticket.getParticipantLastName().toLowerCase().contains(searchLower)) ||
+                            (ticket.getParticipantEmail() != null && ticket.getParticipantEmail().toLowerCase().contains(searchLower)) ||
+                            ticket.getId().toString().contains(searchLower)
+                        )
+                        .collect(Collectors.toList());
+            }
+            
+            // Pagination manuelle
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), allTickets.size());
+            
+            List<Ticket> pageTickets = start < end ? allTickets.subList(start, end) : new ArrayList<>();
+            Page<Ticket> ticketPage = new PageImpl<>(pageTickets, pageable, allTickets.size());
+            
+            // Convertir en DTOs
+            List<TicketResponseDto> ticketDtos = buildTicketResponseDtoList(ticketPage.getContent());
+            PaginatedResponseDto<TicketResponseDto> result = new PaginatedResponseDto<>(ticketDtos, ticketPage.getTotalElements(), 
+                    ticketPage.getNumber(), ticketPage.getSize(), ticketPage.getTotalPages());
+            
+            LoggingUtils.logMethodExit(log, "getEventTickets", result);
+            return result;
+        } finally {
+            LoggingUtils.clearContext();
+        }
     }
 }

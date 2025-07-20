@@ -261,6 +261,7 @@ create table if not exists tickets
     participant_last_name  varchar(255)                                   not null,
     qr_code_value          varchar(255)                                   not null,
     reservation_date       datetime(6)                                    not null,
+    validation_date        datetime(6)                                    null,
     status                 enum ('CANCELLED', 'EXPIRED', 'USED', 'VALID') not null,
     event_id               bigint                                         not null,
     event_audience_zone_id bigint                                         not null,

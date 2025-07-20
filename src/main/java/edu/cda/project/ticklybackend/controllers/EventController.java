@@ -5,7 +5,11 @@ import edu.cda.project.ticklybackend.dtos.common.PaginatedResponseDto;
 import edu.cda.project.ticklybackend.dtos.event.*;
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketResponseDto;
+import edu.cda.project.ticklybackend.dtos.ticket.TicketValidationResponseDto;
+import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
+import edu.cda.project.ticklybackend.services.interfaces.TicketService;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -36,6 +41,7 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
+    private final TicketService ticketService;
 
     @Operation(
             summary = "Créer un nouvel événement",
@@ -287,6 +293,60 @@ public class EventController {
             return ResponseEntity.ok(categories);
         } catch (Exception e) {
             LoggingUtils.logException(log, "Erreur lors de la récupération des catégories d'événements", e);
+            throw e;
+        }
+    }
+
+    @Operation(
+            summary = "Récupérer les billets d'un événement pour la gestion",
+            description = "Récupère une liste paginée et filtrée de tous les billets pour un événement spécifique, conçue pour la gestion par le personnel.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Liste des billets récupérée", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponseDto.class))),
+                    @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Événement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
+            }
+    )
+    @GetMapping("/events/{eventId}/management/tickets")
+    @PreAuthorize("@ticketSecurityService.canValidateEventTickets(#eventId, authentication)")
+    public ResponseEntity<PaginatedResponseDto<TicketResponseDto>> getEventTickets(
+            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
+            @Parameter(description = "Statut des billets à filtrer (optionnel)") @RequestParam(required = false) TicketStatus status,
+            @Parameter(description = "Terme de recherche pour filtrer les billets (optionnel)") @RequestParam(required = false) String search,
+            @ParameterObject Pageable pageable) {
+        LoggingUtils.logMethodEntry(log, "getEventTickets", "eventId", eventId, "status", status, "search", search, "pageable", pageable);
+        try {
+            PaginatedResponseDto<TicketResponseDto> tickets = ticketService.getEventTickets(eventId, status, search, pageable);
+            LoggingUtils.logMethodExit(log, "getEventTickets", tickets);
+            return ResponseEntity.ok(tickets);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la récupération des billets pour l'événement ID " + eventId, e);
+            throw e;
+        }
+    }
+
+    @Operation(
+            summary = "Valider un billet",
+            description = "Marque un billet spécifique comme UTILISÉ. Cet endpoint est conçu pour la validation manuelle depuis le panneau du personnel.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Billet validé avec succès", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TicketValidationResponseDto.class))),
+                    @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Billet non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
+            }
+    )
+    @PostMapping("/events/{eventId}/management/tickets/{ticketId}/validate")
+    @PreAuthorize("@ticketSecurityService.canValidateEventTickets(#eventId, authentication)")
+    public ResponseEntity<TicketValidationResponseDto> validateTicket(
+            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
+            @Parameter(description = "ID du billet à valider") @PathVariable UUID ticketId) {
+        LoggingUtils.logMethodEntry(log, "validateTicket", "eventId", eventId, "ticketId", ticketId);
+        try {
+            TicketValidationResponseDto result = ticketService.validateTicket(ticketId);
+            LoggingUtils.logMethodExit(log, "validateTicket", result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la validation du billet ID " + ticketId + " pour l'événement ID " + eventId, e);
             throw e;
         }
     }

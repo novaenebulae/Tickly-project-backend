@@ -78,6 +78,9 @@ public class Ticket {
     @NotNull
     @Column(name = "reservation_date", nullable = false)
     private Instant reservationDate;
+    
+    @Column(name = "validation_date")
+    private Instant validationDate;
 
     @PrePersist
     protected void onCreate() {
