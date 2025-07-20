@@ -148,10 +148,12 @@ We will use Spring WebSocket with a STOMP message broker.
     * newStatus (TicketStatus)
     * validationTimestamp (Date)
 * **EventTicketStatisticsDto**:
-    * totalTickets (long)
-    * scannedTickets (long)
-    * remainingTickets (long)
-    * fillRate (double)
+    * eventId (long) - ID of the event
+    * eventName (String) - Name of the event
+    * totalTickets (long) - Total number of tickets for the event (valid + used)
+    * scannedTickets (long) - Number of scanned (used) tickets for the event
+    * remainingTickets (long) - Number of remaining (valid) tickets for the event
+    * fillRate (double) - Percentage of used tickets compared to total tickets (0-100)
 
 ## **7\. Summary of Workflow**
 
