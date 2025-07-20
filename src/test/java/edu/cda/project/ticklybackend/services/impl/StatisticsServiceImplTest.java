@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.dtos.statistics.EventStatisticsDto;
+import edu.cda.project.ticklybackend.dtos.statistics.EventTicketStatisticsDto;
 import edu.cda.project.ticklybackend.dtos.statistics.StructureDashboardStatsDto;
 import edu.cda.project.ticklybackend.dtos.statistics.ZoneFillRateDataPointDto;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
@@ -65,9 +66,9 @@ class StatisticsServiceImplTest {
     private User mockUser;
     private Event mockEvent;
     private Structure mockStructure;
-    private Long structureId = 1L;
-    private Long eventId = 1L;
-    private Long userId = 1L;
+    private final Long structureId = 1L;
+    private final Long eventId = 1L;
+    private final Long userId = 1L;
 
     @BeforeEach
     void setUp() {
@@ -364,5 +365,69 @@ class StatisticsServiceImplTest {
         assertNotNull(result);
         // Average of 80% and 60% is 70%
         assertEquals(70.0, result.getAverageAttendanceRate());
+    }
+    
+    @Test
+    void getEventTicketStats_WhenEventExists_ReturnsCorrectStats() {
+        // Arrange
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(mockEvent));
+        
+        // Mock repository methods for ticket counts
+        when(ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID)).thenReturn(80L);
+        when(ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED)).thenReturn(20L);
+        
+        // Act
+        EventTicketStatisticsDto result = statisticsService.getEventTicketStats(eventId);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(eventId, result.getEventId());
+        assertEquals(mockEvent.getName(), result.getEventName());
+        assertEquals(100L, result.getTotalTickets());
+        assertEquals(20L, result.getScannedTickets());
+        assertEquals(80L, result.getRemainingTickets());
+        assertEquals(20.0, result.getFillRate()); // 20 used out of 100 total = 20%
+        
+        // Verify repository methods were called
+        verify(ticketRepository).countByEventIdAndStatus(eventId, TicketStatus.VALID);
+        verify(ticketRepository).countByEventIdAndStatus(eventId, TicketStatus.USED);
+    }
+    
+    @Test
+    void getEventTicketStats_WhenEventNotFound_ThrowsResourceNotFoundException() {
+        // Arrange
+        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
+        
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> statisticsService.getEventTicketStats(eventId));
+        
+        // Verify repository methods were not called
+        verify(ticketRepository, never()).countByEventIdAndStatus(anyLong(), any(TicketStatus.class));
+    }
+    
+    @Test
+    void getEventTicketStats_WhenNoTickets_ReturnsZeroValues() {
+        // Arrange
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(mockEvent));
+        
+        // Mock repository methods to return zero tickets
+        when(ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID)).thenReturn(0L);
+        when(ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED)).thenReturn(0L);
+        
+        // Act
+        EventTicketStatisticsDto result = statisticsService.getEventTicketStats(eventId);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(eventId, result.getEventId());
+        assertEquals(mockEvent.getName(), result.getEventName());
+        assertEquals(0L, result.getTotalTickets());
+        assertEquals(0L, result.getScannedTickets());
+        assertEquals(0L, result.getRemainingTickets());
+        assertEquals(0.0, result.getFillRate());
+        
+        // Verify repository methods were called
+        verify(ticketRepository).countByEventIdAndStatus(eventId, TicketStatus.VALID);
+        verify(ticketRepository).countByEventIdAndStatus(eventId, TicketStatus.USED);
     }
 }

@@ -212,7 +212,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             long remainingTickets = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
             long scannedTickets = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
             long totalTickets = remainingTickets + scannedTickets;
-            
+
             // Calculate the correct fill rate as the percentage of USED tickets compared to total tickets
             double fillRate = calculateTicketUsagePercentage(scannedTickets, totalTickets);
 
@@ -252,31 +252,27 @@ public class StatisticsServiceImpl implements StatisticsService {
     private double calculateFillPercentage(List<ZoneFillRateDataPointDto> zoneFillRates) {
         LoggingUtils.logMethodEntry(log, "calculateFillPercentage", "zoneFillRates.size", zoneFillRates != null ? zoneFillRates.size() : 0);
 
-        try {
-            if (zoneFillRates.isEmpty()) {
-                LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
-                return 0.0;
-            }
-
-            int totalCapacity = 0;
-            long totalTicketsSold = 0;
-
-            for (ZoneFillRateDataPointDto zone : zoneFillRates) {
-                totalCapacity += zone.getCapacity();
-                totalTicketsSold += zone.getTicketsSold();
-            }
-
-            if (totalCapacity == 0) {
-                LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
-                return 0.0;
-            }
-
-            double result = (double) totalTicketsSold / totalCapacity * 100;
-            LoggingUtils.logMethodExit(log, "calculateFillPercentage", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
+        if (zoneFillRates.isEmpty()) {
+            LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
+            return 0.0;
         }
+
+        int totalCapacity = 0;
+        long totalTicketsSold = 0;
+
+        for (ZoneFillRateDataPointDto zone : zoneFillRates) {
+            totalCapacity += zone.getCapacity();
+            totalTicketsSold += zone.getTicketsSold();
+        }
+
+        if (totalCapacity == 0) {
+            LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
+            return 0.0;
+        }
+
+        double result = (double) totalTicketsSold / totalCapacity * 100;
+        LoggingUtils.logMethodExit(log, "calculateFillPercentage", result);
+        return result;
     }
 
     /**
@@ -284,24 +280,20 @@ public class StatisticsServiceImpl implements StatisticsService {
      * This is the ratio of scanned (used) tickets to total tickets (valid + used).
      *
      * @param scannedTickets Number of scanned (used) tickets
-     * @param totalTickets Total number of tickets (valid + used)
+     * @param totalTickets   Total number of tickets (valid + used)
      * @return The usage percentage as a value between 0 and 100
      */
     private double calculateTicketUsagePercentage(long scannedTickets, long totalTickets) {
         LoggingUtils.logMethodEntry(log, "calculateTicketUsagePercentage", "scannedTickets", scannedTickets, "totalTickets", totalTickets);
 
-        try {
-            if (totalTickets == 0) {
-                LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", 0.0);
-                return 0.0;
-            }
-
-            double result = (double) scannedTickets / totalTickets * 100;
-            LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
+        if (totalTickets == 0) {
+            LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", 0.0);
+            return 0.0;
         }
+
+        double result = (double) scannedTickets / totalTickets * 100;
+        LoggingUtils.logMethodExit(log, "calculateTicketUsagePercentage", result);
+        return result;
     }
 
     /**
@@ -310,14 +302,10 @@ public class StatisticsServiceImpl implements StatisticsService {
     private long countUpcomingEvents(Long structureId, LocalDateTime now) {
         LoggingUtils.logMethodEntry(log, "countUpcomingEvents", "structureId", structureId, "now", now);
 
-        try {
-            // Query to find events that haven't started yet
-            long result = eventRepository.countByStructureIdAndStartDateAfterAndDeletedFalse(structureId, now.atZone(ZoneId.systemDefault()).toInstant());
-            LoggingUtils.logMethodExit(log, "countUpcomingEvents", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
-        }
+        // Query to find events that haven't started yet
+        long result = eventRepository.countByStructureIdAndStartDateAfterAndDeletedFalse(structureId, now.atZone(ZoneId.systemDefault()).toInstant());
+        LoggingUtils.logMethodExit(log, "countUpcomingEvents", result);
+        return result;
     }
 
     /**
@@ -326,16 +314,12 @@ public class StatisticsServiceImpl implements StatisticsService {
     private long countTotalTicketsReserved(Long structureId) {
         LoggingUtils.logMethodEntry(log, "countTotalTicketsReserved", "structureId", structureId);
 
-        try {
-            long result = ticketRepository.countByEventStructureIdAndStatusIn(
-                    structureId,
-                    Arrays.asList(TicketStatus.VALID, TicketStatus.USED) // On passe les enums
-            );
-            LoggingUtils.logMethodExit(log, "countTotalTicketsReserved", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
-        }
+        long result = ticketRepository.countByEventStructureIdAndStatusIn(
+                structureId,
+                Arrays.asList(TicketStatus.VALID, TicketStatus.USED) // On passe les enums
+        );
+        LoggingUtils.logMethodExit(log, "countTotalTicketsReserved", result);
+        return result;
     }
 
     /**
@@ -344,17 +328,13 @@ public class StatisticsServiceImpl implements StatisticsService {
     private long countExpectedAttendees(Long structureId, LocalDateTime now) {
         LoggingUtils.logMethodEntry(log, "countExpectedAttendees", "structureId", structureId, "now", now);
 
-        try {
-            long result = ticketRepository.countByEventStructureIdAndEventStartDateAfterAndStatus(
-                    structureId,
-                    now.atZone(ZoneId.systemDefault()).toInstant(),
-                    TicketStatus.VALID
-            );
-            LoggingUtils.logMethodExit(log, "countExpectedAttendees", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
-        }
+        long result = ticketRepository.countByEventStructureIdAndEventStartDateAfterAndStatus(
+                structureId,
+                now.atZone(ZoneId.systemDefault()).toInstant(),
+                TicketStatus.VALID
+        );
+        LoggingUtils.logMethodExit(log, "countExpectedAttendees", result);
+        return result;
     }
 
     /**
@@ -363,43 +343,39 @@ public class StatisticsServiceImpl implements StatisticsService {
     private double calculateAverageAttendanceRate(Long structureId) {
         LoggingUtils.logMethodEntry(log, "calculateAverageAttendanceRate", "structureId", structureId);
 
-        try {
-            // Get past events for this structure
-            List<Event> pastEvents = eventRepository.findByStructureIdAndEndDateBeforeAndDeletedFalse(
-                    structureId,
-                    LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()
+        // Get past events for this structure
+        List<Event> pastEvents = eventRepository.findByStructureIdAndEndDateBeforeAndDeletedFalse(
+                structureId,
+                LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()
+        );
+
+        if (pastEvents.isEmpty()) {
+            LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", 0.0);
+            return 0.0;
+        }
+
+        double totalRate = 0.0;
+        int eventCount = 0;
+
+        for (Event event : pastEvents) {
+            // Count used tickets (attendees)
+            long attendees = ticketRepository.countByEventIdAndStatus(event.getId(), TicketStatus.USED);
+
+            // Count total tickets (valid + used)
+            long totalTickets = ticketRepository.countByEventIdAndStatusIn(
+                    event.getId(),
+                    Arrays.asList(TicketStatus.VALID, TicketStatus.USED)
             );
 
-            if (pastEvents.isEmpty()) {
-                LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", 0.0);
-                return 0.0;
+            if (totalTickets > 0) {
+                totalRate += (double) attendees / totalTickets * 100;
+                eventCount++;
             }
-
-            double totalRate = 0.0;
-            int eventCount = 0;
-
-            for (Event event : pastEvents) {
-                // Count used tickets (attendees)
-                long attendees = ticketRepository.countByEventIdAndStatus(event.getId(), TicketStatus.USED);
-
-                // Count total tickets (valid + used)
-                long totalTickets = ticketRepository.countByEventIdAndStatusIn(
-                        event.getId(),
-                        Arrays.asList(TicketStatus.VALID, TicketStatus.USED)
-                );
-
-                if (totalTickets > 0) {
-                    totalRate += (double) attendees / totalTickets * 100;
-                    eventCount++;
-                }
-            }
-
-            double result = eventCount > 0 ? totalRate / eventCount : 0.0;
-            LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
         }
+
+        double result = eventCount > 0 ? totalRate / eventCount : 0.0;
+        LoggingUtils.logMethodExit(log, "calculateAverageAttendanceRate", result);
+        return result;
     }
 
     /**
@@ -408,42 +384,38 @@ public class StatisticsServiceImpl implements StatisticsService {
     private ChartJsDataDto generateTopEventsChart(Long structureId) {
         LoggingUtils.logMethodEntry(log, "generateTopEventsChart", "structureId", structureId);
 
-        try {
-            List<Map<String, Object>> topEvents = statisticsRepository.findTopEventsByTickets(structureId, TOP_EVENTS_LIMIT);
+        List<Map<String, Object>> topEvents = statisticsRepository.findTopEventsByTickets(structureId, TOP_EVENTS_LIMIT);
 
-            List<String> labels = new ArrayList<>();
-            List<Number> data = new ArrayList<>();
-            List<String> backgroundColors = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        List<Number> data = new ArrayList<>();
+        List<String> backgroundColors = new ArrayList<>();
 
-            // Generate random colors for the chart
-            String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"};
+        // Generate random colors for the chart
+        String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"};
 
-            for (int i = 0; i < topEvents.size(); i++) {
-                Map<String, Object> event = topEvents.get(i);
-                labels.add((String) event.get("name"));
-                data.add((Number) event.get("ticket_count"));
-                backgroundColors.add(colors[i % colors.length]);
-            }
-
-            ChartJsDataset dataset = new ChartJsDataset(
-                    "Tickets Sold",
-                    data,
-                    backgroundColors,
-                    "#FFFFFF",
-                    false
-            );
-
-            ChartJsDataDto result = new ChartJsDataDto(
-                    "bar",
-                    labels,
-                    Collections.singletonList(dataset)
-            );
-
-            LoggingUtils.logMethodExit(log, "generateTopEventsChart", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
+        for (int i = 0; i < topEvents.size(); i++) {
+            Map<String, Object> event = topEvents.get(i);
+            labels.add((String) event.get("name"));
+            data.add((Number) event.get("ticket_count"));
+            backgroundColors.add(colors[i % colors.length]);
         }
+
+        ChartJsDataset dataset = new ChartJsDataset(
+                "Tickets Sold",
+                data,
+                backgroundColors,
+                "#FFFFFF",
+                false
+        );
+
+        ChartJsDataDto result = new ChartJsDataDto(
+                "bar",
+                labels,
+                Collections.singletonList(dataset)
+        );
+
+        LoggingUtils.logMethodExit(log, "generateTopEventsChart", result);
+        return result;
     }
 
     /**
@@ -452,42 +424,38 @@ public class StatisticsServiceImpl implements StatisticsService {
     private ChartJsDataDto generateAttendanceByCategoryChart(Long structureId) {
         LoggingUtils.logMethodEntry(log, "generateAttendanceByCategoryChart", "structureId", structureId);
 
-        try {
-            List<Map<String, Object>> attendanceByCategory = statisticsRepository.findAttendanceByCategory(structureId);
+        List<Map<String, Object>> attendanceByCategory = statisticsRepository.findAttendanceByCategory(structureId);
 
-            List<String> labels = new ArrayList<>();
-            List<Number> data = new ArrayList<>();
-            List<String> backgroundColors = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        List<Number> data = new ArrayList<>();
+        List<String> backgroundColors = new ArrayList<>();
 
-            // Generate random colors for the chart
-            String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#FFCD56"};
+        // Generate random colors for the chart
+        String[] colors = {"#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#FFCD56"};
 
-            for (int i = 0; i < attendanceByCategory.size(); i++) {
-                Map<String, Object> category = attendanceByCategory.get(i);
-                labels.add((String) category.get("name"));
-                data.add((Number) category.get("attendee_count"));
-                backgroundColors.add(colors[i % colors.length]);
-            }
-
-            ChartJsDataset dataset = new ChartJsDataset(
-                    "Attendees",
-                    data,
-                    backgroundColors,
-                    "#FFFFFF",
-                    false
-            );
-
-            ChartJsDataDto result = new ChartJsDataDto(
-                    "doughnut",
-                    labels,
-                    Collections.singletonList(dataset)
-            );
-
-            LoggingUtils.logMethodExit(log, "generateAttendanceByCategoryChart", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
+        for (int i = 0; i < attendanceByCategory.size(); i++) {
+            Map<String, Object> category = attendanceByCategory.get(i);
+            labels.add((String) category.get("name"));
+            data.add((Number) category.get("attendee_count"));
+            backgroundColors.add(colors[i % colors.length]);
         }
+
+        ChartJsDataset dataset = new ChartJsDataset(
+                "Attendees",
+                data,
+                backgroundColors,
+                "#FFFFFF",
+                false
+        );
+
+        ChartJsDataDto result = new ChartJsDataDto(
+                "doughnut",
+                labels,
+                Collections.singletonList(dataset)
+        );
+
+        LoggingUtils.logMethodExit(log, "generateAttendanceByCategoryChart", result);
+        return result;
     }
 
     /**

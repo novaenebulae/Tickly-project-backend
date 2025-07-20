@@ -16,8 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -152,7 +152,7 @@ class StructureControllerTest {
     @Test
     void getAllStructures_ShouldReturnPaginatedStructures() {
         // Arrange
-        List<StructureSummaryDto> structures = Arrays.asList(summaryDto);
+        List<StructureSummaryDto> structures = Collections.singletonList(summaryDto);
         Page<StructureSummaryDto> structurePage = new PageImpl<>(structures);
         when(structureService.getAllStructures(any(Pageable.class), any(StructureSearchParamsDto.class))).thenReturn(structurePage);
 
@@ -283,7 +283,7 @@ class StructureControllerTest {
     @Test
     void getAreasByStructureId_ShouldReturnAreasList() {
         // Arrange
-        List<AreaResponseDto> areas = Arrays.asList(areaResponseDto);
+        List<AreaResponseDto> areas = Collections.singletonList(areaResponseDto);
         when(structureService.getAreasByStructureId(structureId)).thenReturn(areas);
 
         // Act
@@ -307,7 +307,7 @@ class StructureControllerTest {
                 .thenReturn(templateResponseDto);
 
         // Act
-        ResponseEntity<AudienceZoneTemplateResponseDto> response = 
+        ResponseEntity<AudienceZoneTemplateResponseDto> response =
                 structureController.createAudienceZoneTemplate(structureId, areaId, templateCreationDto, authentication);
 
         // Assert

@@ -210,8 +210,7 @@ public class EventSecurityService {
     @Transactional(readOnly = true)
     public boolean isOwner(Long eventId, UserDetails principal) {
         // Vérifier si l'utilisateur est un administrateur de structure
-        if (principal instanceof User) {
-            User user = (User) principal;
+        if (principal instanceof User user) {
             if (user.getRole() != null && user.getRole().name().equals("STRUCTURE_ADMINISTRATOR")) {
                 log.debug("Utilisateur {} est un administrateur de structure", user.getUsername());
 

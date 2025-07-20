@@ -53,11 +53,9 @@ public class StructureSecurityService {
             return false;
         }
 
-        User user = (User) authentication.getPrincipal();
-
-        return user.getStructure() != null &&
-                user.getStructure().getId().equals(structureId) &&
-                user.getRole() != UserRole.SPECTATOR;
+        return currentUser.getStructure() != null &&
+                currentUser.getStructure().getId().equals(structureId) &&
+                currentUser.getRole() != UserRole.SPECTATOR;
     }
 
     /**
@@ -68,11 +66,9 @@ public class StructureSecurityService {
      */
     @Transactional(readOnly = true)
     public boolean canCreateStructure(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
             return false;
         }
-
-        User user = (User) authentication.getPrincipal();
 
         // Vérifie si l'utilisateur a le rôle 'ROLE_SPECTATOR', que son email est validé
         // et qu'il n'est pas déjà lié à une structure.

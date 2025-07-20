@@ -1,7 +1,6 @@
 package edu.cda.project.ticklybackend.security;
 
 
-import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
@@ -91,7 +90,7 @@ public class TicketSecurityService {
 
                     if (!isInValidTimeWindow) {
                         log.warn("Tentative de validation du billet {} en dehors de la fenêtre de temps valide. " +
-                                "Heure actuelle: {}, Début de l'événement: {}, Fin de l'événement: {}", 
+                                        "Heure actuelle: {}, Début de l'événement: {}, Fin de l'événement: {}",
                                 ticket.getId(), now, eventStart, eventEnd);
                         return false;
                     }

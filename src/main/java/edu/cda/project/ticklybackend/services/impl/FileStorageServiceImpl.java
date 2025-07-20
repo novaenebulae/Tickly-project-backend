@@ -93,7 +93,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             }
 
             // Générer un nom de fichier unique pour éviter les collisions et les problèmes de sécurité
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+            String uniqueFilename = UUID.randomUUID() + fileExtension;
             log.debug("Nom de fichier unique généré: {}", uniqueFilename);
 
             try {
@@ -132,16 +132,12 @@ public class FileStorageServiceImpl implements FileStorageService {
     private Path buildPath(String filename, String subDirectory) {
         LoggingUtils.logMethodEntry(log, "buildPath", "filename", filename, "subDirectory", subDirectory);
 
-        try {
-            Path subDirPath = StringUtils.hasText(subDirectory) ? Paths.get(subDirectory) : Paths.get("");
-            Path result = this.rootStorageLocation.resolve(subDirPath).resolve(filename).normalize();
-            log.trace("Chemin construit pour le fichier {} dans le sous-répertoire {}: {}", filename, subDirectory, result);
+        Path subDirPath = StringUtils.hasText(subDirectory) ? Paths.get(subDirectory) : Paths.get("");
+        Path result = this.rootStorageLocation.resolve(subDirPath).resolve(filename).normalize();
+        log.trace("Chemin construit pour le fichier {} dans le sous-répertoire {}: {}", filename, subDirectory, result);
 
-            LoggingUtils.logMethodExit(log, "buildPath", result);
-            return result;
-        } finally {
-            // No need to clear context for private methods called by public methods that already handle context
-        }
+        LoggingUtils.logMethodExit(log, "buildPath", result);
+        return result;
     }
 
     @Override

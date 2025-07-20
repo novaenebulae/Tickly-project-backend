@@ -33,8 +33,8 @@ class StatisticsRepositoryImplTest extends AbstractIntegrationTest {
     @InjectMocks
     private StatisticsRepositoryImpl statisticsRepository;
 
-    private Long eventId = 1L;
-    private Long structureId = 1L;
+    private final Long eventId = 1L;
+    private final Long structureId = 1L;
 
     @BeforeEach
     void setUp() {
