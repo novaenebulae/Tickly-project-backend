@@ -63,14 +63,34 @@ FROM structure_types;
 -- Elles n'ont aucune dépendance et doivent être insérées en premier.
 
 INSERT INTO structure_types (id, name, icon)
-VALUES (1, 'Salle de concert', 'icon-concert-hall'),
-       (2, 'Théâtre', 'icon-theater-masks'),
-       (3, 'Opéra', 'icon-opera'),
-       (4, 'Stade / Arène', 'icon-stadium'),
-       (5, 'Centre de congrès / Parc des expositions', 'icon-convention-center'),
-       (6, 'Musée / Galerie d''exposition', 'icon-museum'),
-       (7, 'Cinéma', 'icon-cinema'),
-       (8, 'Café-théâtre / Comédie club', 'icon-comedy-club');
+VALUES (1, 'Salle de concert', 'speaker_group'),
+       (2, 'Théâtre', 'theater_comedy'),
+       (3, 'Opéra', 'music_note'),
+       (4, 'Stade / Arène', 'stadium'),
+       (5, 'Centre de congrès / Parc des expositions', 'corporate_fare'),
+       (6, 'Musée / Galerie d''exposition', 'museum'),
+       (7, 'Cinéma', 'theaters'),
+       (8, 'Café-théâtre / Comédie club', 'mic'),
+       (9, 'Salle de conférence', 'meeting_room'),
+       (10, 'Salle polyvalente / Salle des fêtes', 'celebration'),
+       (11, 'Club / Discothèque', 'nightlife'),
+       (12, 'Site de festival en plein air', 'festival'),
+       (13, 'Palais des sports', 'sports'),
+       (14, 'Salle de réception / Lieu de mariage', 'deck'),
+       (15, 'Péniche événementielle', 'directions_boat'),
+       (16, 'Bar en terrasse / Rooftop', 'local_bar'),
+       (17, 'Studio de production / Plateau TV', 'videocam'),
+       (18, 'Domaine viticole / Vignoble', 'wine_bar'),
+       (19, 'Circuit automobile / Karting', 'sports_score'),
+       (20, 'Théâtre en plein air', 'theater_comedy'),
+       (21, 'Auditorium', 'mic'),
+       (22, 'Centre culturel', 'palette'),
+       (23, 'Hippodrome', 'chess_knight'),
+       (24, 'Casino', 'casino'),
+       (25, 'Halle gourmande / Food court', 'restaurant'),
+       (26, 'Espace d''art / Galerie', 'image'),
+       (27, 'Lieu alternatif / Tiers-lieu', 'hub'),
+       (28, 'Chapiteau / Tente de réception', 'home');
 
 -- ##################################################
 -- # 2. PEUPLEMENT DE LA TABLE `structures`         #

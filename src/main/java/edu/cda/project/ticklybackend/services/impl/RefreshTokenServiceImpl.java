@@ -8,6 +8,7 @@ import edu.cda.project.ticklybackend.services.interfaces.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.expiration.refresh-token-ms}")
     private long refreshTokenDurationMs;
@@ -38,11 +40,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public String createRefreshToken(User user) {
         String rawToken = generateSecureToken();
-        String hashedToken = hashToken(rawToken); // Utiliser la nouvelle méthode de hachage
+        String hashedToken = passwordEncoder.encode(rawToken);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
-                .token(hashedToken) // Stocker le hash SHA-256
+                .token(hashedToken)
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
                 .revoked(false)
                 .build();
@@ -80,8 +82,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
      */
     @Override
     public Optional<RefreshToken> findByToken(String rawToken) {
-        String hashedToken = hashToken(rawToken);
-        return refreshTokenRepository.findByToken(hashedToken);
+        return refreshTokenRepository.findAll().stream()
+                .filter(token -> passwordEncoder.matches(rawToken, token.getToken()))
+                .findFirst();
     }
 
     /**
@@ -134,13 +137,4 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
-    private String hashToken(String rawToken) {
-        try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new RuntimeException("Impossible de trouver l'algorithme SHA-256", e);
-        }
-    }
 }
