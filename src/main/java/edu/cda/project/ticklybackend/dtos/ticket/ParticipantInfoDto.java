@@ -21,7 +21,6 @@ ParticipantInfoDto {
     @Schema(description = "Nom de famille du participant.", example = "Dupont")
     private String lastName;
 
-    @NotBlank(message = "L'email est requis.")
     @Email(message = "L'email doit être valide.")
     @Schema(description = "Email du participant.", example = "jean.dupont@example.com")
     private String email;

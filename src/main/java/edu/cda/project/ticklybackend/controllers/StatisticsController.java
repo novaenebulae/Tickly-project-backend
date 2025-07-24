@@ -61,19 +61,19 @@ public class StatisticsController {
             @Parameter(description = "ID of the structure", required = true)
             @PathVariable Long structureId) {
 
-        log.info("Récupération des statistiques du tableau de bord pour la structure ID: {}", structureId);
+        log.info("Retrieving dashboard statistics for structure ID: {}", structureId);
         try {
             StructureDashboardStatsDto stats = statisticsService.getStructureDashboardStats(structureId);
-            log.info("Statistiques du tableau de bord récupérées avec succès pour la structure ID: {}", structureId);
+            log.info("Dashboard statistics successfully retrieved for structure ID: {}", structureId);
             return ResponseEntity.ok(stats);
         } catch (AccessDeniedException e) {
-            log.warn("Accès refusé lors de la récupération des statistiques pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.warn("Access denied when retrieving statistics for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         } catch (ResourceNotFoundException e) {
-            log.error("Structure non trouvée lors de la récupération des statistiques - ID: {}: {}", structureId, e.getMessage());
+            log.error("Structure not found when retrieving statistics - ID: {}: {}", structureId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de la récupération des statistiques pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.error("Unexpected error when retrieving statistics for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         }
     }
@@ -103,19 +103,19 @@ public class StatisticsController {
             @Parameter(description = "ID of the event", required = true)
             @PathVariable Long eventId) {
 
-        log.info("Récupération des statistiques pour l'événement ID: {}", eventId);
+        log.info("Retrieving statistics for event ID: {}", eventId);
         try {
             EventStatisticsDto stats = statisticsService.getEventStats(eventId);
-            log.info("Statistiques récupérées avec succès pour l'événement ID: {}", eventId);
+            log.info("Statistics successfully retrieved for event ID: {}", eventId);
             return ResponseEntity.ok(stats);
         } catch (AccessDeniedException e) {
-            log.warn("Accès refusé lors de la récupération des statistiques pour l'événement ID: {}: {}", eventId, e.getMessage());
+            log.warn("Access denied when retrieving statistics for event ID: {}: {}", eventId, e.getMessage());
             throw e;
         } catch (ResourceNotFoundException e) {
-            log.error("Événement non trouvé lors de la récupération des statistiques - ID: {}: {}", eventId, e.getMessage());
+            log.error("Event not found when retrieving statistics - ID: {}: {}", eventId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de la récupération des statistiques pour l'événement ID: {}: {}", eventId, e.getMessage());
+            log.error("Unexpected error when retrieving statistics for event ID: {}: {}", eventId, e.getMessage());
             throw e;
         }
     }

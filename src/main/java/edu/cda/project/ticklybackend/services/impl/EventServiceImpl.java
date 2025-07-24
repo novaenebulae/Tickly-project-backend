@@ -6,9 +6,11 @@ import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSummaryDto;
 import edu.cda.project.ticklybackend.enums.EventStatus;
+import edu.cda.project.ticklybackend.enums.TicketStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.event.EventAddressMapper;
+import edu.cda.project.ticklybackend.mappers.event.EventAudienceZoneMapper;
 import edu.cda.project.ticklybackend.mappers.event.EventMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
@@ -62,6 +64,7 @@ public class EventServiceImpl implements EventService {
     private final FriendshipRepository friendshipRepository;
     private final EventAddressMapper addressMapper;
     private final EventSecurityService eventSecurityService;
+    private final EventAudienceZoneMapper eventAudienceZoneMapper;
 
     private static final String MAIN_PHOTO_SUBDIR = "events/main";
     private static final String GALLERY_SUBDIR = "events/gallery";
@@ -122,8 +125,8 @@ public class EventServiceImpl implements EventService {
 
             throw new BadRequestException(
                     "Impossible de créer l'événement : conflit avec d'autres événements programmés " +
-                    "dans les mêmes zones et créneaux horaires. " +
-                    "Événements en conflit : " + conflictingEventNames
+                            "dans les mêmes zones et créneaux horaires. " +
+                            "Événements en conflit : " + conflictingEventNames
             );
         }
 
@@ -361,6 +364,23 @@ public class EventServiceImpl implements EventService {
         return zones;
     }
 
+    /**
+     * Calcule et enrichit les DTOs avec la capacité restante
+     */
+    private List<EventAudienceZoneDto> enrichAudienceZonesWithRemainingCapacity(List<EventAudienceZone> zones) {
+        return zones.stream().map(zone -> {
+            // Mapping de base via MapStruct
+            EventAudienceZoneDto dto = eventAudienceZoneMapper.toDto(zone);
+
+            // Calcul de la capacité restante
+            Long soldTickets = ticketRepository.countByEventAudienceZoneAndStatus(zone, TicketStatus.VALID);
+            Integer remaining = zone.getAllocatedCapacity() - soldTickets.intValue();
+            dto.setRemainingCapacity(Math.max(0, remaining));
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
 
     /**
      * Gère la logique complexe de mise à jour des zones d'audience d'un événement.
@@ -444,11 +464,45 @@ public class EventServiceImpl implements EventService {
         Specification<Event> secureSpec = eventSecurityService.addSecurityFilters(baseSpec);
 
         Page<Event> eventPage = eventRepository.findAll(secureSpec, pageable);
+
+        // Check and update status for each event
+        for (Event event : eventPage.getContent()) {
+            if (checkAndUpdateEventStatus(event)) {
+                log.info("Event status automatically updated to COMPLETED for event ID: {}", event.getId());
+            }
+        }
+
         Page<EventSummaryDto> dtoPage = eventPage.map(eventMapper::toSummaryDto);
 
         PaginatedResponseDto<EventSummaryDto> result = new PaginatedResponseDto<>(dtoPage);
         LoggingUtils.logMethodExit(log, "searchEvents", result);
         return result;
+    }
+
+    /**
+     * Checks if an event is finished (end date is in the past) and updates its status to COMPLETED if necessary.
+     * Only events with status PUBLISHED will be updated.
+     *
+     * @param event The event to check and potentially update
+     * @return true if the event status was updated, false otherwise
+     */
+    private boolean checkAndUpdateEventStatus(Event event) {
+        // Only check PUBLISHED events
+        if (event.getStatus() != EventStatus.PUBLISHED) {
+            return false;
+        }
+
+        // Check if the event is finished (end date is in the past)
+        java.time.Instant now = java.time.Instant.now();
+        if (event.getEndDate().isBefore(now)) {
+            // Update the event status to COMPLETED
+            event.setStatus(EventStatus.COMPLETED);
+            eventRepository.save(event);
+            log.info("Event ID: {} automatically marked as COMPLETED as it has finished", event.getId());
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -477,6 +531,12 @@ public class EventServiceImpl implements EventService {
         // If still not found, throw exception
         Event event = eventOptional.orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
+        // Check if the event is finished and update its status to COMPLETED if necessary
+        boolean statusUpdated = checkAndUpdateEventStatus(event);
+        if (statusUpdated) {
+            log.info("Event status automatically updated to COMPLETED for event ID: {}", eventId);
+        }
+
         // Vérification de sécurité pour l'accès aux détails
         boolean canAccess = eventSecurityService.canAccessEventDetails(
                 eventId,
@@ -490,6 +550,9 @@ public class EventServiceImpl implements EventService {
         }
 
         EventDetailResponseDto result = eventMapper.toDetailDto(event);
+        List<EventAudienceZoneDto> enrichedZones = enrichAudienceZonesWithRemainingCapacity(event.getAudienceZones());
+        result.setAudienceZones(enrichedZones);
+
         LoggingUtils.logMethodExit(log, "getEventById", result);
         return result;
     }

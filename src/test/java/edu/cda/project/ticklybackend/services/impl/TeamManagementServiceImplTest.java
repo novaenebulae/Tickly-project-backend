@@ -22,7 +22,7 @@ import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
-import edu.cda.project.ticklybackend.services.interfaces.TokenService;
+import edu.cda.project.ticklybackend.services.interfaces.VerificationTokenService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class TeamManagementServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private TokenService tokenService;
+    private VerificationTokenService verificationTokenService;
 
     @Mock
     private MailingService mailingService;
@@ -228,7 +228,7 @@ public class TeamManagementServiceImplTest {
         when(userRepository.findByEmail("new.member@example.com")).thenReturn(Optional.of(invitee));
         when(memberRepository.existsByTeamIdAndEmail(testTeam.getId(), "new.member@example.com")).thenReturn(false);
         when(memberRepository.save(any(TeamMember.class))).thenReturn(newMember);
-        when(tokenService.createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString())).thenReturn(invitationToken);
+        when(verificationTokenService.createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString())).thenReturn(invitationToken);
         doNothing().when(mailingService).sendTeamInvitation(anyString(), anyString(), anyString(), anyString());
 
         // Act
@@ -242,7 +242,7 @@ public class TeamManagementServiceImplTest {
         verify(userRepository, times(1)).findByEmail("new.member@example.com");
         verify(memberRepository, times(1)).existsByTeamIdAndEmail(testTeam.getId(), "new.member@example.com");
         verify(memberRepository, times(1)).save(any(TeamMember.class));
-        verify(tokenService, times(1)).createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString());
+        verify(verificationTokenService, times(1)).createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString());
         verify(mailingService, times(1)).sendTeamInvitation(anyString(), anyString(), anyString(), anyString());
     }
 
@@ -362,7 +362,7 @@ public class TeamManagementServiceImplTest {
                 "{\"memberId\": " + memberId + "}"
         );
 
-        when(tokenService.validateToken("valid-invitation-token", TokenType.TEAM_INVITATION)).thenReturn(invitationToken);
+        when(verificationTokenService.validateToken("valid-invitation-token", TokenType.TEAM_INVITATION)).thenReturn(invitationToken);
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testTeamMember));
 
@@ -380,10 +380,10 @@ public class TeamManagementServiceImplTest {
 
         when(userRepository.findUserWithStructureById(userId)).thenReturn(Optional.of(updatedUser));
 
-        when(jwtTokenProvider.generateToken(updatedUser)).thenReturn("new-jwt-token");
+        when(jwtTokenProvider.generateAccessToken(updatedUser)).thenReturn("new-jwt-token");
         when(jwtTokenProvider.getExpirationInMillis()).thenReturn(3600000L);
 
-        doNothing().when(tokenService).markTokenAsUsed(invitationToken);
+        doNothing().when(verificationTokenService).markTokenAsUsed(invitationToken);
 
         // Act
         InvitationAcceptanceResponseDto result = teamManagementService.acceptInvitation("valid-invitation-token");
@@ -397,15 +397,15 @@ public class TeamManagementServiceImplTest {
         assertEquals("Invitation acceptée avec succès ! Vous êtes maintenant membre de l'équipe.", result.getMessage());
 
         // Verify
-        verify(tokenService, times(1)).validateToken("valid-invitation-token", TokenType.TEAM_INVITATION);
+        verify(verificationTokenService, times(1)).validateToken("valid-invitation-token", TokenType.TEAM_INVITATION);
         verify(memberRepository, times(1)).findById(memberId);
         verify(userRepository, times(1)).updateUserTypeAndStructure(
                 eq(userId), anyString(), anyString(), eq(structureId)
         );
         verify(userRepository, times(1)).findUserWithStructureById(userId);
         verify(memberRepository, times(1)).save(testTeamMember);
-        verify(tokenService, times(1)).markTokenAsUsed(invitationToken);
-        verify(jwtTokenProvider, times(1)).generateToken(updatedUser);
+        verify(verificationTokenService, times(1)).markTokenAsUsed(invitationToken);
+        verify(jwtTokenProvider, times(1)).generateAccessToken(updatedUser);
     }
 
     @Test

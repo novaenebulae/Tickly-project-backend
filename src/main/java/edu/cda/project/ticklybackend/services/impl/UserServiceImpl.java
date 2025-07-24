@@ -25,8 +25,8 @@ import edu.cda.project.ticklybackend.repositories.user.UserFavoriteStructureRepo
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
-import edu.cda.project.ticklybackend.services.interfaces.TokenService;
 import edu.cda.project.ticklybackend.services.interfaces.UserService;
+import edu.cda.project.ticklybackend.services.interfaces.VerificationTokenService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
     private final StructureRepository structureRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final AuthUtils authUtils;
-    private final TokenService tokenService;
+    private final VerificationTokenService verificationTokenService;
     private final MailingService mailingService;
     private final VerificationTokenRepository tokenRepository; // Ajouté pour la suppression en cascade
     private final TicketRepository ticketRepository;
@@ -262,7 +262,7 @@ public class UserServiceImpl implements UserService {
 
                 // S'il est le seul admin (ou si le compte est 0 pour une raison quelconque, on est prudent), on bloque.
                 if (adminCount <= 1) {
-                    log.warn("Suppression de compte refusée pour l'utilisateur ID: {} car il est le seul administrateur de la structure ID: {}", 
+                    log.warn("Suppression de compte refusée pour l'utilisateur ID: {} car il est le seul administrateur de la structure ID: {}",
                             currentUser.getId(), managedStructure.getId());
                     throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
                             + managedStructure.getName() + "'. Avant de supprimer votre compte, vous devez soit :\n" +
@@ -275,7 +275,7 @@ public class UserServiceImpl implements UserService {
 
         // Si le garde-fou est passé, on continue le processus de demande de suppression
         log.debug("Création du token de suppression de compte pour l'utilisateur ID: {}", currentUser.getId());
-        VerificationToken deletionToken = tokenService.createToken(currentUser, TokenType.ACCOUNT_DELETION_CONFIRMATION, Duration.ofHours(1), null);
+        VerificationToken deletionToken = verificationTokenService.createToken(currentUser, TokenType.ACCOUNT_DELETION_CONFIRMATION, Duration.ofHours(1), null);
         String deletionLink = "/users/confirm-deletion?token=" + deletionToken.getToken();
 
         log.debug("Envoi de l'email de confirmation de suppression de compte à {}", currentUser.getEmail());
@@ -286,7 +286,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void confirmAccountDeletion(String tokenString) {
-        VerificationToken token = tokenService.validateToken(tokenString, TokenType.ACCOUNT_DELETION_CONFIRMATION);
+        VerificationToken token = verificationTokenService.validateToken(tokenString, TokenType.ACCOUNT_DELETION_CONFIRMATION);
         User user = token.getUser();
 
         log.info("Début de l'anonymisation du compte pour l'utilisateur: {}", user.getEmail());

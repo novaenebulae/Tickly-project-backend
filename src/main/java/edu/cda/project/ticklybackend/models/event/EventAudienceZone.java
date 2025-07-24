@@ -18,7 +18,6 @@ public class EventAudienceZone {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // RELATION ACTIVÉE ET MODIFIÉE
     /**
      * Link to the template this zone is based on.
      * This is a mandatory, non-nullable relationship.

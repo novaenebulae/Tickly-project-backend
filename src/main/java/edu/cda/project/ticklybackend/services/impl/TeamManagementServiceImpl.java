@@ -25,7 +25,7 @@ import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.TeamManagementService;
-import edu.cda.project.ticklybackend.services.interfaces.TokenService;
+import edu.cda.project.ticklybackend.services.interfaces.VerificationTokenService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import jakarta.transaction.Transactional;
@@ -47,7 +47,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
     private final TeamMemberRepository memberRepository;
     private final StructureRepository structureRepository;
     private final UserRepository userRepository;
-    private final TokenService tokenService;
+    private final VerificationTokenService verificationTokenService;
     private final MailingService mailingService;
     private final TeamMemberMapper memberMapper;
     private final FileStorageService fileStorageService;
@@ -141,7 +141,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             String payload = "{\"memberId\": " + savedMember.getId() + "}";
 
             log.debug("Création d'un token d'invitation pour le membre ID: {}", savedMember.getId());
-            VerificationToken invitationToken = tokenService.createToken(savedMember.getUser(), TokenType.TEAM_INVITATION, Duration.ofDays(7), payload);
+            VerificationToken invitationToken = verificationTokenService.createToken(savedMember.getUser(), TokenType.TEAM_INVITATION, Duration.ofDays(7), payload);
 
             String invitationLink = "/team/accept-invitation?token=" + invitationToken.getToken();
             log.debug("Envoi de l'email d'invitation à: {}", inviteDto.getEmail());
@@ -165,7 +165,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
         try {
             log.debug("Validation du token d'invitation");
             // 1. Valider le token d'invitation
-            VerificationToken invitationToken = tokenService.validateToken(token, TokenType.TEAM_INVITATION);
+            VerificationToken invitationToken = verificationTokenService.validateToken(token, TokenType.TEAM_INVITATION);
 
             // 2. Parser le payload pour récupérer le memberId
             String payload = invitationToken.getPayload();
@@ -205,7 +205,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
             // 5. Vérifier que l'email correspond
             if (!invitation.getEmail().equals(currentUser.getEmail())) {
-                log.warn("Email de l'invitation ({}) ne correspond pas à l'email de l'utilisateur ({})", 
+                log.warn("Email de l'invitation ({}) ne correspond pas à l'email de l'utilisateur ({})",
                         invitation.getEmail(), currentUser.getEmail());
                 throw new BadRequestException("Cette invitation n'est pas destinée à votre adresse email.");
             }
@@ -227,12 +227,12 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             // 7. Récupérer les informations de la structure
             Structure structure = invitation.getTeam().getStructure();
             UserRole newRole = invitation.getRole();
-            log.debug("Structure trouvée: {} (ID: {}), nouveau rôle: {}", 
+            log.debug("Structure trouvée: {} (ID: {}), nouveau rôle: {}",
                     structure.getName(), structure.getId(), newRole);
 
             // 8. MISE À JOUR DIRECTE : Transformer l'utilisateur via requête native
             String discriminatorValue = getDiscriminatorValueForRole(newRole);
-            log.debug("Mise à jour de l'utilisateur ID: {} vers discriminateur: {}, rôle: {}, structure: {}", 
+            log.debug("Mise à jour de l'utilisateur ID: {} vers discriminateur: {}, rôle: {}, structure: {}",
                     currentUser.getId(), discriminatorValue, newRole.name(), structure.getId());
 
             int updateCount = userRepository.updateUserTypeAndStructure(
@@ -266,11 +266,11 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
             // 11. Marquer le token comme utilisé
             log.debug("Marquage du token comme utilisé");
-            tokenService.markTokenAsUsed(invitationToken);
+            verificationTokenService.markTokenAsUsed(invitationToken);
 
             // 12. GÉNÉRER LE JWT AVEC L'UTILISATEUR TRANSFORMÉ
             log.debug("Génération du nouveau JWT pour l'utilisateur ID: {}", updatedUser.getId());
-            String newJwtToken = jwtTokenProvider.generateToken(updatedUser);
+            String newJwtToken = jwtTokenProvider.generateAccessToken(updatedUser);
 
             log.info("Invitation acceptée pour {} dans la structure {} avec le rôle {}. Token généré avec structureId: {}",
                     updatedUser.getEmail(), structure.getName(), newRole,
@@ -339,7 +339,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             if (member.getUser() != null) {
                 // MISE À JOUR DIRECTE : Mettre à jour le rôle ET le discriminateur via requête native
                 String discriminatorValue = getDiscriminatorValueForRole(roleDto.getRole());
-                log.debug("Mise à jour du type d'utilisateur ID: {} vers discriminateur: {}, rôle: {}", 
+                log.debug("Mise à jour du type d'utilisateur ID: {} vers discriminateur: {}, rôle: {}",
                         member.getUser().getId(), discriminatorValue, roleDto.getRole().name());
 
                 int updateCount = userRepository.updateUserTypeAndRole(
@@ -352,7 +352,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                 // This allows the test to pass while we investigate the actual issue
                 // In a real environment, we would want to keep this check
                 if (updateCount != 1) {
-                    log.warn("Mise à jour du rôle de l'utilisateur ID: {} a retourné un compte différent de 1: {} - Continuons quand même pour le test", 
+                    log.warn("Mise à jour du rôle de l'utilisateur ID: {} a retourné un compte différent de 1: {} - Continuons quand même pour le test",
                             member.getUser().getId(), updateCount);
                 }
 
@@ -400,11 +400,11 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             // Check if this is the last admin and explicitly throw BadRequestException
             if (member.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
                 long adminCount = countAdminsForStructure(member.getTeam().getStructure().getId());
-                log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}", 
+                log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}",
                         member.getTeam().getStructure().getId(), adminCount);
 
                 if (adminCount <= 1) {
-                    log.warn("Tentative de suppression du dernier administrateur de la structure ID: {}", 
+                    log.warn("Tentative de suppression du dernier administrateur de la structure ID: {}",
                             member.getTeam().getStructure().getId());
                     throw new BadRequestException("L'administrateur principal de la structure ne peut pas être supprimé de l'équipe. " +
                             "Si vous souhaitez quitter l'équipe, vous devez d'abord promouvoir un autre membre au rôle d'administrateur " +
@@ -421,14 +421,14 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
                     // For testing, we'll skip this check
                     if (updateCount != 1) {
-                        log.warn("La conversion de l'utilisateur ID: {} en SPECTATOR a retourné un compte différent de 1: {} - Continuons quand même pour le test", 
+                        log.warn("La conversion de l'utilisateur ID: {} en SPECTATOR a retourné un compte différent de 1: {} - Continuons quand même pour le test",
                                 user.getId(), updateCount);
                     }
                     userRepository.flush();
                     log.info("Utilisateur {} converti avec succès en SPECTATOR", user.getEmail());
                 } catch (Exception e) {
                     // For testing, we'll just log the error and continue
-                    log.warn("Erreur lors de la conversion de l'utilisateur ID: {} en SPECTATOR: {} - Continuons quand même pour le test", 
+                    log.warn("Erreur lors de la conversion de l'utilisateur ID: {} en SPECTATOR: {} - Continuons quand même pour le test",
                             user.getId(), e.getMessage());
                 }
             }

@@ -131,7 +131,7 @@ public class StructureServiceImplTest {
         when(userRepository.findById(validatedUser.getId())).thenReturn(Optional.of(validatedUser));
 
         // Mock JWT token generation
-        when(jwtTokenProvider.generateToken(validatedUser)).thenReturn("mock-jwt-token");
+        when(jwtTokenProvider.generateAccessToken(validatedUser)).thenReturn("mock-jwt-token");
         when(jwtTokenProvider.getExpirationInMillis()).thenReturn(3600000L);
 
         // Act

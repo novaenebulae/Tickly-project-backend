@@ -5,7 +5,6 @@ import edu.cda.project.ticklybackend.dtos.auth.PasswordResetDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserLoginDto;
 import edu.cda.project.ticklybackend.dtos.auth.UserRegistrationDto;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
-import edu.cda.project.ticklybackend.models.user.User;
 
 
 public interface AuthService {
@@ -45,10 +44,19 @@ public interface AuthService {
     void resetPassword(PasswordResetDto passwordResetDto);
 
     /**
-     * Rafraîchit le token JWT de l'utilisateur actuel.
+     * Rafraîchit le token JWT en utilisant un refresh token.
+     * Vérifie la validité du refresh token, le révoque, et génère un nouveau pair de tokens.
      *
-     * @param user L'utilisateur actuel.
-     * @return Un DTO de réponse d'authentification avec un nouveau token JWT.
+     * @param refreshToken Le refresh token à utiliser pour obtenir un nouveau token JWT.
+     * @return Un DTO de réponse d'authentification avec un nouveau token JWT et un nouveau refresh token.
+     * @throws edu.cda.project.ticklybackend.exceptions.TokenRefreshException si le refresh token est invalide, expiré ou révoqué.
      */
-    AuthResponseDto refreshToken(User user);
+    AuthResponseDto refreshToken(String refreshToken);
+
+    /**
+     * Déconnecte l'utilisateur en révoquant son refresh token.
+     *
+     * @param refreshToken Le refresh token à révoquer.
+     */
+    void logout(String refreshToken);
 }

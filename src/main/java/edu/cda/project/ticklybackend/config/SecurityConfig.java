@@ -45,7 +45,7 @@ public class SecurityConfig {
     };
 
     private static final String[] PUBLIC_DELETE_URLS = {
-            "/api/v1/users/confirm-deletion"
+            "/api/v1/users/confirm-deletion",
     };
 
 

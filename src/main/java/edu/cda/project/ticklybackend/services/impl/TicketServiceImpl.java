@@ -5,6 +5,7 @@ import edu.cda.project.ticklybackend.dtos.statistics.EventTicketStatisticsDto;
 import edu.cda.project.ticklybackend.dtos.ticket.*;
 import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.enums.TicketStatus;
+import edu.cda.project.ticklybackend.exceptions.AccessDeniedException;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.ticket.TicketMapper;
@@ -38,6 +39,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -74,6 +76,14 @@ public class TicketServiceImpl implements TicketService {
             Event event = eventRepository.findById(requestDto.getEventId())
                     .orElseThrow(() -> new ResourceNotFoundException("Événement avec ID " + requestDto.getEventId() + " non trouvé."));
 
+            // Vérification que l'événement n'a pas encore commencé
+            Instant now = Instant.now();
+            if (event.getStartDate().isBefore(now) || event.getStartDate().equals(now)) {
+                log.warn("Tentative de réservation pour un événement déjà commencé. Événement ID: {}, Date de début: {}, Heure actuelle: {}",
+                        event.getId(), event.getStartDate(), now);
+                throw new BadRequestException("Impossible de réserver des billets pour un événement qui a déjà commencé");
+            }
+
             // Récupérer la zone d'audience directement depuis l'événement
             EventAudienceZone zone = event.getAudienceZones().stream()
                     .filter(audienceZone -> audienceZone.getId().equals(requestDto.getAudienceZoneId()))
@@ -89,7 +99,12 @@ public class TicketServiceImpl implements TicketService {
             }
 
             // --- Vérification de la capacité ---
-            long existingTickets = ticketRepository.countByEventAudienceZoneId(zone.getId());
+            // On compte uniquement les billets VALID et USED pour vérifier la capacité
+            // Les billets CANCELLED ne sont pas comptés, ce qui libère de la capacité
+            long existingTickets = ticketRepository.countByEventAudienceZoneIdAndStatusIn(
+                    zone.getId(),
+                    Arrays.asList(TicketStatus.VALID, TicketStatus.USED)
+            );
             if (existingTickets + requestDto.getParticipants().size() > zone.getAllocatedCapacity()) {
                 throw new BadRequestException("Capacité insuffisante dans la zone sélectionnée.");
             }
@@ -174,19 +189,87 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    /**
+     * Annule une réservation et tous les billets associés.
+     * Les billets annulés libèrent des places pour l'événement.
+     * Seul le propriétaire de la réservation peut l'annuler.
+     *
+     * @param reservationId L'ID de la réservation à annuler.
+     * @return true si l'annulation a réussi, false sinon.
+     */
     @Override
-    public List<TicketResponseDto> getMyTickets() {
-        LoggingUtils.logMethodEntry(log, "getMyTickets");
+    @Transactional
+    public boolean cancelReservation(Long reservationId) {
+        LoggingUtils.logMethodEntry(log, "cancelReservation", "reservationId", reservationId);
+
+        try {
+
+            Reservation reservation = this.reservationRepository.findById(reservationId).orElseThrow(() -> new ResourceNotFoundException("Réservation avec ID " + reservationId + " non trouvée."));
+
+            // Vérifier que l'utilisateur actuel est le propriétaire de la réservation
+            User currentUser = authUtils.getCurrentAuthenticatedUser();
+            if (currentUser == null || !reservation.getUser().getId().equals(currentUser.getId())) {
+                log.warn("Tentative d'annulation d'une réservation par un utilisateur non autorisé. Réservation ID: {}, Utilisateur ID: {}",
+                        reservationId, currentUser != null ? currentUser.getId() : "non authentifié");
+                throw new AccessDeniedException("Vous n'êtes pas autorisé à annuler cette réservation");
+            }
+
+            // Récupérer tous les billets de la réservation
+            List<Ticket> tickets = reservation.getTickets();
+            if (tickets.isEmpty()) {
+                log.warn("Aucun billet trouvé pour la réservation ID: {}", reservationId);
+                return false;
+            }
+
+            // Vérifier que les billets peuvent être annulés (ils doivent être VALID)
+            for (Ticket ticket : tickets) {
+                if (ticket.getStatus() != TicketStatus.VALID) {
+                    log.warn("Impossible d'annuler la réservation ID: {} car le billet ID: {} a le statut: {}",
+                            reservationId, ticket.getId(), ticket.getStatus());
+                    throw new BadRequestException("Impossible d'annuler la réservation car certains billets ont déjà été utilisés ou annulés");
+                }
+            }
+
+            // Annuler tous les billets
+            for (Ticket ticket : tickets) {
+                ticket.setStatus(TicketStatus.CANCELLED);
+                ticketRepository.save(ticket);
+                log.debug("Billet ID: {} annulé", ticket.getId());
+            }
+
+            log.info("Réservation ID: {} annulée avec succès. {} billets annulés", reservationId, tickets.size());
+            LoggingUtils.logMethodExit(log, "cancelReservation", true);
+            return true;
+
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de l'annulation de la réservation avec l'id: " + reservationId, e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
+    }
+
+    @Override
+    public List<ReservationConfirmationDto> getMyReservations() {
+        LoggingUtils.logMethodEntry(log, "getMyReservations");
 
         try {
             User currentUser = authUtils.getCurrentAuthenticatedUser();
             LoggingUtils.setUserId(currentUser.getId());
 
-            List<Ticket> tickets = ticketRepository.findByUserId(currentUser.getId());
-            List<TicketResponseDto> result = buildTicketResponseDtoList(tickets);
+            List<Reservation> reservations = reservationRepository.findAllByUserId(currentUser.getId());
+            List<ReservationConfirmationDto> confirmationDtos = new ArrayList<>();
 
-            LoggingUtils.logMethodExit(log, "getMyTickets", result);
-            return result;
+            reservations.forEach(reservation -> {
+                ReservationConfirmationDto confirmationDto = new ReservationConfirmationDto();
+                confirmationDto.setReservationId(reservation.getId());
+                confirmationDto.setReservationDate(ZonedDateTime.ofInstant(reservation.getReservationDate(), ZoneOffset.UTC));
+                confirmationDto.setTickets(buildTicketResponseDtoList(reservation.getTickets()));
+                confirmationDtos.add(confirmationDto);
+            });
+
+            LoggingUtils.logMethodExit(log, "getMyReservations", reservations);
+            return confirmationDtos;
         } finally {
             LoggingUtils.clearContext();
         }

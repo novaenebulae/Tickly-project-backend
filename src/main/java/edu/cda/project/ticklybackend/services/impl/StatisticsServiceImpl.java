@@ -156,10 +156,18 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             // Calculate KPIs
             log.debug("Calcul des KPIs pour l'événement ID: {}", eventId);
-            double fillPercentage = calculateFillPercentage(zoneFillRates);
             long uniqueReservationAmount = statisticsRepository.countUniqueReservationsByEventId(eventId);
             long attributedTicketsAmount = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
             long scannedTicketsNumber = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
+            
+            // Calculate total capacity from zone fill rates
+            int totalCapacity = zoneFillRates.stream().mapToInt(ZoneFillRateDataPointDto::getCapacity).sum();
+            
+            // Calculate fill percentage as the percentage of valid and used tickets on the total capacity
+            double fillPercentage = totalCapacity > 0 
+                ? (double) (attributedTicketsAmount + scannedTicketsNumber) / totalCapacity * 100 
+                : 0.0;
+                
             log.debug("KPIs calculés pour l'événement ID: {}: taux de remplissage={}%, réservations uniques={}, tickets attribués={}, tickets scannés={}",
                     eventId, fillPercentage, uniqueReservationAmount, attributedTicketsAmount, scannedTicketsNumber);
 
@@ -242,38 +250,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    /**
-     * Calculate the overall fill percentage for an event.
-     * This is the ratio of tickets sold to total capacity across all zones.
-     *
-     * @param zoneFillRates List of zone fill rate data points
-     * @return The fill percentage as a value between 0 and 100
-     */
-    private double calculateFillPercentage(List<ZoneFillRateDataPointDto> zoneFillRates) {
-        LoggingUtils.logMethodEntry(log, "calculateFillPercentage", "zoneFillRates.size", zoneFillRates != null ? zoneFillRates.size() : 0);
-
-        if (zoneFillRates.isEmpty()) {
-            LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
-            return 0.0;
-        }
-
-        int totalCapacity = 0;
-        long totalTicketsSold = 0;
-
-        for (ZoneFillRateDataPointDto zone : zoneFillRates) {
-            totalCapacity += zone.getCapacity();
-            totalTicketsSold += zone.getTicketsSold();
-        }
-
-        if (totalCapacity == 0) {
-            LoggingUtils.logMethodExit(log, "calculateFillPercentage", 0.0);
-            return 0.0;
-        }
-
-        double result = (double) totalTicketsSold / totalCapacity * 100;
-        LoggingUtils.logMethodExit(log, "calculateFillPercentage", result);
-        return result;
-    }
 
     /**
      * Calculate the percentage of used tickets compared to total tickets.

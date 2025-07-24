@@ -28,12 +28,12 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Gestion des Utilisateurs", description = "Endpoints pour gérer les profils utilisateurs et les favoris.")
+@Tag(name = "User Management", description = "Endpoints for managing user profiles and favorites.")
 public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "Récupérer le profil de l'utilisateur authentifié")
+    @Operation(summary = "Get the authenticated user's profile")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -49,7 +49,7 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Mettre à jour le profil de l'utilisateur authentifié")
+    @Operation(summary = "Update the authenticated user's profile")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
     @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -65,7 +65,7 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Uploader ou mettre à jour l'avatar de l'utilisateur authentifié")
+    @Operation(summary = "Upload or update the authenticated user's avatar")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = FileUploadResponseDto.class)))
     @PostMapping(value = "/me/avatar", consumes = {"multipart/form-data"})
     @PreAuthorize("isAuthenticated()")
@@ -82,27 +82,7 @@ public class UserController {
         }
     }
 
-//    @Operation(summary = "Récupérer le profil d'un utilisateur par ID (Admin)",
-//            description = "Nécessite le rôle SYSTEM_ADMINISTRATOR.")
-//    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
-//    @GetMapping("/{userId}")
-//    @PreAuthorize("hasRole('SYSTEM_ADMINISTRATOR')")
-//    public ResponseEntity<UserProfileResponseDto> getUserProfileById(@PathVariable Long userId) {
-//        return ResponseEntity.ok(userService.getUserProfile(userId));
-//    }
-//
-//    @Operation(summary = "Rechercher des utilisateurs")
-//    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Page.class)))
-//    // Page<UserSearchResponseDto>
-//    @GetMapping("/search")
-//    @PreAuthorize("isAuthenticated()")
-//    public ResponseEntity<Page<UserSearchResponseDto>> searchUsers(
-//            @RequestParam(required = false) String query,
-//            @ParameterObject Pageable pageable) {
-//        return ResponseEntity.ok(userService.searchUsers(query, pageable));
-//    }
-
-    @Operation(summary = "Lister les structures favorites de l'utilisateur authentifié")
+    @Operation(summary = "List the authenticated user's favorite structures")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = List.class)))
     // List<UserFavoriteStructureDto>
     @GetMapping("/me/favorites/structures")
@@ -119,7 +99,7 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Ajouter une structure aux favoris de l'utilisateur authentifié")
+    @Operation(summary = "Add a structure to the authenticated user's favorites")
     @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = UserFavoriteStructureDto.class)))
     @PostMapping("/me/favorites/structures")
     @PreAuthorize("isAuthenticated()")
@@ -136,12 +116,12 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Retirer une structure des favoris de l'utilisateur authentifié")
+    @Operation(summary = "Remove a structure from the authenticated user's favorites")
     @ApiResponse(responseCode = "204")
     @DeleteMapping("/me/favorites/structures/{structureId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeMyFavoriteStructure(
-            @Parameter(description = "ID de la structure à retirer des favoris") @PathVariable Long structureId) {
+            @Parameter(description = "ID of the structure to remove from favorites") @PathVariable Long structureId) {
         LoggingUtils.logMethodEntry(log, "removeMyFavoriteStructure", "structureId", structureId);
         try {
             userService.removeCurrentUserFavoriteStructure(structureId);
@@ -154,7 +134,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    @Operation(summary = "Demander la suppression de mon compte", description = "Lance le processus de suppression de compte en envoyant un e-mail de confirmation. La suppression n'est pas immédiate.")
+    @Operation(summary = "Request account deletion", description = "Initiates the account deletion process by sending a confirmation email. Deletion is not immediate.")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> requestAccountDeletion() {
         LoggingUtils.logMethodEntry(log, "requestAccountDeletion");
@@ -169,7 +149,7 @@ public class UserController {
     }
 
     @DeleteMapping("/confirm-deletion")
-    @Operation(summary = "Confirmer la suppression du compte", description = "Supprime définitivement le compte et les données associées en utilisant le token reçu par e-mail. Cette action est irréversible.")
+    @Operation(summary = "Confirm account deletion", description = "Permanently deletes the account and associated data using the token received by email. This action is irreversible.")
     public ResponseEntity<Void> confirmAccountDeletion(@RequestParam("token") String token) {
         LoggingUtils.logMethodEntry(log, "confirmAccountDeletion", "token", token);
         try {

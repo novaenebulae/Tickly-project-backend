@@ -29,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class TokenServiceImplTest {
+class VerificationTokenServiceImplTest {
 
     @Mock
     private VerificationTokenRepository tokenRepository;
@@ -38,7 +38,7 @@ class TokenServiceImplTest {
     private ObjectMapper objectMapper;
 
     @InjectMocks
-    private TokenServiceImpl tokenService;
+    private VerificationTokenServiceImpl tokenService;
 
     private User testUser;
     private VerificationToken testToken;

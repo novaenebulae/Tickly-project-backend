@@ -168,16 +168,19 @@ class AuthControllerTest {
     @Test
     void refreshToken_ShouldReturnAuthResponseDto() {
         // Arrange
+        RefreshTokenRequestDto refreshTokenRequest = new RefreshTokenRequestDto();
+        refreshTokenRequest.setRefreshToken("test-refresh-token");
+        
         AuthResponseDto expectedResponse = new AuthResponseDto();
         expectedResponse.setAccessToken("new-token");
         expectedResponse.setTokenType("Bearer");
         expectedResponse.setExpiresIn(3600000L);
+        expectedResponse.setRefreshToken("new-refresh-token");
 
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(authService.refreshToken(user)).thenReturn(expectedResponse);
+        when(authService.refreshToken(refreshTokenRequest.getRefreshToken())).thenReturn(expectedResponse);
 
         // Act
-        ResponseEntity<AuthResponseDto> response = authController.refreshToken(authentication);
+        ResponseEntity<AuthResponseDto> response = authController.refreshToken(refreshTokenRequest);
 
         // Assert
         assertNotNull(response);
@@ -186,9 +189,28 @@ class AuthControllerTest {
         assertEquals("new-token", response.getBody().getAccessToken());
         assertEquals("Bearer", response.getBody().getTokenType());
         assertEquals(3600000L, response.getBody().getExpiresIn());
+        assertEquals("new-refresh-token", response.getBody().getRefreshToken());
 
         // Verify
-        verify(authentication, times(1)).getPrincipal();
-        verify(authService, times(1)).refreshToken(user);
+        verify(authService, times(1)).refreshToken(refreshTokenRequest.getRefreshToken());
+    }
+    
+    @Test
+    void logout_ShouldReturnOk() {
+        // Arrange
+        RefreshTokenRequestDto refreshTokenRequest = new RefreshTokenRequestDto();
+        refreshTokenRequest.setRefreshToken("test-refresh-token");
+        
+        doNothing().when(authService).logout(refreshTokenRequest.getRefreshToken());
+        
+        // Act
+        ResponseEntity<Void> response = authController.logout(refreshTokenRequest);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        
+        // Verify
+        verify(authService, times(1)).logout(refreshTokenRequest.getRefreshToken());
     }
 }

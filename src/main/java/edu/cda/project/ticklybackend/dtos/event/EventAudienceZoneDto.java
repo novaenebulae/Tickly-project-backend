@@ -29,6 +29,9 @@ public class EventAudienceZoneDto {
     @Min(value = 0, message = "La capacité maximale ne peut pas être négative.")
     private Integer allocatedCapacity;
 
+    @Schema(description = "Places restantes de la zone pour cet événement.", example = "500")
+    private Integer remainingCapacity;
+
     @Schema(description = "Type de placement dans la zone.", example = "STANDING")
     @NotNull(message = "Le type de placement est requis.")
     private SeatingType seatingType;

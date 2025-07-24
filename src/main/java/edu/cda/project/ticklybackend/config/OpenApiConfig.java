@@ -39,6 +39,4 @@ import io.swagger.v3.oas.annotations.servers.Server;
         in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
-    // Cette classe sert de conteneur pour les annotations de configuration d'OpenAPI.
-    // Aucune implémentation de bean n'est nécessaire ici car nous utilisons les annotations.
 }

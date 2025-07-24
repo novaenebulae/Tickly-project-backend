@@ -14,6 +14,7 @@ public interface EventAudienceZoneMapper {
     @Mappings({
             @Mapping(source = "id", target = "id"),
             @Mapping(source = "allocatedCapacity", target = "allocatedCapacity"),
+            @Mapping(target = "remainingCapacity", ignore = true),
             @Mapping(source = "template.id", target = "templateId"),
             @Mapping(source = "template.name", target = "name"),
             @Mapping(source = "template.seatingType", target = "seatingType"),
@@ -23,4 +24,6 @@ public interface EventAudienceZoneMapper {
     EventAudienceZoneDto toDto(EventAudienceZone entity);
 
     List<EventAudienceZoneDto> toDtoList(List<EventAudienceZone> entityList);
+
+
 }

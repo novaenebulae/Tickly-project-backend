@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/team")
 @RequiredArgsConstructor
-@Tag(name = "Gestion d'Équipe", description = "API pour la gestion des membres de l'équipe d'une structure.")
+@Tag(name = "Team Management", description = "API for managing team members of a structure.")
 @SecurityRequirement(name = "bearerAuth")
 @Slf4j
 public class TeamController {
@@ -30,7 +30,7 @@ public class TeamController {
     private final TeamManagementService teamService;
 
     @GetMapping("/structure/{structureId}")
-    @Operation(summary = "Récupérer les membres de l'équipe d'une structure")
+    @Operation(summary = "Get team members of a structure")
     @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal) or @teamSecurityService.isStructureOrganizationService(#structureId, authentication.principal) or @teamSecurityService.isStructureReservationService(#structureId, authentication.principal)")
     public ResponseEntity<List<TeamMemberDto>> getTeamMembers(@PathVariable Long structureId) {
         log.info("Récupération des membres de l'équipe pour la structure ID: {}", structureId);
@@ -48,7 +48,7 @@ public class TeamController {
     }
 
     @PostMapping("/structure/{structureId}/invite")
-    @Operation(summary = "Inviter un nouveau membre dans l'équipe")
+    @Operation(summary = "Invite a new member to the team")
     @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal)")
     public ResponseEntity<List<TeamMemberDto>> inviteMember(@PathVariable Long structureId, @Valid @RequestBody InviteMemberRequestDto inviteDto) {
         log.info("Invitation d'un nouveau membre dans l'équipe de la structure ID: {}, email: {}", structureId, inviteDto.getEmail());
@@ -71,11 +71,11 @@ public class TeamController {
 
     @PostMapping("/invitations/accept")
     @Operation(
-            summary = "Accepter une invitation à rejoindre une équipe",
-            description = "Endpoint public pour accepter une invitation d'équipe. Le token d'invitation est passé en paramètre. " +
-                    "L'utilisateur est automatiquement identifié via le token d'invitation. " +
-                    "Retourne un nouveau token JWT avec les permissions mises à jour.",
-            security = {} // Supprime l'exigence d'authentification pour cet endpoint
+            summary = "Accept an invitation to join a team",
+            description = "Public endpoint to accept a team invitation. The invitation token is passed as a parameter. " +
+                    "The user is automatically identified via the invitation token. " +
+                    "Returns a new JWT token with updated permissions.",
+            security = {} // Removes the authentication requirement for this endpoint
     )
     public ResponseEntity<InvitationAcceptanceResponseDto> acceptInvitation(@RequestParam String token) {
         log.info("Tentative d'acceptation d'invitation d'équipe avec token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
@@ -93,7 +93,7 @@ public class TeamController {
     }
 
     @PutMapping("/members/{memberId}/role")
-    @Operation(summary = "Mettre à jour le rôle d'un membre de l'équipe")
+    @Operation(summary = "Update a team member's role")
     @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
     public ResponseEntity<TeamMemberDto> updateMemberRole(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRoleDto roleDto) {
         log.info("Mise à jour du rôle du membre ID: {} vers le rôle: {}", memberId, roleDto.getRole());
@@ -114,7 +114,7 @@ public class TeamController {
     }
 
     @DeleteMapping("/members/{memberId}")
-    @Operation(summary = "Supprimer un membre de l'équipe")
+    @Operation(summary = "Remove a team member")
     @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
     public ResponseEntity<Void> removeMember(@PathVariable Long memberId) {
         log.info("Suppression du membre d'équipe ID: {}", memberId);

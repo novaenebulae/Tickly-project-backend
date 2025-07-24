@@ -22,18 +22,14 @@ public class ApplicationConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Bean pour le fournisseur d'authentification
     @Bean
     public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        // Définit le service pour charger les détails de l'utilisateur
         authProvider.setUserDetailsService(userDetailsService);
-        // Définit l'encodeur de mot de passe à utiliser
         authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
 
-    // Bean pour le gestionnaire d'authentification
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

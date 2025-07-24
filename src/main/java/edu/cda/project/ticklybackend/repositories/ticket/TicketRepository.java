@@ -1,6 +1,7 @@
 package edu.cda.project.ticklybackend.repositories.ticket;
 
 import edu.cda.project.ticklybackend.enums.TicketStatus;
+import edu.cda.project.ticklybackend.models.event.EventAudienceZone;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -42,7 +43,28 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
      * @return le nombre de billets.
      */
     long countByEventAudienceZoneId(Long zoneId);
-    
+
+    /**
+     * Compte le nombre de billets existants pour une zone d'audience spécifique d'un événement
+     * avec un statut spécifique.
+     *
+     * @param zone   La zone d'audience de l'événement.
+     * @param status Le statut des billets à compter.
+     * @return le nombre de billets.
+     */
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.eventAudienceZone = :zone AND t.status = :status")
+    Long countByEventAudienceZoneAndStatus(@Param("zone") EventAudienceZone zone, @Param("status") TicketStatus status);
+
+    /**
+     * Compte le nombre de billets existants pour une zone d'audience spécifique d'un événement
+     * avec un des statuts spécifiés.
+     *
+     * @param zoneId   L'ID de la zone d'audience de l'événement.
+     * @param statuses Les statuts des billets à compter.
+     * @return le nombre de billets.
+     */
+    long countByEventAudienceZoneIdAndStatusIn(Long zoneId, Collection<TicketStatus> statuses);
+
 
     List<Ticket> findAllByEventId(Long eventId);
 

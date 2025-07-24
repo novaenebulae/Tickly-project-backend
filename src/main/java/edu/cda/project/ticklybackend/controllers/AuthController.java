@@ -19,86 +19,98 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/auth") // Chemin de base pour ce contrôleur
+@RequestMapping("/api/v1/auth") // Base path for this controller
 @RequiredArgsConstructor
-@Tag(name = "Authentification", description = "Endpoints pour l'inscription et la connexion des utilisateurs")
+@Tag(name = "Authentication", description = "Endpoints for user registration and login")
 @Slf4j
 public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "Inscrire un nouvel utilisateur et le connecter",
-            description = "Crée un nouveau compte utilisateur et retourne un token JWT si l'inscription réussit.")
-    @ApiResponse(responseCode = "201", description = "Utilisateur inscrit et connecté avec succès",
+    @Operation(summary = "Register a new user and log them in",
+            description = "Creates a new user account and returns a JWT token if registration is successful.")
+    @ApiResponse(responseCode = "201", description = "User successfully registered and logged in",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class)))
-    @ApiResponse(responseCode = "400", description = "Données d'inscription invalides")
-    @ApiResponse(responseCode = "409", description = "L'email est déjà utilisé")
+    @ApiResponse(responseCode = "400", description = "Invalid registration data")
+    @ApiResponse(responseCode = "409", description = "Email is already in use")
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> registerAndLoginUser(
             @Valid @RequestBody UserRegistrationDto registrationDto) {
-        log.info("Demande d'inscription reçue pour l'email: {}", registrationDto.getEmail());
+        log.info("Registration request received for email: {}", registrationDto.getEmail());
         AuthResponseDto authResponse = authService.registerUser(registrationDto);
-        log.info("Inscription réussie pour l'utilisateur: {}", registrationDto.getEmail());
+        log.info("Registration successful for user: {}", registrationDto.getEmail());
         return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Connecter un utilisateur existant",
-            description = "Valide les identifiants de l'utilisateur et retourne un token JWT en cas de succès.")
-    @ApiResponse(responseCode = "200", description = "Connexion réussie",
+    @Operation(summary = "Log in an existing user",
+            description = "Validates user credentials and returns a JWT token upon successful authentication.")
+    @ApiResponse(responseCode = "200", description = "Login successful",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class)))
-    @ApiResponse(responseCode = "400", description = "Données de connexion invalides")
-    @ApiResponse(responseCode = "401", description = "Identifiants incorrects")
-    @ApiResponse(responseCode = "403", description = "Email non validé")
+    @ApiResponse(responseCode = "400", description = "Invalid login data")
+    @ApiResponse(responseCode = "401", description = "Incorrect credentials")
+    @ApiResponse(responseCode = "403", description = "Email not validated")
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> loginUser(
             @Valid @RequestBody UserLoginDto loginDto) {
-        log.info("Tentative de connexion pour l'email: {}", loginDto.getEmail());
+        log.info("Login attempt for email: {}", loginDto.getEmail());
         AuthResponseDto authResponse = authService.login(loginDto);
-        log.info("Connexion réussie pour l'utilisateur: {}", loginDto.getEmail());
+        log.info("Login successful for user: {}", loginDto.getEmail());
         return ResponseEntity.ok(authResponse);
     }
 
-    @Operation(summary = "Valider l'e-mail d'un utilisateur", description = "Valide l'e-mail en utilisant le token reçu. En cas de succès, retourne un token JWT pour une connexion automatique.")
+    @Operation(summary = "Validate a user's email", description = "Validates the email using the received token. Upon success, returns a JWT token for automatic login.")
     @GetMapping("/validate-email")
     public ResponseEntity<AuthResponseDto> validateEmail(@RequestParam("token") String token) {
-        log.info("Demande de validation d'email avec token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
+        log.info("Email validation request with token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
         AuthResponseDto authResponse = authService.validateEmail(token);
-        log.info("Validation d'email réussie pour l'utilisateur: {}", authResponse.getEmail());
+        log.info("Email validation successful for user: {}", authResponse.getEmail());
         return ResponseEntity.ok(authResponse);
     }
 
-    @Operation(summary = "Demander la réinitialisation du mot de passe", description = "Envoie un e-mail avec un lien de réinitialisation si l'adresse e-mail est associée à un compte.")
+    @Operation(summary = "Request password reset", description = "Sends an email with a reset link if the email address is associated with an account.")
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody PasswordResetRequestDto requestDto) {
-        log.info("Demande de réinitialisation de mot de passe pour l'email: {}", requestDto.getEmail());
+        log.info("Password reset request for email: {}", requestDto.getEmail());
         authService.forgotPassword(requestDto.getEmail());
-        log.info("Email de réinitialisation envoyé (si le compte existe) pour: {}", requestDto.getEmail());
+        log.info("Reset email sent (if account exists) for: {}", requestDto.getEmail());
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Réinitialiser le mot de passe", description = "Met à jour le mot de passe de l'utilisateur en utilisant le token et le nouveau mot de passe fournis.")
+    @Operation(summary = "Reset password", description = "Updates the user's password using the provided token and new password.")
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetDto resetDto) {
-        log.info("Demande de réinitialisation de mot de passe avec token: {}", resetDto.getToken().substring(0, Math.min(resetDto.getToken().length(), 10)) + "...");
+        log.info("Password reset request with token: {}", resetDto.getToken().substring(0, Math.min(resetDto.getToken().length(), 10)) + "...");
         authService.resetPassword(resetDto);
-        log.info("Réinitialisation de mot de passe réussie");
+        log.info("Password reset successful");
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Rafraîchir le token JWT", 
-            description = "Génère un nouveau token JWT pour l'utilisateur actuellement authentifié.")
+    @Operation(summary = "Refresh JWT token", 
+            description = "Generates a new pair of access and refresh tokens using a valid refresh token.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Token rafraîchi avec succès", 
+            @ApiResponse(responseCode = "200", description = "Tokens refreshed successfully", 
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class))),
-            @ApiResponse(responseCode = "401", description = "Authentification requise")
+            @ApiResponse(responseCode = "401", description = "Invalid, expired, or revoked refresh token")
     })
-    @PostMapping("/refresh-token")
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<AuthResponseDto> refreshToken(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        log.info("Demande de rafraîchissement de token pour l'utilisateur: {}", user.getEmail());
-        AuthResponseDto authResponse = authService.refreshToken(user);
-        log.info("Token rafraîchi avec succès pour l'utilisateur: {}", user.getEmail());
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponseDto> refreshToken(@Valid @RequestBody RefreshTokenRequestDto requestDto) {
+        log.info("Token refresh request received");
+        AuthResponseDto authResponse = authService.refreshToken(requestDto.getRefreshToken());
+        log.info("Tokens refreshed successfully");
         return ResponseEntity.ok(authResponse);
+    }
+    
+    @Operation(summary = "Logout user", 
+            description = "Revokes the provided refresh token, effectively logging the user out.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logout successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequestDto requestDto) {
+        log.info("Logout request received");
+        authService.logout(requestDto.getRefreshToken());
+        log.info("Logout successful");
+        return ResponseEntity.ok().build();
     }
 }

@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Service pour la gestion des tokens de vérification à usage unique.
  */
-public interface TokenService {
+public interface VerificationTokenService {
 
     /**
      * Crée un nouveau token de vérification pour un utilisateur.

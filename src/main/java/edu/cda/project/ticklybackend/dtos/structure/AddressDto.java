@@ -27,6 +27,7 @@ public class AddressDto {
     @Schema(description = "Ville.", example = "Paris", requiredMode = Schema.RequiredMode.REQUIRED)
     private String city;
 
+    @NotBlank
     @Size(max = 20, message = "Le code postal ne doit pas dépasser 20 caractères.")
     @Schema(description = "Code postal.", example = "75001", requiredMode = Schema.RequiredMode.REQUIRED)
     private String zipCode;

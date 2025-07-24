@@ -28,7 +28,7 @@ public interface TicketService {
      *
      * @return une liste de détails de billets.
      */
-    List<TicketResponseDto> getMyTickets();
+    List<ReservationConfirmationDto> getMyReservations();
 
     /**
      * Récupère les détails d'un billet spécifique par son ID.
@@ -52,9 +52,9 @@ public interface TicketService {
      * Récupère une liste paginée de billets pour un événement spécifique.
      * Permet de filtrer par statut et de rechercher par nom, email ou UUID du billet.
      *
-     * @param eventId L'ID de l'événement.
-     * @param status  Le statut des billets à filtrer (optionnel).
-     * @param search  Terme de recherche pour filtrer les billets (optionnel).
+     * @param eventId  L'ID de l'événement.
+     * @param status   Le statut des billets à filtrer (optionnel).
+     * @param search   Terme de recherche pour filtrer les billets (optionnel).
      * @param pageable Informations de pagination.
      * @return une réponse paginée contenant les détails des billets.
      */
@@ -67,5 +67,15 @@ public interface TicketService {
      * @return un DTO contenant le résultat de la validation.
      */
     TicketValidationResponseDto validateTicket(UUID ticketId);
+
+    /**
+     * Annule une réservation et tous les billets associés.
+     * Les billets annulés libèrent des places pour l'événement.
+     * Seul le propriétaire de la réservation peut l'annuler.
+     *
+     * @param reservationId L'ID de la réservation à annuler.
+     * @return true si l'annulation a réussi, false sinon.
+     */
+    boolean cancelReservation(Long reservationId);
 
 }

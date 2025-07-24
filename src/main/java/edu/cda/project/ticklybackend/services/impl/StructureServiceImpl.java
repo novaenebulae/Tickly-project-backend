@@ -106,7 +106,7 @@ public class StructureServiceImpl implements StructureService {
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", user.getId()));
 
             // 6. Générer un nouveau token JWT qui inclura le structureId.
-            String newJwt = jwtTokenProvider.generateToken(updatedUser);
+            String newJwt = jwtTokenProvider.generateAccessToken(updatedUser);
             log.debug("Nouveau token JWT généré pour l'utilisateur: {} (ID: {})", updatedUser.getEmail(), updatedUser.getId());
 
             // 7. Préparer la réponse DTO avec le nouveau token.

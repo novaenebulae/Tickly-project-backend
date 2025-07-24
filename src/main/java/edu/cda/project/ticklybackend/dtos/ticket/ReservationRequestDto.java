@@ -22,7 +22,7 @@ public class ReservationRequestDto {
 
     @Valid
     @NotNull
-    @Size(min = 1, max = 10, message = "Vous pouvez réserver entre 1 et 10 billets à la fois.")
+    @Size(min = 1, max = 4, message = "Vous pouvez réserver entre 1 et 4 billets à la fois.")
     @Schema(description = "Liste des participants pour lesquels les billets sont réservés.")
     private List<ParticipantInfoDto> participants;
 }

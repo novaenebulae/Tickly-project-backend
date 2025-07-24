@@ -27,16 +27,11 @@ public class JacksonConfig {
         );
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-//        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
-        // Désactiver la sérialisation des propriétés nulles
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        // Ignorer les propriétés inconnues lors de la désérialisation
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        // Éviter les échecs sur les beans vides
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
         return mapper;

@@ -17,7 +17,7 @@ public class AuthResponseDto {
     private String accessToken;
     private String tokenType = "Bearer"; // Toujours "Bearer"
     private Long expiresIn; // Durée de validité en millisecondes
-    // private String refreshToken; // Optionnel, si implémenté
+    private String refreshToken; // Token de rafraîchissement pour obtenir un nouveau accessToken
 
     private Long userId;
     private String email;

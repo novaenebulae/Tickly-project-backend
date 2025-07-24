@@ -8,7 +8,7 @@ import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
-import edu.cda.project.ticklybackend.services.interfaces.TokenService;
+import edu.cda.project.ticklybackend.services.interfaces.VerificationTokenService;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TokenServiceImpl implements TokenService {
+public class VerificationTokenServiceImpl implements VerificationTokenService {
 
     private final VerificationTokenRepository tokenRepository;
     private final ObjectMapper objectMapper; // Injection de Jackson ObjectMapper
@@ -32,7 +32,7 @@ public class TokenServiceImpl implements TokenService {
     @Override
     @Transactional
     public VerificationToken createToken(User user, TokenType tokenType, Duration validity, String payload) {
-        LoggingUtils.logMethodEntry(log, "createToken", "user", user != null ? user.getEmail() : "null", 
+        LoggingUtils.logMethodEntry(log, "createToken", "user", user != null ? user.getEmail() : "null",
                 "tokenType", tokenType, "validity", validity, "payload", payload);
 
         try {
@@ -81,7 +81,7 @@ public class TokenServiceImpl implements TokenService {
                         return new InvalidTokenException("Token non trouvé.");
                     });
 
-            log.debug("Token trouvé, ID: {}, type: {}, utilisateur: {}", 
+            log.debug("Token trouvé, ID: {}, type: {}, utilisateur: {}",
                     token.getId(), token.getTokenType(), token.getUser() != null ? token.getUser().getEmail() : "aucun");
 
             if (token.getUser() != null) {
@@ -94,13 +94,13 @@ public class TokenServiceImpl implements TokenService {
             }
 
             if (token.getExpiryDate().isBefore(Instant.now())) {
-                log.warn("Tentative d'utilisation d'un token expiré, ID: {}, date d'expiration: {}", 
+                log.warn("Tentative d'utilisation d'un token expiré, ID: {}, date d'expiration: {}",
                         token.getId(), token.getExpiryDate());
                 throw new InvalidTokenException("Ce token a expiré.");
             }
 
             if (token.getTokenType() != expectedType) {
-                log.warn("Type de token incorrect, ID: {}, type attendu: {}, type réel: {}", 
+                log.warn("Type de token incorrect, ID: {}, type attendu: {}, type réel: {}",
                         token.getId(), expectedType, token.getTokenType());
                 throw new InvalidTokenException("Le type de token est incorrect.");
             }
@@ -164,7 +164,8 @@ public class TokenServiceImpl implements TokenService {
 
         try {
             log.debug("Analyse du payload JSON pour le token ID: {}", token.getId());
-            Map<String, Object> payload = objectMapper.readValue(payloadStr, new TypeReference<>() {});
+            Map<String, Object> payload = objectMapper.readValue(payloadStr, new TypeReference<>() {
+            });
             log.debug("Payload analysé avec succès pour le token ID: {}, {} entrées trouvées", token.getId(), payload.size());
             return payload;
         } catch (JsonProcessingException e) {

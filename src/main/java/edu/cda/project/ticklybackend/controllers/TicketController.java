@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/ticketing")
-@Tag(name = "API de Billetterie", description = "Endpoints pour la réservation, la consultation et la validation des billets.")
+@Tag(name = "Ticketing API", description = "Endpoints for ticket reservation, viewing, and validation.")
 public class TicketController {
 
     private final TicketService ticketService;
@@ -28,38 +28,53 @@ public class TicketController {
 
     @PostMapping("/reservations")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Créer une nouvelle réservation", description = "Crée une nouvelle réservation pour un ou plusieurs billets pour un événement spécifique.")
+    @Operation(summary = "Create a new reservation", description = "Creates a new reservation for one or more tickets for a specific event.")
     public ResponseEntity<ReservationConfirmationDto> createReservation(@Valid @RequestBody ReservationRequestDto requestDto) {
         ReservationConfirmationDto confirmation = ticketService.createReservation(requestDto);
         return new ResponseEntity<>(confirmation, HttpStatus.CREATED);
     }
 
-    @GetMapping("/my-tickets")
+    @GetMapping("/reservations")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Obtenir mes billets", description = "Récupère une liste de tous les billets achetés par l'utilisateur authentifié.")
-    public ResponseEntity<List<TicketResponseDto>> getMyTickets() {
-        List<TicketResponseDto> tickets = ticketService.getMyTickets();
+    @Operation(summary = "Get my reservations", description = "Retrieves a list of all reservations made by the authenticated user.")
+    public ResponseEntity<List<ReservationConfirmationDto>> getMyReservations() {
+        List<ReservationConfirmationDto> tickets = ticketService.getMyReservations();
         return ResponseEntity.ok(tickets);
     }
 
 
     @GetMapping("/tickets/{ticketId}")
-    // L'utilisateur doit être le propriétaire du billet
+    // User must be the ticket owner
     @PreAuthorize("@ticketSecurityService.isTicketOwner(#ticketId, authentication.principal)")
-    @Operation(summary = "Obtenir les détails d'un billet (authentifié)", description = "Récupère les détails d'un billet spécifique. L'utilisateur doit être le propriétaire du billet.")
+    @Operation(summary = "Get ticket details (authenticated)", description = "Retrieves the details of a specific ticket. The user must be the owner of the ticket.")
     public ResponseEntity<TicketResponseDto> getTicketDetails(@PathVariable UUID ticketId) {
         TicketResponseDto ticket = ticketService.getTicketDetails(ticketId);
         return ResponseEntity.ok(ticket);
     }
 
     @GetMapping("/public/tickets/{ticketId}")
-    @Operation(summary = "Obtenir les détails d'un billet par UUID (public)",
-            description = "Récupère les détails d'un billet spécifique en utilisant son UUID. " +
-                    "Cet endpoint est public et ne nécessite pas d'authentification. " +
-                    "La sécurité est assurée par l'UUID du billet qui est difficile à deviner.")
+    @Operation(summary = "Get ticket details by UUID (public)",
+            description = "Retrieves the details of a specific ticket using its UUID. " +
+                    "This endpoint is public and does not require authentication. " +
+                    "Security is ensured by the ticket's UUID which is difficult to guess.")
     public ResponseEntity<TicketResponseDto> getPublicTicketDetails(@PathVariable UUID ticketId) {
         TicketResponseDto ticket = ticketService.getPublicTicketDetails(ticketId);
         return ResponseEntity.ok(ticket);
+    }
+
+    @DeleteMapping("/reservations/{reservationId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Cancel a reservation",
+            description = "Cancels a reservation and all associated tickets. " +
+                    "Canceled tickets free up spaces for the event. " +
+                    "Only the owner of the reservation can cancel it.")
+    public ResponseEntity<Void> cancelReservation(@PathVariable Long reservationId) {
+        boolean success = ticketService.cancelReservation(reservationId);
+        if (success) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 }

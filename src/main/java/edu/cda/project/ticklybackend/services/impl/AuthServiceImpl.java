@@ -9,16 +9,14 @@ import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.exceptions.EmailAlreadyExistsException;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
+import edu.cda.project.ticklybackend.exceptions.TokenRefreshException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
-import edu.cda.project.ticklybackend.services.interfaces.AuthService;
-import edu.cda.project.ticklybackend.services.interfaces.MailingService;
-import edu.cda.project.ticklybackend.services.interfaces.TeamManagementService;
-import edu.cda.project.ticklybackend.services.interfaces.TokenService;
+import edu.cda.project.ticklybackend.services.interfaces.*;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +44,10 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
-    private final TokenService tokenService;
+    private final VerificationTokenService verificationTokenService;
     private final MailingService mailingService;
     private final TeamManagementService teamService; // Injection pour le flux optimisé
+    private final RefreshTokenService refreshTokenService; // Service pour gérer les refresh tokens
 
     @Override
     @Transactional
@@ -145,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
             LoggingUtils.setUserId(savedUser.getId());
 
             // Créer un token et envoyer l'e-mail de validation
-            VerificationToken validationToken = tokenService.createToken(savedUser, TokenType.EMAIL_VALIDATION, Duration.ofHours(24), null);
+            VerificationToken validationToken = verificationTokenService.createToken(savedUser, TokenType.EMAIL_VALIDATION, Duration.ofHours(24), null);
             String validationLink = "/auth/validate-email?token=" + validationToken.getToken();
             mailingService.sendEmailValidation(savedUser.getEmail(), savedUser.getFirstName(), validationLink);
 
@@ -190,11 +189,7 @@ public class AuthServiceImpl implements AuthService {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                String jwtToken = jwtTokenProvider.generateToken(user);
-
-                AuthResponseDto authResponse = userMapper.userToAuthResponseDto(user);
-                authResponse.setAccessToken(jwtToken);
-                authResponse.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
+                AuthResponseDto authResponse = generateAuthResponse(user);
 
                 log.info("Connexion réussie pour l'utilisateur: {}", user.getEmail());
                 LoggingUtils.logMethodExit(log, "login", authResponse);
@@ -218,7 +213,7 @@ public class AuthServiceImpl implements AuthService {
             userRepository.findByEmail(email).ifPresentOrElse(user -> {
                 LoggingUtils.setUserId(user.getId());
                 log.info("Utilisateur trouvé pour la réinitialisation de mot de passe: {}", email);
-                VerificationToken resetToken = tokenService.createToken(user, TokenType.PASSWORD_RESET, Duration.ofHours(1), null);
+                VerificationToken resetToken = verificationTokenService.createToken(user, TokenType.PASSWORD_RESET, Duration.ofHours(1), null);
                 String resetLink = "/reset-password?token=" + resetToken.getToken(); // Lien vers le frontend
                 mailingService.sendPasswordReset(user.getEmail(), user.getFirstName(), resetLink);
                 log.info("Email de réinitialisation envoyé à: {}", email);
@@ -244,7 +239,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Tentative de réinitialisation de mot de passe avec token");
 
-            VerificationToken token = tokenService.validateToken(passwordResetDto.getToken(), TokenType.PASSWORD_RESET);
+            VerificationToken token = verificationTokenService.validateToken(passwordResetDto.getToken(), TokenType.PASSWORD_RESET);
             User user = token.getUser();
             LoggingUtils.setUserId(user.getId());
             log.info("Token de réinitialisation valide pour l'utilisateur: {}", user.getEmail());
@@ -253,7 +248,7 @@ public class AuthServiceImpl implements AuthService {
             userRepository.save(user);
             log.info("Mot de passe mis à jour pour l'utilisateur: {}", user.getEmail());
 
-            tokenService.markTokenAsUsed(token);
+            verificationTokenService.markTokenAsUsed(token);
             log.info("Token de réinitialisation marqué comme utilisé");
 
             LoggingUtils.logMethodExit(log, "resetPassword");
@@ -275,11 +270,17 @@ public class AuthServiceImpl implements AuthService {
             LoggingUtils.setUserId(user.getId());
             log.debug("Génération d'une réponse d'authentification pour l'utilisateur: {}", user.getEmail());
 
-            String jwtToken = jwtTokenProvider.generateToken(user);
-            log.debug("Token JWT généré pour l'utilisateur: {}", user.getEmail());
+            // Générer un access token
+            String jwtToken = jwtTokenProvider.generateAccessToken(user);
+            log.debug("Access token JWT généré pour l'utilisateur: {}", user.getEmail());
+
+            // Générer un refresh token
+            String refreshToken = refreshTokenService.createRefreshToken(user);
+            log.debug("Refresh token généré pour l'utilisateur: {}", user.getEmail());
 
             AuthResponseDto authResponse = userMapper.userToAuthResponseDto(user);
             authResponse.setAccessToken(jwtToken);
+            authResponse.setRefreshToken(refreshToken);
             authResponse.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
 
             log.debug("Réponse d'authentification complète générée pour l'utilisateur: {}", user.getEmail());
@@ -299,7 +300,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Tentative de validation d'email avec token");
 
-            VerificationToken token = tokenService.validateToken(tokenString, TokenType.EMAIL_VALIDATION);
+            VerificationToken token = verificationTokenService.validateToken(tokenString, TokenType.EMAIL_VALIDATION);
             User user = token.getUser();
             LoggingUtils.setUserId(user.getId());
             log.info("Token de validation valide pour l'utilisateur: {}", user.getEmail());
@@ -313,7 +314,7 @@ public class AuthServiceImpl implements AuthService {
             userRepository.save(user);
             log.info("Email validé avec succès pour l'utilisateur: {}", user.getEmail());
 
-            tokenService.markTokenAsUsed(token);
+            verificationTokenService.markTokenAsUsed(token);
             log.info("Token de validation marqué comme utilisé");
 
             AuthResponseDto response = generateAuthResponse(user);
@@ -333,30 +334,92 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponseDto refreshToken(User user) {
-        LoggingUtils.logMethodEntry(log, "refreshToken", "user", user);
-        LoggingUtils.setUserId(user.getId());
+    @Transactional
+    public AuthResponseDto refreshToken(String refreshToken) {
+        LoggingUtils.logMethodEntry(log, "refreshToken", "refreshToken", "***");
 
         try {
-            log.info("Demande de rafraîchissement de token pour l'utilisateur ID: {}", user.getId());
+            log.info("Demande de rafraîchissement de token avec refresh token");
 
-            // Recharger l'utilisateur depuis la base de données pour s'assurer d'avoir les données les plus récentes
-            User refreshedUser = userRepository.findById(user.getId())
-                    .orElseThrow(() -> {
-                        log.warn("Tentative de rafraîchissement de token pour un utilisateur inexistant ID: {}", user.getId());
-                        return new ResourceNotFoundException("User", "id", user.getId());
-                    });
+            // Vérifier si le refresh token existe
+            var refreshTokenOpt = refreshTokenService.findByToken(refreshToken);
 
-            log.info("Utilisateur trouvé pour le rafraîchissement de token: {}", refreshedUser.getEmail());
+            if (refreshTokenOpt.isEmpty()) {
+                log.warn("Tentative de rafraîchissement avec un token inexistant");
+                throw new TokenRefreshException("Refresh token invalide");
+            }
 
-            // Générer un nouveau token JWT
-            AuthResponseDto response = generateAuthResponse(refreshedUser);
-            log.info("Token rafraîchi avec succès pour l'utilisateur: {}", refreshedUser.getEmail());
+            var tokenEntity = refreshTokenOpt.get();
 
-            LoggingUtils.logMethodExit(log, "refreshToken", response);
+            // Vérifier si le token est révoqué
+            if (tokenEntity.isRevoked()) {
+                log.warn("Tentative de réutilisation d'un refresh token révoqué pour l'utilisateur: {}", tokenEntity.getUser().getEmail());
+                // Révoquer tous les tokens de l'utilisateur en cas de tentative de réutilisation (sécurité)
+                refreshTokenService.revokeAllUserTokens(tokenEntity.getUser());
+                throw new TokenRefreshException("Tentative de réutilisation d'un refresh token. Tous les tokens ont été révoqués.");
+            }
+
+            // Vérifier si le token est expiré
+            refreshTokenService.verifyExpiration(tokenEntity);
+
+            User user = tokenEntity.getUser();
+            LoggingUtils.setUserId(user.getId());
+            log.info("Refresh token valide pour l'utilisateur: {}", user.getEmail());
+
+            // Révoquer le token actuel
+            refreshTokenService.revokeToken(tokenEntity);
+            log.info("Ancien refresh token révoqué");
+
+            // Générer un nouveau access token
+            String accessToken = jwtTokenProvider.generateAccessToken(user);
+
+            // Générer un nouveau refresh token
+            String newRefreshToken = refreshTokenService.createRefreshToken(user);
+            log.info("Nouveaux tokens générés pour l'utilisateur: {}", user.getEmail());
+
+            // Créer la réponse
+            AuthResponseDto response = userMapper.userToAuthResponseDto(user);
+            response.setAccessToken(accessToken);
+            response.setRefreshToken(newRefreshToken);
+            response.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
+
+            LoggingUtils.logMethodExit(log, "refreshToken", "AuthResponseDto");
             return response;
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors du rafraîchissement du token pour l'utilisateur ID " + user.getId(), e);
+            LoggingUtils.logException(log, "Erreur lors du rafraîchissement du token", e);
+            throw e;
+        } finally {
+            LoggingUtils.clearContext();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        LoggingUtils.logMethodEntry(log, "logout", "refreshToken", "***");
+
+        try {
+            log.info("Demande de déconnexion avec refresh token");
+
+            // Vérifier si le refresh token existe
+            var refreshTokenOpt = refreshTokenService.findByToken(refreshToken);
+
+            if (refreshTokenOpt.isEmpty()) {
+                log.warn("Tentative de déconnexion avec un token inexistant");
+                return; // Silently ignore invalid tokens
+            }
+
+            var tokenEntity = refreshTokenOpt.get();
+            User user = tokenEntity.getUser();
+            LoggingUtils.setUserId(user.getId());
+
+            // Révoquer le token
+            refreshTokenService.revokeToken(tokenEntity);
+            log.info("Refresh token révoqué pour l'utilisateur: {}", user.getEmail());
+
+            LoggingUtils.logMethodExit(log, "logout");
+        } catch (Exception e) {
+            LoggingUtils.logException(log, "Erreur lors de la déconnexion", e);
             throw e;
         } finally {
             LoggingUtils.clearContext();

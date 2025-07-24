@@ -25,9 +25,14 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration.access-token-ms}") // Durée d'expiration du token en ms
     private long jwtExpirationMs;
 
-// Modifier la génération du token pour utiliser user.getStructure() au lieu de ((StaffUser) userDetails).getStructure()
 
-    public String generateToken(UserDetails userDetails) {
+    /**
+     * Generates an access token for the given user details.
+     *
+     * @param userDetails the user details
+     * @return the generated access token
+     */
+    public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
 
         if (userDetails instanceof User user) {

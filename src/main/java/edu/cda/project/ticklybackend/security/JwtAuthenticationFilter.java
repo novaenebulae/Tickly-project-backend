@@ -1,5 +1,7 @@
-package edu.cda.project.ticklybackend.security;
+package edu.cda.project.ticklybackend.security;// Dans le package edu.cda.project.ticklybackend.security
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,14 +18,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// @Component indique que cette classe est un composant Spring géré.
 @Component
-// @RequiredArgsConstructor génère un constructeur pour les champs finaux.
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider; // Service pour manipuler les JWT (à créer)
-    private final UserDetailsService userDetailsService; // Notre AppUserDetailsService
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -32,56 +32,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Récupérer l'en-tête "Authorization" de la requête.
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
 
-        // Si l'en-tête est manquant ou ne commence pas par "Bearer ", passer au filtre suivant.
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extraire le token JWT (après "Bearer ").
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
+        final String userEmail;
 
         try {
-            // Extraire l'email de l'utilisateur à partir du token.
-            userEmail = jwtTokenProvider.extractUsername(jwt); // ou extractEmail
+            // Si l'une des étapes de validation du token échoue, une exception sera levée.
+            userEmail = jwtTokenProvider.extractUsername(jwt);
 
-            // Si l'email est présent et qu'il n'y a pas déjà une authentification dans le contexte de sécurité.
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Charger les détails de l'utilisateur à partir de la base de données.
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // Valider le token (vérifier la signature et l'expiration).
                 if (jwtTokenProvider.isTokenValid(jwt, userDetails)) {
-                    // Créer un objet d'authentification.
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
-                            null, // Pas de credentials (mot de passe) car authentification par token
+                            null,
                             userDetails.getAuthorities()
                     );
-                    // Attacher des détails supplémentaires de la requête à l'authentification.
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request)
                     );
-                    // Mettre à jour le SecurityContextHolder avec la nouvelle authentification.
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (Exception e) {
-            // En cas d'erreur lors de la validation du token (ex: token expiré, malformé),
-            // ne pas configurer d'authentification et laisser la requête continuer.
-            // Spring Security gérera l'accès non autorisé plus tard.
-            // Vous pouvez logger l'exception ici si nécessaire.
-            SecurityContextHolder.clearContext(); // Important pour s'assurer qu'un contexte invalide n'est pas utilisé
-            // logger.warn("Impossible de définir l'authentification utilisateur : {}", e.getMessage());
+            // Si tout s'est bien passé, on continue la chaîne de filtres.
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException e) {
+            // Le token a expiré. On arrête le traitement ici et on renvoie 401.
+            logger.warn("JWT Token has expired: {}", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Token expiré\", \"message\": \"" + e.getMessage() + "\"}");
+            // On ne fait PAS filterChain.doFilter(request, response) pour arrêter la chaîne.
+
+        } catch (JwtException e) {
+            // Pour toute autre erreur liée au JWT (malformé, signature invalide...).
+            logger.warn("Invalid JWT Token: {}", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Token invalide\", \"message\": \"" + e.getMessage() + "\"}");
+            // On ne fait PAS filterChain.doFilter(request, response) pour arrêter la chaîne.
         }
-
-
-        // Passer la requête et la réponse au filtre suivant dans la chaîne.
-        filterChain.doFilter(request, response);
     }
 }

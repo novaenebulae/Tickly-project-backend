@@ -28,6 +28,7 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_S=${JWT_EXPIRATION_S}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_REFRESH_TOKEN=${GOOGLE_REFRESH_TOKEN}
@@ -65,6 +66,8 @@ services:
       - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/20_data.sql
     networks:
       - app_network
+    ports:
+      - "3306:3306"
 
 volumes:
   mysql_data: { }
