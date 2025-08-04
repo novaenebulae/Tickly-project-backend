@@ -5,7 +5,6 @@ import edu.cda.project.ticklybackend.dtos.event.*;
 import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
-import edu.cda.project.ticklybackend.mappers.event.EventAddressMapper;
 import edu.cda.project.ticklybackend.mappers.event.EventMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.event.EventCategory;
@@ -16,12 +15,9 @@ import edu.cda.project.ticklybackend.repositories.event.EventCategoryRepository;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplateRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
-import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
-import edu.cda.project.ticklybackend.repositories.user.FriendshipRepository;
 import edu.cda.project.ticklybackend.security.EventSecurityService;
-import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
-import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
+import edu.cda.project.ticklybackend.utils.EventStatusUpdateUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,22 +57,10 @@ public class EventServiceImplTest {
     private EventMapper eventMapper;
 
     @Mock
-    private FileStorageService fileStorageService;
+    private EventStatusUpdateUtils eventStatusUpdateService;
 
     @Mock
     private AuthUtils authUtils;
-
-    @Mock
-    private MailingService mailingService;
-
-    @Mock
-    private TicketRepository ticketRepository;
-
-    @Mock
-    private FriendshipRepository friendshipRepository;
-
-    @Mock
-    private EventAddressMapper addressMapper;
 
     @Mock
     private EventSecurityService eventSecurityService;
@@ -306,11 +290,11 @@ public class EventServiceImplTest {
         String exceptionMessage = exception.getMessage();
         System.out.println("[DEBUG_LOG] Exception message: " + exceptionMessage);
 
-        assertTrue(exceptionMessage.contains("Impossible de créer l'événement"), 
+        assertTrue(exceptionMessage.contains("Impossible de créer l'événement"),
                 "Exception message should mention inability to create event");
-        assertTrue(exceptionMessage.contains("conflit"), 
+        assertTrue(exceptionMessage.contains("conflit"),
                 "Exception message should mention conflict");
-        assertTrue(exceptionMessage.contains("Conflicting Event"), 
+        assertTrue(exceptionMessage.contains("Conflicting Event"),
                 "Exception message should include the name of the conflicting event");
 
         // Verify
@@ -384,7 +368,6 @@ public class EventServiceImplTest {
     void updateEventStatus_FromDraftToPublished_ShouldUpdateStatus() {
         // Arrange
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(testEvent));
-        when(authUtils.getCurrentAuthenticatedUser()).thenReturn(testUser);
         when(eventRepository.save(testEvent)).thenReturn(testEvent);
         when(eventMapper.toDetailDto(testEvent)).thenReturn(detailResponseDto);
 
@@ -398,7 +381,6 @@ public class EventServiceImplTest {
 
         // Verify
         verify(eventRepository, times(1)).findById(eventId);
-        verify(authUtils, times(1)).getCurrentAuthenticatedUser();
         verify(eventRepository, times(1)).save(testEvent);
         verify(eventMapper, times(1)).toDetailDto(testEvent);
     }

@@ -37,6 +37,15 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     List<Ticket> findValidTicketsByEventAndUserIds(@Param("eventId") Long eventId, @Param("userIds") Set<Long> userIds);
 
     /**
+     * Trouve tous les billets valides pour un événement spécifique.
+     *
+     * @param eventId L'ID de l'événement.
+     * @return une liste de billets valides pour l'événement.
+     */
+    @Query("SELECT t FROM Ticket t WHERE t.event.id = :eventId AND t.status = 'VALID'")
+    List<Ticket> findValidTicketsByEventId(@Param("eventId") Long eventId);
+
+    /**
      * Compte le nombre de billets existants pour une zone d'audience spécifique d'un événement.
      *
      * @param zoneId L'ID de la zone d'audience de l'événement.

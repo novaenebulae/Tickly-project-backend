@@ -64,33 +64,24 @@ FROM structure_types;
 
 INSERT INTO structure_types (id, name, icon)
 VALUES (1, 'Salle de concert', 'speaker_group'),
-       (2, 'Théâtre', 'theater_comedy'),
-       (3, 'Opéra', 'music_note'),
+       (2, 'Musée / Galerie d''exposition', 'museum'),
+       (3, 'Théâtre', 'theater_comedy'),
        (4, 'Stade / Arène', 'stadium'),
-       (5, 'Centre de congrès / Parc des expositions', 'corporate_fare'),
-       (6, 'Musée / Galerie d''exposition', 'museum'),
-       (7, 'Cinéma', 'theaters'),
-       (8, 'Café-théâtre / Comédie club', 'mic'),
-       (9, 'Salle de conférence', 'meeting_room'),
-       (10, 'Salle polyvalente / Salle des fêtes', 'celebration'),
-       (11, 'Club / Discothèque', 'nightlife'),
+       (5, 'Opéra', 'music_note'),
+       (6, 'Club / Discothèque', 'nightlife'),
+       (7, 'Centre de congrès / Parc des expositions', 'corporate_fare'),
+       (8, 'Cinéma', 'theaters'),
+       (9, 'Café-théâtre / Comédie club', 'mic'),
+       (10, 'Salle de conférence', 'meeting_room'),
+       (11, 'Salle polyvalente / Salle des fêtes', 'celebration'),
        (12, 'Site de festival en plein air', 'festival'),
        (13, 'Palais des sports', 'sports'),
        (14, 'Salle de réception / Lieu de mariage', 'deck'),
        (15, 'Péniche événementielle', 'directions_boat'),
        (16, 'Bar en terrasse / Rooftop', 'local_bar'),
        (17, 'Studio de production / Plateau TV', 'videocam'),
-       (18, 'Domaine viticole / Vignoble', 'wine_bar'),
-       (19, 'Circuit automobile / Karting', 'sports_score'),
-       (20, 'Théâtre en plein air', 'theater_comedy'),
-       (21, 'Auditorium', 'mic'),
-       (22, 'Centre culturel', 'palette'),
-       (23, 'Hippodrome', 'chess_knight'),
-       (24, 'Casino', 'casino'),
-       (25, 'Halle gourmande / Food court', 'restaurant'),
-       (26, 'Espace d''art / Galerie', 'image'),
-       (27, 'Lieu alternatif / Tiers-lieu', 'hub'),
-       (28, 'Chapiteau / Tente de réception', 'home');
+       (18, 'Domaine viticole / Vignoble', 'wine_bar');
+
 
 -- ##################################################
 -- # 2. PEUPLEMENT DE LA TABLE `structures`         #
@@ -759,12 +750,12 @@ VALUES
 INSERT INTO friendships (id, sender_id, receiver_id, status, created_at, updated_at)
 VALUES
 -- Amitiés acceptées
-(10, 6, 20, 'ACCEPTED', NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 49 DAY),  -- François et Hélène
-(11, 21, 22, 'ACCEPTED', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 38 DAY), -- Isaac et Justine
-(12, 23, 24, 'ACCEPTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 29 DAY), -- Kévin et Léa
+(10, 6, 20, 'ACCEPTED', NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 49 DAY), -- François et Hélène
+(11, 8, 6, 'ACCEPTED', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 38 DAY),  -- Isaac et Justine
+(12, 20, 6, 'ACCEPTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 29 DAY), -- Kévin et Léa
 -- Demandes en attente
-(13, 20, 21, 'PENDING', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY),    -- Hélène a demandé Isaac en ami
-(14, 25, 6, 'PENDING', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY);
+(13, 6, 18, 'PENDING', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY),    -- Hélène a demandé Isaac en ami
+(14, 16, 8, 'PENDING', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY);
 -- Marc a demandé François en ami
 
 
