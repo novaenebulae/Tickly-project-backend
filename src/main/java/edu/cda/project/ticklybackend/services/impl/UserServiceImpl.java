@@ -3,7 +3,6 @@ package edu.cda.project.ticklybackend.services.impl;
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
-import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
 import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.exceptions.BadRequestException;
@@ -13,7 +12,6 @@ import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.team.TeamMember;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
-import edu.cda.project.ticklybackend.models.user.StructureAdministratorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
@@ -30,8 +28,6 @@ import edu.cda.project.ticklybackend.services.interfaces.VerificationTokenServic
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +69,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         log.debug("Profil utilisateur ID: {} récupéré avec succès", userId);
+
         return userMapper.userToUserProfileResponseDto(user);
     }
 
@@ -130,23 +127,6 @@ public class UserServiceImpl implements UserService {
 
         log.info("Avatar mis à jour avec succès pour l'utilisateur ID: {}", userId);
         return fileStorageService.getFileUrl(newAvatarPath, AVATAR_SUBDIRECTORY);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<UserSearchResponseDto> searchUsers(String query, Pageable pageable) {
-        // Implémentation de recherche simple (peut être améliorée avec des Specifications JPA)
-        // Pour l'instant, recherche par prénom ou nom contenant la query
-        // Note: Ceci n'est pas sensible à la casse par défaut avec toutes les DB,
-        // des configurations spécifiques ou des fonctions de DB peuvent être nécessaires pour une recherche insensible à la casse.
-        if (!StringUtils.hasText(query)) {
-            return userRepository.findAll(pageable).map(userMapper::userToUserSearchResponseDto);
-        }
-        // Ceci est une simplification. Une vraie recherche utiliserait des prédicats.
-        // Pour l'instant, on retourne tous les utilisateurs si la query est vide, sinon une page vide.
-        // Une implémentation plus complète nécessiterait une méthode de repository personnalisée.
-        // Par exemple : userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query, pageable);
-        return Page.empty(pageable); // À remplacer par une vraie logique de recherche
     }
 
     @Override
@@ -251,21 +231,22 @@ public class UserServiceImpl implements UserService {
         User currentUser = authUtils.getCurrentAuthenticatedUser();
         log.info("Demande de suppression de compte pour l'utilisateur ID: {}", currentUser.getId());
 
-        // GARDE-FOU: Passation de pouvoir pour un administrateur de structure
-        if (currentUser instanceof StructureAdministratorUser admin) {
-            Structure managedStructure = admin.getStructure();
-            // Vérifie s'il gère une structure qui est toujours active
-            if (managedStructure != null && managedStructure.isActive()) {
-                log.debug("Vérification des droits d'administration pour la structure ID: {}", managedStructure.getId());
-                long adminCount = teamService.countAdminsForStructure(managedStructure.getId());
-                log.debug("Nombre d'administrateurs pour la structure ID: {}: {}", managedStructure.getId(), adminCount);
+        // GARDE-FOU: Passation de pouvoir pour un administrateur de structure (basé sur l'appartenance TeamMember)
+        Optional<TeamMember> currentMembershipOpt = teamMemberRepository.findByUserId(currentUser.getId());
+        if (currentMembershipOpt.isPresent()) {
+            TeamMember currentMembership = currentMembershipOpt.get();
+            if (currentMembership.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
+                Long structureId = currentMembership.getStructure().getId();
+                log.debug("Vérification des droits d'administration pour la structure ID: {}", structureId);
+                long adminCount = teamService.countAdminsForStructure(structureId);
+                log.debug("Nombre d'administrateurs pour la structure ID: {}: {}", structureId, adminCount);
 
                 // S'il est le seul admin (ou si le compte est 0 pour une raison quelconque, on est prudent), on bloque.
                 if (adminCount <= 1) {
                     log.warn("Suppression de compte refusée pour l'utilisateur ID: {} car il est le seul administrateur de la structure ID: {}",
-                            currentUser.getId(), managedStructure.getId());
-                    throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure '"
-                            + managedStructure.getName() + "'. Avant de supprimer votre compte, vous devez soit :\n" +
+                            currentUser.getId(), structureId);
+                    throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le seul administrateur de la structure. " +
+                            "Avant de supprimer votre compte, vous devez soit :\n" +
                             "1. Promouvoir un autre membre de l'équipe au rôle d'administrateur via l'interface de gestion d'équipe\n" +
                             "2. Supprimer définitivement la structure si elle n'est plus utilisée\n" +
                             "Ces actions peuvent être effectuées depuis le tableau de bord de votre structure.");
@@ -308,7 +289,7 @@ public class UserServiceImpl implements UserService {
             TeamMember teamMember = teamMemberOpt.get();
             // Vérifier s'il est le dernier administrateur de la structure
             if (teamMember.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
-                Long structureId = teamMember.getTeam().getStructure().getId();
+                Long structureId = teamMember.getStructure().getId();
                 if (teamService.countAdminsForStructure(structureId) <= 1) {
                     throw new BadRequestException("Vous ne pouvez pas supprimer votre compte car vous êtes le dernier administrateur de votre structure. " +
                             "Veuillez d'abord transférer la propriété de la structure à un autre membre ou supprimer la structure.");

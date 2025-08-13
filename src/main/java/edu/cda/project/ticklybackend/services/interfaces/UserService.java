@@ -3,9 +3,6 @@ package edu.cda.project.ticklybackend.services.interfaces;
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileUpdateDto;
-import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -16,8 +13,6 @@ public interface UserService {
     UserProfileResponseDto updateUserProfile(Long userId, UserProfileUpdateDto updateDto);
 
     String updateUserAvatar(Long userId, MultipartFile file);
-
-    Page<UserSearchResponseDto> searchUsers(String query, Pageable pageable);
 
     UserFavoriteStructureDto addFavoriteStructure(Long userId, Long structureId);
 

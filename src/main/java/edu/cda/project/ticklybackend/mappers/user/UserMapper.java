@@ -5,10 +5,13 @@ import edu.cda.project.ticklybackend.dtos.auth.AuthResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserFavoriteStructureDto;
 import edu.cda.project.ticklybackend.dtos.user.UserProfileResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.UserSearchResponseDto;
+import edu.cda.project.ticklybackend.enums.TeamMemberStatus;
+import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.mappers.structure.StructureMapper;
-import edu.cda.project.ticklybackend.models.user.StaffUser;
+import edu.cda.project.ticklybackend.models.team.TeamMember;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
+import edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
@@ -24,14 +27,14 @@ import java.util.stream.Collectors;
 
 // @Mapper indique à MapStruct de générer une implémentation pour cette interface.
 // componentModel = "spring" permet d'injecter ce mapper comme un bean Spring.
-@Mapper(componentModel = "spring", uses = {StructureMapper.class}, imports = {StaffUser.class})
+@Mapper(componentModel = "spring", uses = {StructureMapper.class})
 public abstract class UserMapper {
-
-    // Juste pour qu'il reste dans les imports car utilisé dans l'expression du mapping StructureId
-    protected StaffUser staffUser;
 
     @Autowired
     protected FileStorageService fileStorageService;
+
+    @Autowired
+    protected TeamMemberRepository teamMemberRepository;
 
     // Convertit une entité User en AuthResponseDto
     // Le mapping de 'expiresIn' et 'accessToken' se fera manuellement dans le service
@@ -41,17 +44,17 @@ public abstract class UserMapper {
     @Mapping(target = "tokenType", ignore = true)
     @Mapping(target = "userId", source = "id")
     @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
-    @Mapping(target = "structureId", expression = "java(user instanceof StaffUser && ((StaffUser) user).getStructure()!= null? ((StaffUser) user).getStructure().getId() : null)")
     public abstract AuthResponseDto userToAuthResponseDto(User user);
 
     // Pour UserProfileResponseDto (Étape 3)
     @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
-    @Mapping(target = "structureId", expression = "java(user instanceof StaffUser && ((StaffUser) user).getStructure()!= null? ((StaffUser) user).getStructure().getId() : null)")
-    public abstract UserProfileResponseDto userToUserProfileResponseDto(User user); // ERREUR LIGNES 51 & 88
+    @Mapping(target = "structureId", expression = "java(resolveStructureId(user))")
+    @Mapping(target = "role", expression = "java(resolveRole(user))")
+    public abstract UserProfileResponseDto userToUserProfileResponseDto(User user);
 
     // Pour UserSearchResponseDto (Étape 3)
     @Mapping(target = "avatarUrl", source = "avatarPath", qualifiedByName = "buildUserAvatarUrl")
-    public abstract UserSearchResponseDto userToUserSearchResponseDto(User user); // Pour la référence de méthode à la LIGNE 123
+    public abstract UserSearchResponseDto userToUserSearchResponseDto(User user);
 
     public List<UserSearchResponseDto> usersToUserSearchResponseDtos(List<User> users) {
         if (users == null) return null;
@@ -61,10 +64,10 @@ public abstract class UserMapper {
     // Pour UserFavoriteStructureDto (Étape 3)
     @Mapping(target = "userId", source = "user.id")
     // 'structure' sera mappé par StructureMapper via 'uses'
-    public abstract UserFavoriteStructureDto userFavoriteStructureToUserFavoriteStructureDto(UserFavoriteStructure favorite, @Context FileStorageService fsService); // ERREUR LIGNE 158
+    public abstract UserFavoriteStructureDto userFavoriteStructureToUserFavoriteStructureDto(UserFavoriteStructure favorite, @Context FileStorageService fsService);
 
     // Méthode pour la liste des favoris (Étape 3)
-    public List<UserFavoriteStructureDto> userFavoriteStructuresToUserFavoriteStructureDtos(List<UserFavoriteStructure> favorites, @Context FileStorageService fsService) { // ERREUR LIGNE 139
+    public List<UserFavoriteStructureDto> userFavoriteStructuresToUserFavoriteStructureDtos(List<UserFavoriteStructure> favorites, @Context FileStorageService fsService) {
         if (favorites == null) {
             return null;
         }
@@ -90,4 +93,24 @@ public abstract class UserMapper {
         if (instant == null) return null;
         return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
+
+
+    protected Long resolveStructureId(User user) {
+        return teamMemberRepository
+                .findFirstByUserIdAndStatusOrderByJoinedAtDesc(user.getId(), TeamMemberStatus.ACTIVE)
+                .map(tm -> tm.getStructure().getId())
+                .orElseGet(() -> teamMemberRepository.findByUserId(user.getId())
+                        .map(tm -> tm.getStructure().getId())
+                        .orElse(null));
+    }
+
+    protected UserRole resolveRole(User user) {
+        return teamMemberRepository
+                .findFirstByUserIdAndStatusOrderByJoinedAtDesc(user.getId(), TeamMemberStatus.ACTIVE)
+                .map(TeamMember::getRole)
+                .orElseGet(() -> teamMemberRepository.findByUserId(user.getId())
+                        .map(TeamMember::getRole)
+                        .orElse(null));
+    }
 }
+

@@ -55,7 +55,7 @@ public class EventController {
             }
     )
     @PostMapping("/events")
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.canCreateInStructure(principal, #creationDto.structureId)")
+    @PreAuthorize("@organizationalSecurityService.canModifyStructure(#creationDto.structureId, authentication)")
     public ResponseEntity<EventDetailResponseDto> createEvent(@Valid @RequestBody EventCreationDto creationDto) {
         LoggingUtils.logMethodEntry(log, "createEvent", "structureId", creationDto.getStructureId());
         try {
@@ -147,7 +147,7 @@ public class EventController {
             }
     )
     @PatchMapping("/events/{eventId}")
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<EventDetailResponseDto> updateEvent(
             @Parameter(description = "ID of the event to update") @PathVariable Long eventId,
             @Valid @RequestBody EventUpdateDto updateDto) {
@@ -174,7 +174,7 @@ public class EventController {
             }
     )
     @DeleteMapping("/events/{eventId}")
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<Void> deleteEvent(@Parameter(description = "ID of the event to delete") @PathVariable Long eventId) {
         LoggingUtils.logMethodEntry(log, "deleteEvent", "eventId", eventId);
         try {
@@ -199,7 +199,7 @@ public class EventController {
             }
     )
     @PatchMapping("/events/{eventId}/status")
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<EventDetailResponseDto> updateEventStatus(@Parameter(description = "Event ID") @PathVariable Long eventId, @Valid @RequestBody EventStatusUpdateDto statusUpdateDto) {
         LoggingUtils.logMethodEntry(log, "updateEventStatus", "eventId", eventId, "status", statusUpdateDto.getStatus());
         try {
@@ -219,7 +219,7 @@ public class EventController {
             responses = @ApiResponse(responseCode = "200", description = "Photo mise à jour", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
     )
     @PostMapping(value = "/events/{eventId}/main-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<FileUploadResponseDto> uploadMainPhoto(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "Fichier image à uploader") @RequestParam("file") MultipartFile file) {
@@ -242,7 +242,7 @@ public class EventController {
             responses = @ApiResponse(responseCode = "200", description = "Image ajoutée", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
     )
     @PostMapping(value = "/events/{eventId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<List<FileUploadResponseDto>> addGalleryImages(
             @PathVariable Long eventId,
             @RequestParam("files") MultipartFile[] files) {
@@ -264,7 +264,7 @@ public class EventController {
             responses = @ApiResponse(responseCode = "204", description = "Image supprimée")
     )
     @DeleteMapping("/events/{eventId}/gallery")
-    @PreAuthorize("hasAnyRole('STRUCTURE_ADMINISTRATOR', 'ORGANIZATION_SERVICE') and @eventSecurityService.isOwner(#eventId, principal)")
+    @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<Void> removeGalleryImage(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "Chemin/nom du fichier image à supprimer (tel que retourné par l'API)") @RequestParam String imagePath) {
@@ -308,7 +308,7 @@ public class EventController {
             }
     )
     @GetMapping("/events/{eventId}/management/tickets")
-    @PreAuthorize("@ticketSecurityService.canValidateEventTickets(#eventId, authentication)")
+    @PreAuthorize("@organizationalSecurityService.canValidateEventTickets(#eventId, authentication)")
     public ResponseEntity<PaginatedResponseDto<TicketResponseDto>> getEventTickets(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "Statut des billets à filtrer (optionnel)") @RequestParam(required = false) TicketStatus status,
@@ -336,7 +336,7 @@ public class EventController {
             }
     )
     @PostMapping("/events/{eventId}/management/tickets/{ticketId}/validate")
-    @PreAuthorize("@ticketSecurityService.canValidateEventTickets(#eventId, authentication)")
+    @PreAuthorize("@organizationalSecurityService.canValidateEventTickets(#eventId, authentication)")
     public ResponseEntity<TicketValidationResponseDto> validateTicket(
             @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
             @Parameter(description = "ID du billet à valider") @PathVariable UUID ticketId) {

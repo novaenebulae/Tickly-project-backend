@@ -26,7 +26,6 @@ import edu.cda.project.ticklybackend.repositories.structure.AudienceZoneTemplate
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
 import edu.cda.project.ticklybackend.repositories.user.FriendshipRepository;
-import edu.cda.project.ticklybackend.security.EventSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.EventService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
@@ -43,6 +42,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -67,8 +68,8 @@ public class EventServiceImpl implements EventService {
     private final TicketRepository ticketRepository;
     private final FriendshipRepository friendshipRepository;
     private final EventAddressMapper addressMapper;
-    private final EventSecurityService eventSecurityService;
     private final EventAudienceZoneMapper eventAudienceZoneMapper;
+    private final edu.cda.project.ticklybackend.security.OrganizationalSecurityService organizationalSecurityService;
 
     private final EventStatusUpdateUtils eventStatusUpdateUtils;
 
@@ -81,7 +82,6 @@ public class EventServiceImpl implements EventService {
             throw new BadRequestException("La date de fin ne peut pas être antérieure à la date de début.");
         }
 
-        User creator = authUtils.getCurrentAuthenticatedUser();
         Structure structure = structureRepository.findById(creationDto.getStructureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", creationDto.getStructureId()));
 
@@ -134,7 +134,6 @@ public class EventServiceImpl implements EventService {
         }
 
         Event event = eventMapper.toEntity(creationDto);
-        event.setCreator(creator);
         event.setStructure(structure);
         event.setCategories(categories);
 
@@ -158,10 +157,7 @@ public class EventServiceImpl implements EventService {
         // Construire la spécification de base avec les paramètres de recherche
         Specification<Event> baseSpec = EventSpecification.getSpecification(params);
 
-        // Ajouter les filtres de sécurité basés sur le rôle de l'utilisateur
-        Specification<Event> secureSpec = eventSecurityService.addSecurityFilters(baseSpec);
-
-        Page<Event> eventPage = eventRepository.findAll(secureSpec, pageable);
+        Page<Event> eventPage = eventRepository.findAll(baseSpec, pageable);
 
         // Check and update status for each event
         for (Event event : eventPage.getContent()) {
@@ -208,13 +204,11 @@ public class EventServiceImpl implements EventService {
             log.info("Event status automatically updated to COMPLETED for event ID: {}", eventId);
         }
 
-        // Vérification de sécurité pour l'accès aux détails
-        boolean canAccess = eventSecurityService.canAccessEventDetails(
-                eventId,
-                event.getStatus(),
-                event.getStructure().getId(),
-                event.isDeleted()
-        );
+        // Vérification de sécurité pour l'accès aux détails (public if PUBLISHED and not deleted; otherwise staff only)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean canAccess = !event.isDeleted() &&
+                (event.getStatus() == EventStatus.PUBLISHED ||
+                        organizationalSecurityService.canModifyEvent(eventId, authentication));
 
         if (!canAccess) {
             throw new ResourceNotFoundException("Event", "id", eventId);
@@ -237,13 +231,11 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
-        // Vérification de sécurité pour l'accès aux détails
-        boolean canAccess = eventSecurityService.canAccessEventDetails(
-                eventId,
-                event.getStatus(),
-                event.getStructure().getId(),
-                event.isDeleted()
-        );
+        // Vérification de sécurité pour l'accès aux détails (same rule as getEventById)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean canAccess = !event.isDeleted() &&
+                (event.getStatus() == EventStatus.PUBLISHED ||
+                        organizationalSecurityService.canModifyEvent(eventId, authentication));
 
         if (!canAccess) {
             throw new ResourceNotFoundException("Event", "id", eventId);

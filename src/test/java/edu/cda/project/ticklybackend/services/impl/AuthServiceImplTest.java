@@ -13,7 +13,6 @@ import edu.cda.project.ticklybackend.exceptions.TokenRefreshException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.token.RefreshToken;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
@@ -90,7 +89,7 @@ class AuthServiceImplTest {
     @BeforeEach
     void setUp() {
         // Setup test user
-        testUser = new SpectatorUser();
+        testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");

@@ -2,7 +2,6 @@ package edu.cda.project.ticklybackend.services.impl;
 
 import edu.cda.project.ticklybackend.exceptions.TokenRefreshException;
 import edu.cda.project.ticklybackend.models.token.RefreshToken;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.token.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +47,7 @@ class RefreshTokenServiceImplTest {
         ReflectionTestUtils.setField(refreshTokenService, "refreshTokenDurationMs", 86400000L); // 1 day
 
         // Create test user
-        testUser = new SpectatorUser();
+        testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");
@@ -85,20 +83,20 @@ class RefreshTokenServiceImplTest {
         // Arrange
         String rawToken = "raw-token";
         String hashedToken = "hashed-token";
-        
+
         when(passwordEncoder.encode(anyString())).thenReturn(hashedToken);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        
+
         // Act
         String result = refreshTokenService.createRefreshToken(testUser);
-        
+
         // Assert
         assertNotNull(result);
-        
+
         // Verify
         ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
         verify(refreshTokenRepository).save(tokenCaptor.capture());
-        
+
         RefreshToken savedToken = tokenCaptor.getValue();
         assertEquals(testUser, savedToken.getUser());
         assertEquals(hashedToken, savedToken.getToken());
@@ -110,11 +108,11 @@ class RefreshTokenServiceImplTest {
     void verifyExpiration_WithValidToken_ShouldReturnToken() {
         // Act
         RefreshToken result = refreshTokenService.verifyExpiration(validRefreshToken);
-        
+
         // Assert
         assertNotNull(result);
         assertEquals(validRefreshToken, result);
-        
+
         // Verify
         verifyNoInteractions(refreshTokenRepository);
     }
@@ -125,7 +123,7 @@ class RefreshTokenServiceImplTest {
         TokenRefreshException exception = assertThrows(TokenRefreshException.class, () -> {
             refreshTokenService.verifyExpiration(expiredRefreshToken);
         });
-        
+
         // Verify
         verify(refreshTokenRepository).delete(expiredRefreshToken);
     }
@@ -135,18 +133,18 @@ class RefreshTokenServiceImplTest {
         // Arrange
         String rawToken = "raw-token";
         List<RefreshToken> allTokens = Arrays.asList(validRefreshToken, expiredRefreshToken, revokedRefreshToken);
-        
+
         when(refreshTokenRepository.findAll()).thenReturn(allTokens);
         when(passwordEncoder.matches(eq(rawToken), eq(validRefreshToken.getToken()))).thenReturn(true);
         // We don't need to mock the other matches calls since the stream will stop after finding the first match
-        
+
         // Act
         Optional<RefreshToken> result = refreshTokenService.findByToken(rawToken);
-        
+
         // Assert
         assertTrue(result.isPresent());
         assertEquals(validRefreshToken, result.get());
-        
+
         // Verify
         verify(refreshTokenRepository).findAll();
         // Only one call to matches() is expected because the stream stops after finding the first match
@@ -158,16 +156,16 @@ class RefreshTokenServiceImplTest {
         // Arrange
         String rawToken = "non-existing-token";
         List<RefreshToken> allTokens = Arrays.asList(validRefreshToken, expiredRefreshToken, revokedRefreshToken);
-        
+
         when(refreshTokenRepository.findAll()).thenReturn(allTokens);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
-        
+
         // Act
         Optional<RefreshToken> result = refreshTokenService.findByToken(rawToken);
-        
+
         // Assert
         assertFalse(result.isPresent());
-        
+
         // Verify
         verify(refreshTokenRepository).findAll();
         // In this case, all tokens are checked because none match
@@ -183,15 +181,15 @@ class RefreshTokenServiceImplTest {
         tokenToRevoke.setToken("hashed-token");
         tokenToRevoke.setExpiryDate(Instant.now().plusSeconds(3600));
         tokenToRevoke.setRevoked(false);
-        
+
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        
+
         // Act
         refreshTokenService.revokeToken(tokenToRevoke);
-        
+
         // Assert
         assertTrue(tokenToRevoke.isRevoked());
-        
+
         // Verify
         verify(refreshTokenRepository).save(tokenToRevoke);
     }
@@ -200,10 +198,10 @@ class RefreshTokenServiceImplTest {
     void revokeAllUserTokens_ShouldDeleteAllUserTokens() {
         // Arrange
         doNothing().when(refreshTokenRepository).deleteAllByUser(testUser);
-        
+
         // Act
         refreshTokenService.revokeAllUserTokens(testUser);
-        
+
         // Verify
         verify(refreshTokenRepository).deleteAllByUser(testUser);
     }
@@ -212,13 +210,13 @@ class RefreshTokenServiceImplTest {
     void deleteExpiredTokens_ShouldDeleteExpiredAndRevokedTokens() {
         // Arrange
         List<RefreshToken> expiredOrRevokedTokens = Arrays.asList(expiredRefreshToken, revokedRefreshToken);
-        
+
         when(refreshTokenRepository.findAllExpiredOrRevoked(any(Instant.class))).thenReturn(expiredOrRevokedTokens);
         doNothing().when(refreshTokenRepository).deleteAllExpiredOrRevoked(any(Instant.class));
-        
+
         // Act
         refreshTokenService.deleteExpiredTokens();
-        
+
         // Verify
         verify(refreshTokenRepository).findAllExpiredOrRevoked(any(Instant.class));
         verify(refreshTokenRepository).deleteAllExpiredOrRevoked(any(Instant.class));

@@ -50,7 +50,7 @@ public class StructureController {
             @ApiResponse(responseCode = "403", description = "User is not authorized to create a structure or already has one")
     })
     @PostMapping
-    @PreAuthorize("@structureSecurityService.canCreateStructure(authentication)")
+    @PreAuthorize("@organizationalSecurityService.canCreateStructure(authentication)")
     public ResponseEntity<StructureCreationResponseDto> createStructure(
             @Parameter(description = "DTO for structure creation", required = true)
             @Valid @RequestBody StructureCreationDto creationDto,
@@ -96,7 +96,7 @@ public class StructureController {
             @ApiResponse(responseCode = "404", description = "Structure not found")
     })
     @PatchMapping("/{structureId}")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMINISTRATOR') or @structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMINISTRATOR') or @organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<StructureDetailResponseDto> updateStructure(
             @PathVariable Long structureId,
             @Valid @RequestBody StructureUpdateDto updateDto,
@@ -113,7 +113,7 @@ public class StructureController {
             @ApiResponse(responseCode = "404", description = "Structure not found")
     })
     @DeleteMapping("/{structureId}")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMINISTRATOR') or @structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMINISTRATOR') or @organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> deleteStructure(@PathVariable Long structureId, Authentication authentication) {
         structureService.deleteStructure(structureId);
         return ResponseEntity.noContent().build();
@@ -124,7 +124,7 @@ public class StructureController {
     @Operation(summary = "Update a structure's logo",
             description = "Replaces the current logo of the structure. Requires being the owner.")
     @PostMapping(value = "/{structureId}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<FileUploadResponseDto> updateStructureLogo(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
         return ResponseEntity.ok(structureService.updateStructureLogo(structureId, file));
     }
@@ -137,7 +137,7 @@ public class StructureController {
             @ApiResponse(responseCode = "404", description = "Structure not found or logo does not exist")
     })
     @DeleteMapping("/{structureId}/logo")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> removeStructureLogo(@PathVariable Long structureId, Authentication authentication) {
         structureService.removeStructureLogo(structureId);
         return ResponseEntity.noContent().build();
@@ -146,7 +146,7 @@ public class StructureController {
     @Operation(summary = "Update a structure's cover image",
             description = "Replaces the current cover image of the structure. Requires being the owner.")
     @PostMapping(value = "/{structureId}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<FileUploadResponseDto> updateStructureCover(@PathVariable Long structureId, @RequestParam("file") MultipartFile file, Authentication authentication) {
         return ResponseEntity.ok(structureService.updateStructureCover(structureId, file));
     }
@@ -159,7 +159,7 @@ public class StructureController {
             @ApiResponse(responseCode = "404", description = "Structure not found or cover image does not exist")
     })
     @DeleteMapping("/{structureId}/cover")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> removeStructureCover(@PathVariable Long structureId, Authentication authentication) {
         structureService.removeStructureCover(structureId);
         return ResponseEntity.noContent().build();
@@ -168,7 +168,7 @@ public class StructureController {
     @Operation(summary = "Add multiple images to a structure's gallery",
             description = "Adds multiple new images to the structure's gallery in a single operation.")
     @PostMapping(value = "/{structureId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<List<FileUploadResponseDto>> addMultipleStructureGalleryImages(
             @PathVariable Long structureId,
             @RequestParam("files") MultipartFile[] files,
@@ -181,7 +181,7 @@ public class StructureController {
     @Operation(summary = "Remove an image from a structure's gallery",
             description = "Deletes a specific image from the gallery. Requires being the owner.")
     @DeleteMapping("/{structureId}/gallery")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> removeStructureGalleryImage(
             @PathVariable Long structureId,
             @Parameter(description = "Path of the image to delete, as returned in the gallery URLs.", required = true)
@@ -206,7 +206,7 @@ public class StructureController {
     @Operation(summary = "Create an area for a structure",
             description = "Adds a new physical space (room, stage...) to a structure. Requires being the owner.")
     @PostMapping("/{structureId}/areas")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.canModifyStructure(#structureId, authentication)")
     public ResponseEntity<AreaResponseDto> createArea(@PathVariable Long structureId, @Valid @RequestBody AreaCreationDto creationDto, Authentication authentication) {
         return new ResponseEntity<>(structureService.createArea(structureId, creationDto), HttpStatus.CREATED);
     }
@@ -214,7 +214,7 @@ public class StructureController {
     @Operation(summary = "List areas of a structure",
             description = "Retrieves all physical spaces configured for a given structure. Accessible to the owner or organization services.")
     @GetMapping("/{structureId}/areas")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE') or hasAuthority('ROLE_RESERVATION_SERVICE')")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<List<AreaResponseDto>> getAreasByStructureId(@PathVariable Long structureId, Authentication authentication) {
         return ResponseEntity.ok(structureService.getAreasByStructureId(structureId));
     }
@@ -222,7 +222,7 @@ public class StructureController {
     @Operation(summary = "Get a specific area",
             description = "Retrieves the details of an area by its ID, in the context of a structure.")
     @GetMapping("/{structureId}/areas/{areaId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE')")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<AreaResponseDto> getAreaById(@PathVariable Long structureId, @PathVariable Long areaId, Authentication authentication) {
         return ResponseEntity.ok(structureService.getAreaById(structureId, areaId));
     }
@@ -230,7 +230,7 @@ public class StructureController {
     @Operation(summary = "Update an area",
             description = "Partially updates an existing area. Requires being the owner of the parent structure.")
     @PatchMapping("/{structureId}/areas/{areaId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.canModifyStructure(#structureId, authentication)")
     public ResponseEntity<AreaResponseDto> updateArea(@PathVariable Long structureId, @PathVariable Long areaId, @Valid @RequestBody AreaUpdateDto updateDto, Authentication authentication) {
         return ResponseEntity.ok(structureService.updateArea(structureId, areaId, updateDto));
     }
@@ -238,7 +238,7 @@ public class StructureController {
     @Operation(summary = "Delete an area",
             description = "Removes an area from a structure. Requires being the owner.")
     @DeleteMapping("/{structureId}/areas/{areaId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> deleteArea(@PathVariable Long structureId, @PathVariable Long areaId, Authentication authentication) {
         structureService.deleteArea(structureId, areaId);
         return ResponseEntity.noContent().build();
@@ -249,7 +249,7 @@ public class StructureController {
     @Operation(summary = "Create an audience zone template",
             description = "Adds a new zone template (pit, balcony...) to a specific area. Requires being the owner of the structure.")
     @PostMapping("/{structureId}/areas/{areaId}/audience-zone-templates")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.canModifyStructure(#structureId, authentication)")
     public ResponseEntity<AudienceZoneTemplateResponseDto> createAudienceZoneTemplate(
             @PathVariable Long structureId, @PathVariable Long areaId, @Valid @RequestBody AudienceZoneTemplateCreationDto creationDto, Authentication authentication) {
         return new ResponseEntity<>(structureService.createAudienceZoneTemplate(structureId, areaId, creationDto), HttpStatus.CREATED);
@@ -258,7 +258,7 @@ public class StructureController {
     @Operation(summary = "List audience zone templates for an area",
             description = "Retrieves all audience zone templates for a given area.")
     @GetMapping("/{structureId}/areas/{areaId}/audience-zone-templates")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE')")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<List<AudienceZoneTemplateResponseDto>> getAudienceZoneTemplatesByAreaId(@PathVariable Long structureId, @PathVariable Long areaId, Authentication authentication) {
         return ResponseEntity.ok(structureService.getAudienceZoneTemplatesByAreaId(structureId, areaId));
     }
@@ -266,7 +266,7 @@ public class StructureController {
     @Operation(summary = "Get a specific audience zone template",
             description = "Retrieves the details of a zone template by its ID.")
     @GetMapping("/{structureId}/areas/{areaId}/audience-zone-templates/{templateId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id) or hasAuthority('ROLE_ORGANIZATION_SERVICE')")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<AudienceZoneTemplateResponseDto> getAudienceZoneTemplateById(@PathVariable Long structureId, @PathVariable Long areaId, @PathVariable Long templateId, Authentication authentication) {
         return ResponseEntity.ok(structureService.getAudienceZoneTemplateById(structureId, areaId, templateId));
     }
@@ -274,7 +274,7 @@ public class StructureController {
     @Operation(summary = "Update an audience zone template",
             description = "Updates an existing zone template. Requires being the owner.")
     @PatchMapping("/{structureId}/areas/{areaId}/audience-zone-templates/{templateId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.canModifyStructure(#structureId, authentication)")
     public ResponseEntity<AudienceZoneTemplateResponseDto> updateAudienceZoneTemplate(
             @PathVariable Long structureId, @PathVariable Long areaId, @PathVariable Long templateId, @Valid @RequestBody AudienceZoneTemplateUpdateDto updateDto, Authentication authentication) {
         return ResponseEntity.ok(structureService.updateAudienceZoneTemplate(structureId, areaId, templateId, updateDto));
@@ -283,7 +283,7 @@ public class StructureController {
     @Operation(summary = "Delete an audience zone template",
             description = "Removes an audience zone template. Requires being the owner.")
     @DeleteMapping("/{structureId}/areas/{areaId}/audience-zone-templates/{templateId}")
-    @PreAuthorize("@structureSecurityService.isOwner(#structureId, #authentication.principal.id)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<Void> deleteAudienceZoneTemplate(@PathVariable Long structureId, @PathVariable Long areaId, @PathVariable Long templateId, Authentication authentication) {
         structureService.deleteAudienceZoneTemplate(structureId, areaId, templateId);
         return ResponseEntity.noContent().build();

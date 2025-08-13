@@ -12,7 +12,6 @@ import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.exceptions.TokenRefreshException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
@@ -83,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("Début du flux d'inscription optimisé pour l'invitation de {}", registrationDto.getEmail());
 
             // 1. Créer le compte utilisateur basique (sera transformé par le service d'équipe)
-            User newUser = new SpectatorUser(
+            User newUser = new User(
                     registrationDto.getFirstName(),
                     registrationDto.getLastName(),
                     registrationDto.getEmail(),
@@ -129,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("Début du flux d'inscription standard pour {}", registrationDto.getEmail());
 
-            User newUser = new SpectatorUser(
+            User newUser = new User(
                     registrationDto.getFirstName(),
                     registrationDto.getLastName(),
                     registrationDto.getEmail(),

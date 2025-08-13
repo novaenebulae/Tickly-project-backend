@@ -3,9 +3,8 @@ package edu.cda.project.ticklybackend.mappers.team;
 import edu.cda.project.ticklybackend.dtos.team.TeamMemberDto;
 import edu.cda.project.ticklybackend.enums.TeamMemberStatus;
 import edu.cda.project.ticklybackend.enums.UserRole;
-import edu.cda.project.ticklybackend.models.team.Team;
+import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.team.TeamMember;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,7 @@ public class TeamMemberMapperTest {
     private FileStorageService fileStorageService;
 
     private User user;
-    private Team team;
+    private Structure structure;
     private TeamMember teamMember;
     private Instant testInstant;
 
@@ -43,18 +42,17 @@ public class TeamMemberMapperTest {
         teamMemberMapper = Mappers.getMapper(TeamMemberMapper.class);
 
         // Create test user
-        user = new SpectatorUser();
+        user = new User();
         user.setId(1L);
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEmail("test@example.com");
-        user.setRole(UserRole.SPECTATOR);
         user.setAvatarPath("test-avatar.jpg");
 
-        // Create test team
-        team = new Team();
-        team.setId(1L);
-        team.setName("Test Team");
+        // Create test structure
+        structure = new Structure();
+        structure.setId(1L);
+        structure.setName("Test Structure");
 
         // Create test instant
         testInstant = Instant.parse("2023-01-01T12:00:00Z");
@@ -62,7 +60,7 @@ public class TeamMemberMapperTest {
         // Create test team member
         teamMember = new TeamMember();
         teamMember.setId(1L);
-        teamMember.setTeam(team);
+        teamMember.setStructure(structure);
         teamMember.setUser(user);
         teamMember.setEmail("test@example.com");
         teamMember.setRole(UserRole.SPECTATOR);

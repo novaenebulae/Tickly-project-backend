@@ -11,13 +11,10 @@ import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.mappers.team.TeamMemberMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.team.Team;
 import edu.cda.project.ticklybackend.models.team.TeamMember;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository;
-import edu.cda.project.ticklybackend.repositories.team.TeamRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
@@ -45,8 +42,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class TeamManagementServiceImplTest {
 
-    @Mock
-    private TeamRepository teamRepository;
 
     @Mock
     private TeamMemberRepository memberRepository;
@@ -83,7 +78,6 @@ public class TeamManagementServiceImplTest {
     private Long userId;
     private User testUser;
     private Structure testStructure;
-    private Team testTeam;
     private TeamMember testTeamMember;
     private TeamMemberDto teamMemberDto;
     private List<TeamMember> teamMembers;
@@ -102,28 +96,22 @@ public class TeamManagementServiceImplTest {
         invitationToken = "valid-invitation-token";
 
         // Create test user
-        testUser = new SpectatorUser();
+        testUser = new User();
         testUser.setId(userId);
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");
         testUser.setLastName("User");
-        testUser.setRole(UserRole.SPECTATOR);
 
         // Create test structure
         testStructure = new Structure();
         testStructure.setId(structureId);
         testStructure.setName("Test Structure");
 
-        // Create test team
-        testTeam = new Team();
-        testTeam.setId(1L);
-        testTeam.setName("Test Team");
-        testTeam.setStructure(testStructure);
 
         // Create test team member
         testTeamMember = new TeamMember();
         testTeamMember.setId(memberId);
-        testTeamMember.setTeam(testTeam);
+        testTeamMember.setStructure(testStructure);
         testTeamMember.setUser(testUser);
         testTeamMember.setEmail("test@example.com");
         testTeamMember.setRole(UserRole.ORGANIZATION_SERVICE);
@@ -170,7 +158,7 @@ public class TeamManagementServiceImplTest {
     @Test
     void getTeamMembers_ShouldReturnTeamMembersList() {
         // Arrange
-        when(memberRepository.findByTeamStructureId(structureId)).thenReturn(teamMembers);
+        when(memberRepository.findByStructureId(structureId)).thenReturn(teamMembers);
         when(memberMapper.toDtoList(eq(teamMembers), any(FileStorageService.class))).thenReturn(teamMemberDtos);
 
         // Act
@@ -184,30 +172,29 @@ public class TeamManagementServiceImplTest {
         assertEquals(UserRole.ORGANIZATION_SERVICE, result.get(0).getRole());
 
         // Verify
-        verify(memberRepository, times(1)).findByTeamStructureId(structureId);
+        verify(memberRepository, times(1)).findByStructureId(structureId);
         verify(memberMapper, times(1)).toDtoList(eq(teamMembers), any(FileStorageService.class));
     }
 
     @Test
     void inviteMember_WithExistingTeam_ShouldCreateInvitation() {
         // Arrange
-        User inviter = new SpectatorUser();
+        User inviter = new User();
         inviter.setId(2L);
         inviter.setEmail("inviter@example.com");
         inviter.setFirstName("Inviter");
         inviter.setLastName("User");
 
-        User invitee = new SpectatorUser();
+        User invitee = new User();
         invitee.setId(3L);
         invitee.setEmail("new.member@example.com");
         invitee.setFirstName("New");
         invitee.setLastName("Member");
-        invitee.setRole(UserRole.SPECTATOR);
         invitee.setEmailValidated(true);
 
         TeamMember newMember = new TeamMember();
         newMember.setId(2L);
-        newMember.setTeam(testTeam);
+        newMember.setStructure(testStructure);
         newMember.setEmail("new.member@example.com");
         newMember.setRole(UserRole.ORGANIZATION_SERVICE);
         newMember.setStatus(TeamMemberStatus.PENDING_INVITATION);
@@ -223,10 +210,9 @@ public class TeamManagementServiceImplTest {
 
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(inviter);
         when(structureRepository.findById(structureId)).thenReturn(Optional.of(testStructure));
-        when(teamRepository.findByStructureId(structureId)).thenReturn(Optional.of(testTeam));
         when(userRepository.existsByEmail("new.member@example.com")).thenReturn(true);
         when(userRepository.findByEmail("new.member@example.com")).thenReturn(Optional.of(invitee));
-        when(memberRepository.existsByTeamIdAndEmail(testTeam.getId(), "new.member@example.com")).thenReturn(false);
+        when(memberRepository.existsByStructureIdAndEmail(structureId, "new.member@example.com")).thenReturn(false);
         when(memberRepository.save(any(TeamMember.class))).thenReturn(newMember);
         when(verificationTokenService.createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString())).thenReturn(invitationToken);
         doNothing().when(mailingService).sendTeamInvitation(anyString(), anyString(), anyString(), anyString());
@@ -237,10 +223,9 @@ public class TeamManagementServiceImplTest {
         // Verify
         verify(authUtils, times(1)).getCurrentAuthenticatedUser();
         verify(structureRepository, times(1)).findById(structureId);
-        verify(teamRepository, times(1)).findByStructureId(structureId);
         verify(userRepository, times(1)).existsByEmail("new.member@example.com");
         verify(userRepository, times(1)).findByEmail("new.member@example.com");
-        verify(memberRepository, times(1)).existsByTeamIdAndEmail(testTeam.getId(), "new.member@example.com");
+        verify(memberRepository, times(1)).existsByStructureIdAndEmail(structureId, "new.member@example.com");
         verify(memberRepository, times(1)).save(any(TeamMember.class));
         verify(verificationTokenService, times(1)).createToken(eq(invitee), eq(TokenType.TEAM_INVITATION), any(Duration.class), anyString());
         verify(mailingService, times(1)).sendTeamInvitation(anyString(), anyString(), anyString(), anyString());
@@ -249,7 +234,7 @@ public class TeamManagementServiceImplTest {
     @Test
     void updateMemberRole_ShouldUpdateRoleAndReturnUpdatedMember() {
         // Arrange
-        User currentUser = new SpectatorUser();
+        User currentUser = new User();
         currentUser.setId(2L);
         currentUser.setEmail("admin@example.com");
 
@@ -279,7 +264,7 @@ public class TeamManagementServiceImplTest {
     @Test
     void updateMemberRole_WithLastAdmin_ShouldThrowBadRequestException() {
         // Arrange
-        User currentUser = new SpectatorUser();
+        User currentUser = new User();
         currentUser.setId(2L);
         currentUser.setEmail("admin@example.com");
 
@@ -288,7 +273,7 @@ public class TeamManagementServiceImplTest {
 
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(currentUser);
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testTeamMember));
-        when(memberRepository.countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(1L);
+        when(memberRepository.countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(1L);
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
@@ -298,7 +283,7 @@ public class TeamManagementServiceImplTest {
         // Verify
         verify(authUtils, times(1)).getCurrentAuthenticatedUser();
         verify(memberRepository, times(1)).findById(memberId);
-        verify(memberRepository, times(1)).countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+        verify(memberRepository, times(1)).countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
         verify(memberRepository, never()).save(any(TeamMember.class));
     }
 
@@ -322,7 +307,7 @@ public class TeamManagementServiceImplTest {
         testTeamMember.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testTeamMember));
-        when(memberRepository.countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(1L);
+        when(memberRepository.countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(1L);
 
         // Act & Assert
         assertThrows(BadRequestException.class, () -> {
@@ -331,14 +316,14 @@ public class TeamManagementServiceImplTest {
 
         // Verify
         verify(memberRepository, times(1)).findById(memberId);
-        verify(memberRepository, times(1)).countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+        verify(memberRepository, times(1)).countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
         verify(memberRepository, never()).delete(any(TeamMember.class));
     }
 
     @Test
     void countAdminsForStructure_ShouldReturnCount() {
         // Arrange
-        when(memberRepository.countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(2L);
+        when(memberRepository.countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)).thenReturn(2L);
 
         // Act
         long result = teamManagementService.countAdminsForStructure(structureId);
@@ -347,7 +332,7 @@ public class TeamManagementServiceImplTest {
         assertEquals(2L, result);
 
         // Verify
-        verify(memberRepository, times(1)).countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+        verify(memberRepository, times(1)).countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
     }
 
     @Test
@@ -364,23 +349,12 @@ public class TeamManagementServiceImplTest {
 
         when(verificationTokenService.validateToken("valid-invitation-token", TokenType.TEAM_INVITATION)).thenReturn(invitationToken);
 
+        // Ensure the invitation is pending to pass status check
+        testTeamMember.setStatus(TeamMemberStatus.PENDING_INVITATION);
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testTeamMember));
+        when(memberRepository.findFirstByUserIdAndStatusOrderByJoinedAtDesc(userId, TeamMemberStatus.ACTIVE)).thenReturn(Optional.empty());
 
-        when(userRepository.updateUserTypeAndStructure(
-                eq(userId), anyString(), anyString(), eq(structureId)
-        )).thenReturn(1);
-
-        User updatedUser = new SpectatorUser();
-        updatedUser.setId(userId);
-        updatedUser.setEmail("test@example.com");
-        updatedUser.setFirstName("Test");
-        updatedUser.setLastName("User");
-        updatedUser.setRole(UserRole.ORGANIZATION_SERVICE);
-        updatedUser.setStructure(testStructure);
-
-        when(userRepository.findUserWithStructureById(userId)).thenReturn(Optional.of(updatedUser));
-
-        when(jwtTokenProvider.generateAccessToken(updatedUser)).thenReturn("new-jwt-token");
+        when(jwtTokenProvider.generateAccessToken(testUser)).thenReturn("new-jwt-token");
         when(jwtTokenProvider.getExpirationInMillis()).thenReturn(3600000L);
 
         doNothing().when(verificationTokenService).markTokenAsUsed(invitationToken);
@@ -399,34 +373,24 @@ public class TeamManagementServiceImplTest {
         // Verify
         verify(verificationTokenService, times(1)).validateToken("valid-invitation-token", TokenType.TEAM_INVITATION);
         verify(memberRepository, times(1)).findById(memberId);
-        verify(userRepository, times(1)).updateUserTypeAndStructure(
-                eq(userId), anyString(), anyString(), eq(structureId)
-        );
-        verify(userRepository, times(1)).findUserWithStructureById(userId);
         verify(memberRepository, times(1)).save(testTeamMember);
         verify(verificationTokenService, times(1)).markTokenAsUsed(invitationToken);
-        verify(jwtTokenProvider, times(1)).generateAccessToken(updatedUser);
+        verify(jwtTokenProvider, times(1)).generateAccessToken(testUser);
     }
 
     @Test
-    void dissolveTeam_ShouldDissolveTeamAndConvertUsers() {
+    void dissolveTeam_ShouldDeleteMembersByStructure() {
         // Arrange
         when(structureRepository.existsById(structureId)).thenReturn(true);
-        when(userRepository.convertAllStructureUsersToSpectator(structureId)).thenReturn(2);
-        when(teamRepository.findByStructureId(structureId)).thenReturn(Optional.of(testTeam));
-        when(memberRepository.deleteByTeamId(testTeam.getId())).thenReturn(2L);
-        doNothing().when(teamRepository).delete(testTeam);
+        when(memberRepository.deleteByStructureId(structureId)).thenReturn(2L);
 
         // Act
         teamManagementService.dissolveTeam(structureId);
 
         // Verify
         verify(structureRepository, times(1)).existsById(structureId);
-        verify(userRepository, times(1)).convertAllStructureUsersToSpectator(structureId);
-        verify(userRepository, times(1)).flush();
-        verify(teamRepository, times(1)).findByStructureId(structureId);
-        verify(memberRepository, times(1)).deleteByTeamId(testTeam.getId());
-        verify(teamRepository, times(1)).delete(testTeam);
+        verify(memberRepository, times(1)).deleteByStructureId(structureId);
+        verifyNoMoreInteractions(memberRepository);
     }
 
     @Test
@@ -439,9 +403,6 @@ public class TeamManagementServiceImplTest {
 
         // Verify
         verify(structureRepository, times(1)).existsById(structureId);
-        verify(userRepository, never()).convertAllStructureUsersToSpectator(anyLong());
-        verify(teamRepository, never()).findByStructureId(anyLong());
-        verify(memberRepository, never()).deleteByTeamId(anyLong());
-        verify(teamRepository, never()).delete(any(Team.class));
+        verify(memberRepository, never()).deleteByStructureId(anyLong());
     }
 }

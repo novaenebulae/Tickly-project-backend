@@ -58,6 +58,7 @@ public class StructureServiceImpl implements StructureService {
     private final MailingService mailingService; // Injection pour la notification
     private final EventRepository eventRepository; // Injection pour la vérification
     private final UserFavoriteStructureRepository favoriteRepository;
+    private final edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository teamMemberRepository;
 
     private final StructureMapper structureMapper;
     private final StructureTypeMapper structureTypeMapper;
@@ -84,10 +85,15 @@ public class StructureServiceImpl implements StructureService {
             LoggingUtils.setUserId(user.getId());
             log.debug("Utilisateur trouvé: {} (ID: {})", user.getEmail(), user.getId());
 
-            // 2. Vérifier si l'utilisateur est autorisé à créer une structure.
-            if (user.getStructure() != null || user.getRole() != UserRole.SPECTATOR) {
-                log.warn("Tentative de création de structure par un utilisateur non autorisé: {} (ID: {})", user.getEmail(), user.getId());
-                throw new StructureCreationForbiddenException("L'utilisateur est déjà associé à une structure.");
+            // 2. Vérifier si l'utilisateur est autorisé à créer une structure (nouveau modèle basé sur les memberships).
+            if (!user.isEmailValidated()) {
+                log.warn("Tentative de création de structure par un utilisateur avec email non validé: {} (ID: {})", user.getEmail(), user.getId());
+                throw new StructureCreationForbiddenException("Veuillez valider votre email avant de créer une structure.");
+            }
+            var existingActiveMembership = teamMemberRepository.findFirstByUserIdAndStatusOrderByJoinedAtDesc(user.getId(), edu.cda.project.ticklybackend.enums.TeamMemberStatus.ACTIVE);
+            if (existingActiveMembership.isPresent()) {
+                log.warn("Utilisateur {} (ID: {}) déjà membre actif d'une structure, création interdite", user.getEmail(), user.getId());
+                throw new StructureCreationForbiddenException("Vous êtes déjà membre actif d'une structure.");
             }
 
             // 3. Créer et sauvegarder la nouvelle structure.
@@ -96,23 +102,25 @@ public class StructureServiceImpl implements StructureService {
             Structure savedStructure = structureRepository.save(structure);
             log.info("Nouvelle structure créée: {} (ID: {})", savedStructure.getName(), savedStructure.getId());
 
-            // 4. Mettre à jour l'utilisateur pour en faire un administrateur de structure.
-            userRepository.upgradeUserToStructureAdmin(user.getId(), savedStructure.getId());
-            log.info("Utilisateur {} (ID: {}) promu administrateur de la structure {} (ID: {})", 
-                    user.getEmail(), user.getId(), savedStructure.getName(), savedStructure.getId());
+            // 4. Créer l'appartenance TeamMember (ADMIN actif) pour le créateur.
+            var newMember = new edu.cda.project.ticklybackend.models.team.TeamMember();
+            newMember.setStructure(savedStructure);
+            newMember.setUser(user);
+            newMember.setEmail(user.getEmail());
+            newMember.setRole(edu.cda.project.ticklybackend.enums.UserRole.STRUCTURE_ADMINISTRATOR);
+            newMember.setStatus(edu.cda.project.ticklybackend.enums.TeamMemberStatus.ACTIVE);
+            newMember.setJoinedAt(Instant.now());
+            teamMemberRepository.save(newMember);
+            log.info("Membre administrateur créé pour la structure {} (ID: {})", savedStructure.getName(), savedStructure.getId());
 
-            // 5. Récupérer l'utilisateur mis à jour pour générer un nouveau token.
-            User updatedUser = userRepository.findById(user.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", user.getId()));
+            // 5. Générer un nouveau token JWT identité-seulement
+            String newJwt = jwtTokenProvider.generateAccessToken(user);
+            log.debug("Nouveau token JWT généré pour l'utilisateur: {} (ID: {})", user.getEmail(), user.getId());
 
-            // 6. Générer un nouveau token JWT qui inclura le structureId.
-            String newJwt = jwtTokenProvider.generateAccessToken(updatedUser);
-            log.debug("Nouveau token JWT généré pour l'utilisateur: {} (ID: {})", updatedUser.getEmail(), updatedUser.getId());
-
-            // 7. Préparer la réponse DTO avec le nouveau token.
+            // 6. Préparer la réponse DTO avec le nouveau token.
             StructureCreationResponseDto responseDto = new StructureCreationResponseDto();
             responseDto.setStructureId(savedStructure.getId());
-            responseDto.setMessage("Structure créée avec succès. L'utilisateur a été promu Administrateur de Structure.");
+            responseDto.setMessage("Structure créée avec succès. Vous avez été ajouté en tant qu'Administrateur de Structure.");
             responseDto.setAccessToken(newJwt);
             responseDto.setExpiresIn(jwtTokenProvider.getExpirationInMillis());
 
@@ -245,8 +253,12 @@ public class StructureServiceImpl implements StructureService {
             // Sauvegarde des informations pour la notification avant l'anonymisation
             String originalStructureName = structure.getName();
 
-            // NOUVELLE ÉTAPE : Récupérer les administrateurs pour la notification future.
-            List<User> administratorsToNotify = userRepository.findByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+            // NOUVELLE ÉTAPE : Récupérer les administrateurs via TeamMember pour la notification future.
+            List<User> administratorsToNotify = teamMemberRepository.findByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR)
+                    .stream()
+                    .map(edu.cda.project.ticklybackend.models.team.TeamMember::getUser)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toList());
             log.info("Trouvé {} administrateur(s) à notifier pour la structure ID: {}", administratorsToNotify.size(), structureId);
 
             // 1. Dissolution des relations

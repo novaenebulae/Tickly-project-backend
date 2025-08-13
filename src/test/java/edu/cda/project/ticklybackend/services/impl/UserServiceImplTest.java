@@ -8,7 +8,6 @@ import edu.cda.project.ticklybackend.exceptions.BadRequestException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.UserMapper;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.models.user.UserFavoriteStructure;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
@@ -73,7 +72,7 @@ public class UserServiceImplTest {
         structureId = 1L;
 
         // Create test user
-        testUser = new SpectatorUser();
+        testUser = new User();
         testUser.setId(userId);
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");

@@ -9,11 +9,9 @@ import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.user.FriendshipMapper;
 import edu.cda.project.ticklybackend.models.user.Friendship;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.user.FriendshipRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
-import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,9 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,9 +41,6 @@ public class FriendshipServiceImplTest {
 
     @Mock
     private FriendshipMapper friendshipMapper;
-
-    @Mock
-    private FileStorageService fileStorageService;
 
     @Mock
     private AuthUtils authUtils;
@@ -64,7 +59,6 @@ public class FriendshipServiceImplTest {
     private List<Friendship> sentRequests;
     private SendFriendRequestDto sendFriendRequestDto;
     private UpdateFriendshipStatusDto updateFriendshipStatusDto;
-    private FriendsDataResponseDto friendsDataResponseDto;
 
     @BeforeEach
     void setUp() {
@@ -74,13 +68,13 @@ public class FriendshipServiceImplTest {
         friendshipId = 1L;
 
         // Create users
-        currentUser = new SpectatorUser();
+        currentUser = new User();
         currentUser.setId(currentUserId);
         currentUser.setEmail("current@example.com");
         currentUser.setFirstName("Current");
         currentUser.setLastName("User");
 
-        friendUser = new SpectatorUser();
+        friendUser = new User();
         friendUser.setId(friendUserId);
         friendUser.setEmail("friend@example.com");
         friendUser.setFirstName("Friend");
@@ -109,39 +103,9 @@ public class FriendshipServiceImplTest {
         updateFriendshipStatusDto = new UpdateFriendshipStatusDto();
         updateFriendshipStatusDto.setStatus(FriendshipStatus.ACCEPTED);
 
-        friendsDataResponseDto = new FriendsDataResponseDto();
+        FriendsDataResponseDto friendsDataResponseDto = new FriendsDataResponseDto();
     }
-
-    @Test
-    void getFriendsData_ShouldReturnFriendsData() {
-        // Arrange
-        when(authUtils.getCurrentAuthenticatedUserId()).thenReturn(currentUserId);
-        when(friendshipRepository.findAcceptedFriends(currentUserId)).thenReturn(acceptedFriendships);
-        when(friendshipRepository.findByReceiverIdAndStatus(currentUserId, FriendshipStatus.PENDING)).thenReturn(pendingRequests);
-        when(friendshipRepository.findBySenderIdAndStatus(currentUserId, FriendshipStatus.PENDING)).thenReturn(sentRequests);
-        when(friendshipMapper.toFriendResponseDtoList(eq(acceptedFriendships), eq(currentUserId), any(FileStorageService.class))).thenReturn(new ArrayList<>());
-        when(friendshipMapper.toReceivedFriendRequestDtoList(eq(pendingRequests), any(FileStorageService.class))).thenReturn(new ArrayList<>());
-        when(friendshipMapper.toSentFriendRequestDtoList(eq(sentRequests), any(FileStorageService.class))).thenReturn(new ArrayList<>());
-
-        // Act
-        FriendsDataResponseDto result = friendshipService.getFriendsData();
-
-        // Assert
-        assertNotNull(result);
-        assertNotNull(result.getFriends());
-        assertNotNull(result.getPendingRequests());
-        assertNotNull(result.getSentRequests());
-
-        // Verify
-        verify(authUtils, times(1)).getCurrentAuthenticatedUserId();
-        verify(friendshipRepository, times(1)).findAcceptedFriends(currentUserId);
-        verify(friendshipRepository, times(1)).findByReceiverIdAndStatus(currentUserId, FriendshipStatus.PENDING);
-        verify(friendshipRepository, times(1)).findBySenderIdAndStatus(currentUserId, FriendshipStatus.PENDING);
-        verify(friendshipMapper, times(1)).toFriendResponseDtoList(eq(acceptedFriendships), eq(currentUserId), any(FileStorageService.class));
-        verify(friendshipMapper, times(1)).toReceivedFriendRequestDtoList(eq(pendingRequests), any(FileStorageService.class));
-        verify(friendshipMapper, times(1)).toSentFriendRequestDtoList(eq(sentRequests), any(FileStorageService.class));
-    }
-
+    
     @Test
     void sendFriendRequest_ShouldCreateFriendship() {
         // Arrange

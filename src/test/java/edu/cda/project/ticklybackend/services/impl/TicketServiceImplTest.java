@@ -10,16 +10,11 @@ import edu.cda.project.ticklybackend.mappers.ticket.TicketMapper;
 import edu.cda.project.ticklybackend.models.event.Event;
 import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.ticket.Ticket;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
-import edu.cda.project.ticklybackend.security.TicketSecurityService;
-import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
-import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StatisticsService;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -60,22 +55,10 @@ public class TicketServiceImplTest {
     private AuthUtils authUtils;
 
     @Mock
-    private TicketSecurityService ticketSecurityService;
-
-    @Mock
-    private FileStorageService fileStorageService;
-
-    @Mock
-    private MailingService mailingService;
-    
-    @Mock
     private SimpMessagingTemplate messagingTemplate;
-    
+
     @Mock
     private StatisticsService statisticsService;
-
-    @Mock
-    private Authentication authentication;
 
     @InjectMocks
     private TicketServiceImpl ticketService;
@@ -94,7 +77,7 @@ public class TicketServiceImplTest {
         validQrCode = UUID.randomUUID().toString();
         invalidQrCode = UUID.randomUUID().toString();
 
-        validUser = new SpectatorUser();
+        validUser = new User();
         validUser.setId(1L);
         validUser.setEmail("user@example.com");
 
@@ -135,11 +118,11 @@ public class TicketServiceImplTest {
         UUID ticketId = validTicket.getId();
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
         when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(validTicket));
-        
+
         // Mock the ticket mapper for WebSocket broadcasting
         TicketResponseDto mockTicketDto = new TicketResponseDto();
         when(ticketMapper.toDto(validTicket)).thenReturn(mockTicketDto);
-        
+
         // Mock the statistics service for WebSocket broadcasting
         EventTicketStatisticsDto mockStats = new EventTicketStatisticsDto();
         when(statisticsService.getEventTicketStats(event.getId())).thenReturn(mockStats);
@@ -157,7 +140,7 @@ public class TicketServiceImplTest {
         verify(ticketRepository).save(validTicket);
         assertEquals(TicketStatus.USED, validTicket.getStatus());
         assertNotNull(validTicket.getValidationDate());
-        
+
         // Verify WebSocket broadcasting
         verify(messagingTemplate).convertAndSend(
                 eq("/topic/event/" + event.getId() + "/ticket-update"),
@@ -403,40 +386,40 @@ public class TicketServiceImplTest {
             ticketService.getEventTickets(nonExistentEventId, null, null, pageable);
         });
     }
-    
+
     @Test
     void validateTicket_ShouldHandleStatisticsBroadcastingError() {
         // Arrange
         UUID ticketId = validTicket.getId();
         when(authUtils.getCurrentAuthenticatedUser()).thenReturn(validUser);
         when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(validTicket));
-        
+
         // Mock the ticket mapper for WebSocket broadcasting
         TicketResponseDto mockTicketDto = new TicketResponseDto();
         when(ticketMapper.toDto(validTicket)).thenReturn(mockTicketDto);
-        
+
         // Mock the statistics service to throw an exception
         when(statisticsService.getEventTicketStats(event.getId())).thenThrow(new RuntimeException("Test exception"));
-        
+
         // Act
         TicketValidationResponseDto response = ticketService.validateTicket(ticketId);
-        
+
         // Assert
         assertNotNull(response);
         assertEquals(ticketId, response.getTicketId());
         assertEquals(TicketStatus.USED, response.getStatus());
         assertEquals("Billet validé avec succès.", response.getMessage());
-        
+
         // Verify ticket was updated
         verify(ticketRepository).save(validTicket);
         assertEquals(TicketStatus.USED, validTicket.getStatus());
         assertNotNull(validTicket.getValidationDate());
-        
+
         // Verify WebSocket broadcasting for ticket update (should still happen)
         verify(messagingTemplate).convertAndSend(
                 eq("/topic/event/" + event.getId() + "/ticket-update"),
                 any(TicketResponseDto.class));
-        
+
         // Verify statistics service was called but broadcasting statistics failed
         verify(statisticsService).getEventTicketStats(event.getId());
         verify(messagingTemplate, never()).convertAndSend(

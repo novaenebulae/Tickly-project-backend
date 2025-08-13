@@ -25,7 +25,7 @@ create table if not exists event_audience_zone
   COLLATE = utf8mb4_unicode_ci;
 
 alter table event_audience_zone
-    add constraint FKfct4kt54yjw62qhtjik42e5a9
+    add constraint FKfct4kt54yjw62qhtjik42e5a9_unique
         foreign key (template_id) references audience_zone_template (id);
 
 create table if not exists event_categories
@@ -72,24 +72,23 @@ create table if not exists events
 (
     id                  bigint auto_increment
         primary key,
-    city                varchar(255)                                                                          null,
-    country             varchar(255)                                                                          null,
-    street              varchar(255)                                                                          null,
-    zip_code            varchar(255)                                                                          null,
-    created_at          datetime(6)                                                                           not null,
-    deleted             tinyint(1) default 0                                                                  not null,
-    display_on_homepage bit                                                                                   not null,
-    end_date            datetime(6)                                                                           not null,
-    full_description    text                                                                                  null,
-    is_featured_event   bit                                                                                   not null,
-    main_photo_path     varchar(255)                                                                          null,
-    name                varchar(255)                                                                          not null,
-    short_description   text                                                                                  null,
-    start_date          datetime(6)                                                                           not null,
-    status              enum ('ARCHIVED', 'CANCELLED', 'COMPLETED', 'DRAFT', 'PENDING_APPROVAL', 'PUBLISHED') not null,
-    updated_at          datetime(6)                                                                           not null,
-    creator_id          bigint                                                                                not null,
-    structure_id        bigint                                                                                not null
+    city                varchar(255)                                                      null,
+    country             varchar(255)                                                      null,
+    street              varchar(255)                                                      null,
+    zip_code            varchar(255)                                                      null,
+    created_at          datetime(6)                                                       not null,
+    deleted             tinyint(1) default 0                                              not null,
+    display_on_homepage bit                                                               not null,
+    end_date            datetime(6)                                                       not null,
+    full_description    text                                                              null,
+    is_featured_event   bit                                                               not null,
+    main_photo_path     varchar(255)                                                      null,
+    name                varchar(255)                                                      not null,
+    short_description   text                                                              null,
+    start_date          datetime(6)                                                       not null,
+    status              enum ('ARCHIVED', 'CANCELLED', 'COMPLETED', 'DRAFT', 'PUBLISHED') not null,
+    updated_at          datetime(6)                                                       not null,
+    structure_id        bigint                                                            not null
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
@@ -237,37 +236,21 @@ alter table structure_social_media_links
 
 create table if not exists team_members
 (
-    id         bigint auto_increment
-        primary key,
-    email      varchar(255)                                                                                 not null,
-    invited_at datetime(6)                                                                                  null,
-    joined_at  datetime(6)                                                                                  null,
-    role       enum ('ORGANIZATION_SERVICE', 'RESERVATION_SERVICE', 'SPECTATOR', 'STRUCTURE_ADMINISTRATOR') not null,
-    status     enum ('ACTIVE', 'PENDING_INVITATION')                                                        not null,
-    team_id    bigint                                                                                       not null,
-    user_id    bigint                                                                                       null
-) DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
-
-create table if not exists teams
-(
     id           bigint auto_increment
         primary key,
-    name         varchar(255) not null,
-    structure_id bigint       not null
+    email        varchar(255)                                                                                 not null,
+    invited_at   datetime(6)                                                                                  null,
+    joined_at    datetime(6)                                                                                  null,
+    role         enum ('ORGANIZATION_SERVICE', 'RESERVATION_SERVICE', 'SPECTATOR', 'STRUCTURE_ADMINISTRATOR') not null,
+    status       enum ('ACTIVE', 'PENDING_INVITATION')                                                        not null,
+    structure_id bigint                                                                                       not null,
+    user_id      bigint                                                                                       null
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
+
 alter table team_members
-    add constraint FKtgca08el3ofisywcf11f0f76t
-        foreign key (team_id) references teams (id);
-
-alter table teams
-    add constraint UK1v0mfi1fvmg21q1yjdxptw441
-        unique (structure_id);
-
-alter table teams
-    add constraint FKq5or8388kcncumkl13cca1it3
+    add constraint FK_team_members_structure
         foreign key (structure_id) references structures (id);
 
 create table if not exists tickets
@@ -326,26 +309,19 @@ alter table user_favorite_structures
 
 create table if not exists users
 (
-    user_type          varchar(31)                                                                                  not null,
     id                 bigint auto_increment
         primary key,
-    avatar_path        varchar(255)                                                                                 null,
-    consent_given_at   datetime(6)                                                                                  null,
-    created_at         datetime(6)                                                                                  not null,
-    email              varchar(255)                                                                                 not null,
-    first_name         varchar(255)                                                                                 not null,
-    is_email_validated tinyint(1) default 0                                                                         not null,
-    last_name          varchar(255)                                                                                 not null,
-    password           varchar(255)                                                                                 not null,
-    role               enum ('ORGANIZATION_SERVICE', 'RESERVATION_SERVICE', 'SPECTATOR', 'STRUCTURE_ADMINISTRATOR') not null,
-    updated_at         datetime(6)                                                                                  not null,
-    structure_id       bigint                                                                                       null
+    avatar_path        varchar(255)         null,
+    consent_given_at   datetime(6)          null,
+    created_at         datetime(6)          not null,
+    email              varchar(255)         not null,
+    first_name         varchar(255)         not null,
+    is_email_validated tinyint(1) default 0 not null,
+    last_name          varchar(255)         not null,
+    password           varchar(255)         not null,
+    updated_at         datetime(6)          not null
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
-
-alter table events
-    add constraint FK7ljm71n1057envlomdxcni5hs
-        foreign key (creator_id) references users (id);
 
 alter table friendships
     add constraint FKpk7w2cj6m9n224ny2t7fhi47
@@ -363,6 +339,7 @@ alter table team_members
     add constraint FKee8x7x5026imwmma9kndkxs36
         foreign key (user_id) references users (id);
 
+
 alter table tickets
     add constraint FK4eqsebpimnjen0q46ja6fl2hl
         foreign key (user_id) references users (id);
@@ -375,10 +352,6 @@ alter table users
     add constraint UK6dotkott2kjsp8vw4d0m25fb7
         unique (email);
 
-alter table users
-    add constraint FKeawn2atjygnod8wrmsy4rruje
-        foreign key (structure_id) references structures (id)
-            on delete set null;
 
 create table if not exists refresh_tokens
 (
@@ -421,3 +394,10 @@ alter table verification_tokens
     add constraint FK54y8mqsnq1rtyf581sfmrbp4f
         foreign key (user_id) references users (id);
 
+
+
+-- ===== Migration additions (User-Team refactor) =====
+-- Ensure indexes exist on team_members to support membership queries
+CREATE INDEX idx_team_members_user_id ON team_members (user_id);
+CREATE INDEX idx_team_members_structure_id ON team_members (structure_id);
+CREATE INDEX idx_team_members_structure_role ON team_members (structure_id, role);

@@ -1,21 +1,18 @@
 package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dtos.auth.*;
-import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -85,10 +82,10 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Refresh JWT token", 
+    @Operation(summary = "Refresh JWT token",
             description = "Generates a new pair of access and refresh tokens using a valid refresh token.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tokens refreshed successfully", 
+            @ApiResponse(responseCode = "200", description = "Tokens refreshed successfully",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDto.class))),
             @ApiResponse(responseCode = "401", description = "Invalid, expired, or revoked refresh token")
     })
@@ -99,8 +96,8 @@ public class AuthController {
         log.info("Tokens refreshed successfully");
         return ResponseEntity.ok(authResponse);
     }
-    
-    @Operation(summary = "Logout user", 
+
+    @Operation(summary = "Logout user",
             description = "Revokes the provided refresh token, effectively logging the user out.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout successful"),

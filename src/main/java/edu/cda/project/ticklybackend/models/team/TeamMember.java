@@ -2,6 +2,7 @@ package edu.cda.project.ticklybackend.models.team;
 
 import edu.cda.project.ticklybackend.enums.TeamMemberStatus;
 import edu.cda.project.ticklybackend.enums.UserRole;
+import edu.cda.project.ticklybackend.models.structure.Structure;
 import edu.cda.project.ticklybackend.models.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 /**
- * Entité de liaison qui représente l'appartenance d'un utilisateur à une équipe.
+ * Entité de liaison qui représente l'appartenance d'un utilisateur à une structure.
  */
 @Data
 @NoArgsConstructor
@@ -26,8 +27,8 @@ public class TeamMember {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "structure_id", nullable = false)
+    private Structure structure;
 
     /**
      * L'utilisateur lié. Peut être nul si l'invitation n'a pas encore été acceptée.
@@ -43,7 +44,7 @@ public class TeamMember {
     private String email;
 
     /**
-     * Le rôle de l'utilisateur au sein de cette équipe spécifique.
+     * Le rôle de l'utilisateur au sein de cette structure spécifique.
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -2,7 +2,6 @@ package edu.cda.project.ticklybackend.models.event;
 
 import edu.cda.project.ticklybackend.enums.EventStatus;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -93,9 +92,6 @@ public class Event {
     @Column(nullable = false)
     private EventStatus status = EventStatus.DRAFT;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
-    private User creator;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

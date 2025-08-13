@@ -22,7 +22,6 @@ public abstract class EventMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "categories", ignore = true) // Changé de "category" à "categories"
     @Mapping(target = "structure", ignore = true)
-    @Mapping(target = "creator", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "mainPhotoPath", ignore = true)
@@ -51,7 +50,6 @@ public abstract class EventMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "categories", ignore = true) // Changé de "category" à "categories"
     @Mapping(target = "structure", ignore = true)
-    @Mapping(target = "creator", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "mainPhotoPath", ignore = true)

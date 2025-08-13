@@ -129,7 +129,7 @@ class StructureControllerTest {
     @Test
     void createStructure_ShouldReturnCreatedStructure() {
         // Arrange
-        edu.cda.project.ticklybackend.models.user.SpectatorUser mockUser = new edu.cda.project.ticklybackend.models.user.SpectatorUser();
+        edu.cda.project.ticklybackend.models.user.User mockUser = new edu.cda.project.ticklybackend.models.user.User();
         mockUser.setEmail("test@example.com");
 
         when(authentication.getPrincipal()).thenReturn(mockUser);

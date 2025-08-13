@@ -17,7 +17,6 @@ import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.ReservationRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
-import edu.cda.project.ticklybackend.security.TicketSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import edu.cda.project.ticklybackend.services.interfaces.MailingService;
 import edu.cda.project.ticklybackend.services.interfaces.StatisticsService;
@@ -56,7 +55,6 @@ public class TicketServiceImpl implements TicketService {
     private final AuthUtils authUtils;
     private final FileStorageService fileStorageService;
     private final MailingService mailingService;
-    private final TicketSecurityService ticketSecurityService;
     private final SimpMessagingTemplate messagingTemplate;
     private final StatisticsService statisticsService;
 

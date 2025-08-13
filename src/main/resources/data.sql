@@ -32,8 +32,6 @@ FROM friendships;
 DELETE
 FROM team_members;
 DELETE
-FROM teams;
-DELETE
 FROM user_favorite_structures;
 DELETE
 FROM verification_tokens;
@@ -156,40 +154,35 @@ VALUES (1, 'L''Arsenal',
 -- Les utilisateurs 'STRUCTURE_ADMINISTRATOR' sont liés à une structure via `structure_id`.
 -- La colonne `user_type` est définie à 'User' pour correspondre à la stratégie d'héritage de base.
 
-
-INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at, user_type,
-                   avatar_path, is_email_validated)
-VALUES
 -- Administrateurs de structure
-(1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_1.webp', 1),
-(2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 2, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_2.webp', 1),
-(3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 3, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_3.webp', 1),
-(4, 'Damien', 'Robert', 'damien.robert@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 4, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_4.webp', 1),
-(5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 5, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_5.webp', 1),
-(6, 'François', 'Petit', 'francois.petit@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_6.webp', 1),
-(7, 'Gabrielle', 'Laurent', 'gabrielle.laurent@tickly.dev',
- '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'STRUCTURE_ADMINISTRATOR', 7, NOW(), NOW(),
- 'STRUCTURE_ADMINISTRATOR',
- 'avatar_7.webp', 1),
-(8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 11, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_8.webp', 1),
+INSERT INTO users (id, first_name, last_name, email, password, created_at, updated_at, avatar_path, is_email_validated)
+VALUES (1, 'Alice', 'Martin', 'alice.martin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+        NOW(), NOW(), 'avatar_1.webp', 1),
+       (2, 'Baptiste', 'Dubois', 'baptiste.dubois@tickly.dev',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_2.webp', 1),
+       (3, 'Chloé', 'Bernard', 'chloe.bernard@tickly.dev',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_3.webp', 1),
+       (4, 'Damien', 'Robert', 'damien.robert@tickly.dev',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_4.webp', 1),
+       (5, 'Élise', 'Moreau', 'elise.moreau@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+        NOW(), NOW(), 'avatar_5.webp', 1),
+       (6, 'François', 'Petit', 'francois.petit@tickly.dev',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_6.webp', 1),
+       (7, 'Gabrielle', 'Laurent', 'gabrielle.laurent@tickly.dev',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_7.webp', 1),
+       (8, 'Hugo', 'Simon', 'hugo.simon@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+        NOW(), NOW(), 'avatar_8.webp', 1),
 -- Spectateurs
-(9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_9.webp', 1),
-(10, 'Julien', 'Garcia', 'julien.garcia@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_10.webp', 1),
-(11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_11.webp', 1),
-(12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', 'SPECTATOR',
- NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_12.webp', 1),
-(13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 1, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', '', 1);
+       (9, 'Inès', 'Michel', 'ines.michel@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
+        NOW(), NOW(), 'avatar_9.webp', 1),
+       (10, 'Julien', 'Garcia', 'julien.garcia@email.com',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_10.webp', 1),
+       (11, 'Karine', 'Lefebvre', 'karine.lefebvre@email.com',
+        '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(), 'avatar_11.webp', 1),
+       (12, 'Léo', 'Roux', 'leo.roux@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(),
+        NOW(), 'avatar_12.webp', 1),
+       (13, 'Alice', 'Martin', 'a@a.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(), NOW(),
+        '', 1);
 
 
 -- ##############################################################
@@ -409,78 +402,78 @@ VALUES (1, 'Concert'),
 -- NOTE: La colonne category_id sera supprimée ultérieurement au profit de la relation Many-to-Many
 
 INSERT INTO events (id, name, short_description, full_description, start_date, end_date, status,
-                    display_on_homepage, is_featured_event, structure_id, creator_id, created_at,
+                    display_on_homepage, is_featured_event, structure_id, created_at,
                     updated_at, main_photo_path, street, city, zip_code, country)
 VALUES (1, 'Orchestre National de Metz - Saison Classique',
         'Une soirée exceptionnelle avec l''Orchestre National de Metz.',
         'L''Orchestre National de Metz Grand Est vous invite à une soirée inoubliable sous la direction de son chef principal. Au programme, des œuvres de Beethoven et Mozart qui raviront les amateurs de musique classique. Une expérience acoustique unique dans la Grande Salle de l''Arsenal.',
         DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 1,
-        1, 1, NOW(), NOW(), 'orchestre_metz.webp', '3 Avenue Ney', 'Metz', '57000', 'France'),
+        1, NOW(), NOW(), 'orchestre_metz.webp', '3 Avenue Ney', 'Metz', '57000', 'France'),
 
        (2, 'Festival Electronic Waves',
         'Trois jours de musique électronique avec les meilleurs DJs internationaux.',
         'Electronic Waves revient pour sa 8ème édition avec une programmation exceptionnelle. Découvrez les sonorités les plus avant-gardistes de la scène électronique internationale dans l''ambiance unique de la BAM. Trois scènes, plus de 20 artistes, et une expérience immersive garantie.',
-        DATE_ADD(NOW(), INTERVAL 45 DAY), DATE_ADD(NOW(), INTERVAL 47 DAY), 'PUBLISHED', 1, 1, 2, 2, NOW(), NOW(),
+        DATE_ADD(NOW(), INTERVAL 45 DAY), DATE_ADD(NOW(), INTERVAL 47 DAY), 'PUBLISHED', 1, 1, 2, NOW(), NOW(),
         'electronic_waves.webp', '20 Boulevard d''Alsace', 'Metz', '57070', 'France'),
 
        (3, 'La Traviata - Opéra de Verdi',
         'Production exceptionnelle de l''opéra le plus célèbre de Verdi.',
         'L''Opéra-Théâtre de Metz présente une nouvelle production de La Traviata dans une mise en scène contemporaine saisissante. Avec la soprano internationale Maria Dolores et le ténor français Jean-Baptiste Millot. Direction musicale : Maestro Antonio Benedetti.',
         DATE_ADD(NOW(), INTERVAL 60 DAY), DATE_ADD(NOW(), INTERVAL 60 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 1,
-        3, 3, NOW(), NOW(), 'traviata.webp', '4-5 Place de la Comédie', 'Metz', '57000', 'France'),
+        3, NOW(), NOW(), 'traviata.webp', '4-5 Place de la Comédie', 'Metz', '57000', 'France'),
 
        (4, 'FC Metz vs Olympique Lyonnais',
         'Match de Ligue 1 au Stade Saint-Symphorien.',
         'Venez encourager les Grenats lors de ce match crucial de Ligue 1 face à l''Olympique Lyonnais. Ambiance garantie dans le chaudron messin ! Billets disponibles pour toutes les tribunes. Ouverture des portes 1h30 avant le coup d''envoi.',
         DATE_ADD(NOW(), INTERVAL 25 DAY), DATE_ADD(NOW(), INTERVAL 25 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 0,
-        4, 4, NOW(), NOW(), 'fcmetz_lyon.webp', '3 Allée Saint-Symphorien', 'Longeville-lès-Metz', '57050', 'France'),
+        4, NOW(), NOW(), 'fcmetz_lyon.webp', '3 Allée Saint-Symphorien', 'Longeville-lès-Metz', '57050', 'France'),
 
        (5, 'Salon Habitat & Jardin',
         'Le salon de référence pour l''habitat et le jardinage en Lorraine.',
         'Découvrez les dernières tendances en matière d''habitat, de décoration et de jardinage. Plus de 200 exposants, des démonstrations, des conférences thématiques et de nombreux conseils d''experts. Idéal pour vos projets de rénovation et d''aménagement.',
-        DATE_ADD(NOW(), INTERVAL 40 DAY), DATE_ADD(NOW(), INTERVAL 43 DAY), 'PUBLISHED', 0, 0, 5, 5, NOW(), NOW(),
+        DATE_ADD(NOW(), INTERVAL 40 DAY), DATE_ADD(NOW(), INTERVAL 43 DAY), 'PUBLISHED', 0, 0, 5, NOW(), NOW(),
         'salon_habitat.webp', 'Rue de la Grange aux Bois', 'Metz', '57070', 'France'),
 
        (6, 'Jazz Session - Les Trinitaires',
         'Soirée jazz intime dans le caveau historique.',
         'Plongez dans l''atmosphère feutrée du caveau des Trinitaires pour une soirée jazz exceptionnelle. Le quartet de Sarah Mitchell vous transportera dans l''univers du jazz moderne avec des reprises revisitées et des compositions originales.',
         DATE_ADD(NOW(), INTERVAL 15 DAY), DATE_ADD(NOW(), INTERVAL 15 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 0,
-        6, 6, NOW(), NOW(), 'jazz_trinitaires.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
+        6, NOW(), NOW(), 'jazz_trinitaires.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 
        (7, 'Jamel Comedy Club - Tournée',
         'Les humoristes du Jamel Comedy Club en spectacle.',
         'Retrouvez les talents du Jamel Comedy Club pour une soirée d''humour inoubliable. Au programme : Yacine Belhousse, Sofia Aram et Ahmed Sylla dans leurs derniers spectacles. Rires garantis dans l''intimité de la Comédie de Metz.',
         DATE_ADD(NOW(), INTERVAL 20 DAY), DATE_ADD(NOW(), INTERVAL 20 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 1,
-        7, 7, NOW(), NOW(), 'comedy_club.webp', '1/3 Rue du Pont Saint-Marcel', 'Metz', '57000', 'France'),
+        7, NOW(), NOW(), 'comedy_club.webp', '1/3 Rue du Pont Saint-Marcel', 'Metz', '57000', 'France'),
 
        (8, 'Congrès International de Cybersécurité',
         'Trois jours dédiés aux enjeux de la cybersécurité.',
         'Le plus grand événement cybersécurité de l''Est de la France. Conférences, ateliers, démonstrations et networking avec les experts du secteur. Plus de 50 intervenants internationaux et 1000 participants attendus.',
-        DATE_ADD(NOW(), INTERVAL 80 DAY), DATE_ADD(NOW(), INTERVAL 82 DAY), 'PUBLISHED', 0, 0, 9, 2, NOW(), NOW(),
+        DATE_ADD(NOW(), INTERVAL 80 DAY), DATE_ADD(NOW(), INTERVAL 82 DAY), 'PUBLISHED', 0, 0, 9, NOW(), NOW(),
         'cybersec_congress.webp', '112 Rue aux Arènes', 'Metz', '57000', 'France'),
 
        (9, 'Exposition : "Art et Intelligence Artificielle"',
         'Découverte des nouvelles formes d''art générées par l''IA.',
         'Le Centre Pompidou-Metz explore les frontières entre art et technologie dans cette exposition révolutionnaire. Œuvres interactives, installations immersives et rencontres avec les artistes pionniers de l''art numérique.',
-        DATE_ADD(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 90 DAY), 'PUBLISHED', 1, 1, 10, 3, NOW(), NOW(),
+        DATE_ADD(NOW(), INTERVAL 10 DAY), DATE_ADD(NOW(), INTERVAL 90 DAY), 'PUBLISHED', 1, 1, 10, NOW(), NOW(),
         'expo_ia.webp', '1 Parvis des Droits-de-l''Homme', 'Metz', '57000', 'France'),
 
        (10, 'Concert Rap - Nekfeu',
         'Nekfeu en concert aux Arènes de Metz.',
         'L''un des rappeurs français les plus talentueux de sa génération se produit aux Arènes de Metz. Venez découvrir ses nouveaux titres dans une mise en scène spectaculaire avec un écran géant et des effets pyrotechniques.',
         DATE_ADD(NOW(), INTERVAL 35 DAY), DATE_ADD(NOW(), INTERVAL 35 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 1,
-        11, 8, NOW(), NOW(), 'nekfeu_concert.webp', '5 Avenue Louis le Débonnaire', 'Metz', '57000', 'France'),
+        11, NOW(), NOW(), 'nekfeu_concert.webp', '5 Avenue Louis le Débonnaire', 'Metz', '57000', 'France'),
 
        (11, 'Spectacle Familial - "Le Petit Prince"',
         'Adaptation théâtrale du chef-d''œuvre d''Antoine de Saint-Exupéry.',
         'Une mise en scène poétique et moderne du Petit Prince destinée à toute la famille. Avec des marionnettes, des projections et une bande sonore originale, ce spectacle enchantera petits et grands.',
         DATE_ADD(NOW(), INTERVAL 50 DAY), DATE_ADD(NOW(), INTERVAL 50 DAY) + INTERVAL 90 MINUTE, 'PUBLISHED', 1, 0,
-        8, 1, NOW(), NOW(), 'petit_prince.webp', '18 Rue Mozart', 'Metz', '57000', 'France'),
+        8, NOW(), NOW(), 'petit_prince.webp', '18 Rue Mozart', 'Metz', '57000', 'France'),
 
        (12, 'Festival de Danse Contemporaine',
         'Trois jours de danse contemporaine avec des compagnies internationales.',
         'Le Festival Mouvements revient avec une programmation éclectique mêlant danse contemporaine, performance et arts numériques. 8 compagnies, 15 représentations et des masterclass ouvertes au public.',
-        DATE_ADD(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 72 DAY), 'DRAFT', 0, 0, 1, 1, NOW(), NOW(),
+        DATE_ADD(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 72 DAY), 'DRAFT', 0, 0, 1, NOW(), NOW(),
         'festival_danse.webp', '3 Avenue Ney', 'Metz', '57000', 'France');
 
 -- ###################################################################
@@ -643,30 +636,24 @@ VALUES (1, 9, 10, 'ACCEPTED', NOW() - INTERVAL 20 DAY, NOW() - INTERVAL 19 DAY),
 
 
 -- ##################################################
--- # 19. PEUPLEMENT DE LA TABLE `teams` & `team_members` #
+-- # 5. PEUPLEMENT DE LA TABLE `team_members` #
 -- ##################################################
--- Création d'équipes pour les structures et ajout de membres.
--- Chaque structure a une équipe par défaut. L'administrateur est le premier membre.
-INSERT INTO teams (id, structure_id, name)
-VALUES (1, 1, 'Équipe L''Arsenal'),
-       (2, 2, 'Équipe La BAM'),
-       (3, 3, 'Équipe Opéra-Théâtre');
 
-INSERT INTO team_members (id, team_id, user_id, email, role, status, invited_at, joined_at)
+INSERT INTO team_members (id, structure_id, user_id, email, role, status, invited_at, joined_at)
 VALUES
--- Membres pour L'Arsenal (Team 1)
+-- L'Arsenal (Structure 1)
 (1, 1, 1, 'alice.martin@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
  NOW() - INTERVAL 30 DAY),
 (2, 1, NULL, 'membre.orga@arsenal.fr', 'ORGANIZATION_SERVICE', 'PENDING_INVITATION', NOW() - INTERVAL 5 DAY, NULL),
 (3, 1, NULL, 'membre.reserv@arsenal.fr', 'RESERVATION_SERVICE', 'PENDING_INVITATION', NOW() - INTERVAL 5 DAY, NULL),
 
--- Membres pour La BAM (Team 2)
+-- La BAM (Structure 2)
 (4, 2, 2, 'baptiste.dubois@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
  NOW() - INTERVAL 30 DAY),
 (5, 2, 10, 'julien.garcia@email.com', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 10 DAY,
- NOW() - INTERVAL 9 DAY), -- Julien est aussi dans l'équipe de la BAM
+ NOW() - INTERVAL 9 DAY),
 
--- Membres pour Opéra-Théâtre (Team 3)
+-- Opéra-Théâtre (Structure 3)
 (6, 3, 3, 'chloe.bernard@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 30 DAY,
  NOW() - INTERVAL 30 DAY);
 
@@ -698,49 +685,50 @@ VALUES (1, 11, UUID(), 'EMAIL_VALIDATION', NOW() + INTERVAL 1 DAY, 0, NULL), -- 
 -- et de quelques spectateurs supplémentaires pour les relations.
 -- Le mot de passe est 'Tickly123!' ($2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii)
 
-INSERT INTO users (id, first_name, last_name, email, password, role, structure_id, created_at, updated_at, user_type,
-                   avatar_path, is_email_validated)
+INSERT INTO users (id, first_name, last_name, email, password, created_at, updated_at, avatar_path, is_email_validated)
 VALUES
 -- Équipe des Trinitaires (l'admin François Petit avec l'ID 6 existe déjà)
 (20, 'Hélène', 'Mercier', 'helene.mercier@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'STRUCTURE_ADMINISTRATOR', 6, NOW(), NOW(), 'STRUCTURE_ADMINISTRATOR', 'avatar_20.webp', 1),
+ NOW(), NOW(), 'avatar_20.webp', 1),
 (21, 'Isaac', 'Garnier', 'isaac.garnier@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'ORGANIZATION_SERVICE', 6, NOW(), NOW(), 'ORGANIZATION_SERVICE', 'avatar_21.webp', 1),
+ NOW(), NOW(), 'avatar_21.webp', 1),
 (22, 'Justine', 'Faure', 'justine.faure@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'ORGANIZATION_SERVICE', 6, NOW(), NOW(), 'ORGANIZATION_SERVICE', 'avatar_22.webp', 1),
+ NOW(), NOW(), 'avatar_22.webp', 1),
 (23, 'Kévin', 'Roussel', 'kevin.roussel@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_23.webp', 1),
-(24, 'Léa', 'Blanc', 'lea.blanc@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_24.webp', 1),
-(25, 'Marc', 'Guérin', 'marc.guerin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'RESERVATION_SERVICE', 6, NOW(), NOW(), 'RESERVATION_SERVICE', 'avatar_25.webp', 1),
--- Spectateurs supplémentaires pour les billets et amitiés
-(26, 'Nadia', 'Henry', 'nadia.henry@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_26.webp', 1),
+ NOW(), NOW(), 'avatar_23.webp', 1),
+(24, 'Léa', 'Blanc', 'lea.blanc@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(),
+ NOW(), 'avatar_24.webp', 1),
+(25, 'Marc', 'Guérin', 'marc.guerin@tickly.dev', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(),
+ NOW(), 'avatar_25.webp', 1),
+-- Spectateurs supplémentaires
+(26, 'Nadia', 'Henry', 'nadia.henry@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii', NOW(),
+ NOW(), 'avatar_26.webp', 1),
 (27, 'Olivier', 'Perrin', 'olivier.perrin@email.com', '$2a$10$5D.wJYGi0g79PajRmSwhG.URJPss/OelTTxPcIpyAQ0ZFdg/WKKii',
- 'SPECTATOR', NULL, NOW(), NOW(), 'SPECTATOR', 'avatar_27.webp', 1);
+ NOW(), NOW(), 'avatar_27.webp', 1);
 
 
 -- ###################################################################
 -- # 2. ÉQUIPE ET MEMBRES POUR 'LES TRINITAIRES' (ID 6)              #
 -- ###################################################################
 
--- Création de l'équipe pour la structure 6
-INSERT INTO teams (id, structure_id, name)
-VALUES (6, 6, 'Équipe Les Trinitaires');
-
 -- Ajout des 7 membres à l'équipe
-INSERT INTO team_members (id, team_id, user_id, email, role, status, joined_at)
+INSERT INTO team_members (id, structure_id, user_id, email, role, status, invited_at, joined_at)
 VALUES
--- L'admin principal (François Petit, ID 6) est déjà dans la structure, on l'ajoute à l'équipe
-(10, 6, 6, 'francois.petit@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 100 DAY),
+-- L'admin principal (François Petit, ID 6)
+(10, 6, 6, 'francois.petit@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 100 DAY,
+ NOW() - INTERVAL 100 DAY),
 -- Les 6 nouveaux membres
-(11, 6, 20, 'helene.mercier@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 90 DAY),
-(12, 6, 21, 'isaac.garnier@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY),
-(13, 6, 22, 'justine.faure@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY),
-(14, 6, 23, 'kevin.roussel@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 80 DAY),
-(15, 6, 24, 'lea.blanc@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY),
-(16, 6, 25, 'marc.guerin@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY);
+(11, 6, 20, 'helene.mercier@tickly.dev', 'STRUCTURE_ADMINISTRATOR', 'ACTIVE', NOW() - INTERVAL 90 DAY,
+ NOW() - INTERVAL 90 DAY),
+(12, 6, 21, 'isaac.garnier@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY,
+ NOW() - INTERVAL 85 DAY),
+(13, 6, 22, 'justine.faure@tickly.dev', 'ORGANIZATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 85 DAY,
+ NOW() - INTERVAL 85 DAY),
+(14, 6, 23, 'kevin.roussel@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 80 DAY,
+ NOW() - INTERVAL 80 DAY),
+(15, 6, 24, 'lea.blanc@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY, NOW() - INTERVAL 75 DAY),
+(16, 6, 25, 'marc.guerin@tickly.dev', 'RESERVATION_SERVICE', 'ACTIVE', NOW() - INTERVAL 75 DAY,
+ NOW() - INTERVAL 75 DAY);
 
 
 -- ###################################################################
@@ -765,53 +753,53 @@ VALUES
 -- 10 nouveaux événements, dont 2 (ID 20 et 21) avec des données riches pour les statistiques.
 
 INSERT INTO events (id, name, short_description, full_description, start_date, end_date, status, display_on_homepage,
-                    is_featured_event, structure_id, creator_id, created_at, updated_at, main_photo_path, street, city,
+                    is_featured_event, structure_id, created_at, updated_at, main_photo_path, street, city,
                     zip_code, country)
 VALUES
 -- Événement 20 : Pour les statistiques de remplissage et de statuts
 (20, 'Nuit du Blues & Soul', 'Une nuit entière dédiée aux légendes du blues et de la soul.',
  'Le Caveau des Trinitaires se transforme en club de blues de Chicago. Retrouvez des artistes locaux et internationaux pour des reprises endiablées et des compositions originales. Une soirée authentique et pleine d''émotion.',
- DATE_ADD(NOW(), INTERVAL 14 DAY), DATE_ADD(NOW(), INTERVAL 14 DAY) + INTERVAL 4 HOUR, 'PUBLISHED', 1, 1, 6, 6,
+ DATE_ADD(NOW(), INTERVAL 14 DAY), DATE_ADD(NOW(), INTERVAL 14 DAY) + INTERVAL 4 HOUR, 'PUBLISHED', 1, 1, 6,
  NOW() - INTERVAL 30 DAY, NOW(), 'nuit_blues.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 
 -- Événement 21 : Pour les statistiques d'évolution des réservations
 (21, 'Scène Ouverte Poésie & Slam', 'Donnez de la voix lors de notre scène ouverte mensuelle.',
  'Que vous soyez poète aguerri ou simple curieux, la scène de La Chapelle vous est ouverte. Venez partager vos textes, écouter ceux des autres dans une ambiance bienveillante et créative. Inscription sur place.',
- DATE_ADD(NOW(), INTERVAL 35 DAY), DATE_ADD(NOW(), INTERVAL 35 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6, 20,
+ DATE_ADD(NOW(), INTERVAL 35 DAY), DATE_ADD(NOW(), INTERVAL 35 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6,
  NOW() - INTERVAL 25 DAY, NOW(), 'scene_poesie.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 
 -- 8 autres événements
 (22, 'Trio de Jazz Manouche', 'Hommage à Django Reinhardt.',
  'Un concert virtuose qui vous fera voyager dans le Paris des années 30.', DATE_ADD(NOW(), INTERVAL 40 DAY),
- DATE_ADD(NOW(), INTERVAL 40 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 0, 6, 21, NOW(), NOW(), 'jazz_manouche.webp',
+ DATE_ADD(NOW(), INTERVAL 40 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 0, 6, NOW(), NOW(), 'jazz_manouche.webp',
  '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (23, 'Théâtre d''Improvisation : Le Match', 'Deux équipes s''affrontent dans un match d''improvisation déjanté.',
  'Le public vote, les comédiens improvisent ! Une soirée unique et hilarante.', DATE_ADD(NOW(), INTERVAL 48 DAY),
- DATE_ADD(NOW(), INTERVAL 48 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 0, 0, 6, 22, NOW(), NOW(), 'theatre_impro.webp',
+ DATE_ADD(NOW(), INTERVAL 48 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 0, 0, 6, NOW(), NOW(), 'theatre_impro.webp',
  '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (24, 'Exposition Photos : "Regards sur Metz"', 'Le travail de 10 photographes locaux sur la ville de Metz.',
  'Une vision plurielle et poétique de la ville, capturée par des talents de la région.',
- DATE_ADD(NOW(), INTERVAL 55 DAY), DATE_ADD(NOW(), INTERVAL 85 DAY), 'PUBLISHED', 1, 0, 6, 6, NOW(), NOW(),
+ DATE_ADD(NOW(), INTERVAL 55 DAY), DATE_ADD(NOW(), INTERVAL 85 DAY), 'PUBLISHED', 1, 0, 6, NOW(), NOW(),
  'expo_metz.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (25, 'Concert Folk : The Wandering Souls', 'Un duo folk acoustique pour une soirée intimiste.',
  'Des mélodies envoûtantes et des textes poignants par ce duo montant de la scène folk.',
- DATE_ADD(NOW(), INTERVAL 62 DAY), DATE_ADD(NOW(), INTERVAL 62 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 1, 6, 20, NOW(),
+ DATE_ADD(NOW(), INTERVAL 62 DAY), DATE_ADD(NOW(), INTERVAL 62 DAY) + INTERVAL 2 HOUR, 'PUBLISHED', 1, 1, 6, NOW(),
  NOW(), 'folk_concert.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (26, 'Conférence : L''Histoire des Templiers', 'Par l''historien Jean-Marc Durand.',
  'Découvrez les mythes et réalités de l''ordre des Templiers, de leur création à leur chute.',
- DATE_ADD(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 70 DAY) + INTERVAL 90 MINUTE, 'PUBLISHED', 0, 0, 6, 21,
+ DATE_ADD(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 70 DAY) + INTERVAL 90 MINUTE, 'PUBLISHED', 0, 0, 6,
  NOW(), NOW(), 'conf_templiers.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (27, 'Spectacle de Danse : "Origines"', 'Une performance de danse contemporaine explorant nos racines.',
  'La compagnie "Corps en Mouvement" présente sa dernière création, un voyage chorégraphique puissant.',
- DATE_ADD(NOW(), INTERVAL 78 DAY), DATE_ADD(NOW(), INTERVAL 78 DAY) + INTERVAL 80 MINUTE, 'PUBLISHED', 0, 0, 6, 22,
+ DATE_ADD(NOW(), INTERVAL 78 DAY), DATE_ADD(NOW(), INTERVAL 78 DAY) + INTERVAL 80 MINUTE, 'PUBLISHED', 0, 0, 6,
  NOW(), NOW(), 'danse_origines.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (28, 'Concert Rock Indé : "The Fuzz"', 'Le groupe de rock garage "The Fuzz" en concert unique.',
  'Énergie brute et guitares saturées pour les amateurs de rock sans concession.', DATE_ADD(NOW(), INTERVAL 85 DAY),
- DATE_ADD(NOW(), INTERVAL 85 DAY) + INTERVAL 2 HOUR, 'DRAFT', 0, 0, 6, 6, NOW(), NOW(), 'rock_fuzz.webp',
+ DATE_ADD(NOW(), INTERVAL 85 DAY) + INTERVAL 2 HOUR, 'DRAFT', 0, 0, 6, NOW(), NOW(), 'rock_fuzz.webp',
  '12 Rue des Trinitaires', 'Metz', '57000', 'France'),
 (29, 'Ciné-Concert : "Metropolis"', 'Projection du chef-d''oeuvre de Fritz Lang avec musique live.',
  'Redécouvrez ce classique du cinéma muet accompagné au piano par l''artiste international Marc Vella.',
- DATE_ADD(NOW(), INTERVAL 92 DAY), DATE_ADD(NOW(), INTERVAL 92 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6, 20, NOW(),
+ DATE_ADD(NOW(), INTERVAL 92 DAY), DATE_ADD(NOW(), INTERVAL 92 DAY) + INTERVAL 3 HOUR, 'PUBLISHED', 1, 0, 6, NOW(),
  NOW(), 'cine_metropolis.webp', '12 Rue des Trinitaires', 'Metz', '57000', 'France');
 
 -- Attribution des catégories aux nouveaux événements

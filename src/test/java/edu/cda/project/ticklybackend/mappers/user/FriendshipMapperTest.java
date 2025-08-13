@@ -4,9 +4,7 @@ import edu.cda.project.ticklybackend.dtos.friendship.FriendResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.ReceivedFriendRequestResponseDto;
 import edu.cda.project.ticklybackend.dtos.friendship.SentFriendRequestResponseDto;
 import edu.cda.project.ticklybackend.enums.FriendshipStatus;
-import edu.cda.project.ticklybackend.enums.UserRole;
 import edu.cda.project.ticklybackend.models.user.Friendship;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,20 +42,18 @@ public class FriendshipMapperTest {
         friendshipMapper = Mappers.getMapper(FriendshipMapper.class);
 
         // Create test users
-        sender = new SpectatorUser();
+        sender = new User();
         sender.setId(1L);
         sender.setFirstName("Sender");
         sender.setLastName("User");
         sender.setEmail("sender@example.com");
-        sender.setRole(UserRole.SPECTATOR);
         sender.setAvatarPath("sender-avatar.jpg");
 
-        receiver = new SpectatorUser();
+        receiver = new User();
         receiver.setId(2L);
         receiver.setFirstName("Receiver");
         receiver.setLastName("User");
         receiver.setEmail("receiver@example.com");
-        receiver.setRole(UserRole.SPECTATOR);
         receiver.setAvatarPath("receiver-avatar.jpg");
 
         // Create test instant

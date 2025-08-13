@@ -43,7 +43,7 @@ public class StatisticsController {
      * @return A DTO containing all KPIs and charts for the structure's dashboard
      */
     @GetMapping("/structure/{structureId}/dashboard")
-    @PreAuthorize("@structureSecurityService.isStructureStaff(#structureId, authentication)")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     @Operation(
             summary = "Get structure dashboard statistics",
             description = "Returns a consolidated object containing all KPIs and global charts for a structure's main dashboard."
@@ -85,7 +85,7 @@ public class StatisticsController {
      * @return A DTO containing detailed charts and statistics for the event
      */
     @GetMapping("/event/{eventId}")
-    @PreAuthorize("@eventSecurityService.canAccessEventForStatistics(#eventId, authentication)")
+    @PreAuthorize("@organizationalSecurityService.canAccessEventStatistics(#eventId, authentication)")
     @Operation(
             summary = "Get event-specific statistics",
             description = "Returns detailed charts and statistics for a single event."

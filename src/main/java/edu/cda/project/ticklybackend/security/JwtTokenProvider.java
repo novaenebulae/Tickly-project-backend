@@ -37,11 +37,7 @@ public class JwtTokenProvider {
 
         if (userDetails instanceof User user) {
             claims.put("userId", user.getId());
-            claims.put("role", user.getRole().name());
-            // Correction : Vérifier si la structure n'est pas nulle avant d'accéder à son ID
-            if (user.getStructure() != null) {
-                claims.put("structureId", user.getStructure().getId());
-            }
+            // Identity-only token: do not embed role or structure information
         }
 
         return createToken(claims, userDetails.getUsername());

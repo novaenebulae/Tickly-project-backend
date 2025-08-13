@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cda.project.ticklybackend.enums.TokenType;
 import edu.cda.project.ticklybackend.exceptions.InvalidTokenException;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.mailing.VerificationTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +48,7 @@ class VerificationTokenServiceImplTest {
     @BeforeEach
     void setUp() {
         // Setup test user
-        testUser = new SpectatorUser();
+        testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");

@@ -4,15 +4,15 @@ import edu.cda.project.ticklybackend.dtos.structure.AddressDto;
 import edu.cda.project.ticklybackend.dtos.structure.StructureCreationDto;
 import edu.cda.project.ticklybackend.dtos.structure.StructureCreationResponseDto;
 import edu.cda.project.ticklybackend.dtos.structure.StructureDetailResponseDto;
-import edu.cda.project.ticklybackend.enums.UserRole;
+import edu.cda.project.ticklybackend.enums.TeamMemberStatus;
 import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.exceptions.StructureCreationForbiddenException;
 import edu.cda.project.ticklybackend.mappers.structure.StructureMapper;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.user.SpectatorUser;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.structure.StructureTypeRepository;
+import edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
@@ -42,6 +42,9 @@ public class StructureServiceImplTest {
 
     @Mock
     private StructureTypeRepository structureTypeRepository;
+
+    @Mock
+    private TeamMemberRepository teamMemberRepository;
 
     @Mock
     private StructureMapper structureMapper;
@@ -86,21 +89,19 @@ public class StructureServiceImplTest {
         detailResponseDto.setDescription("Test description");
 
         // Create a validated spectator user
-        validatedUser = new SpectatorUser();
+        validatedUser = new User();
         validatedUser.setId(1L);
         validatedUser.setEmail("validated@example.com");
         validatedUser.setFirstName("Validated");
         validatedUser.setLastName("User");
-        validatedUser.setRole(UserRole.SPECTATOR);
         validatedUser.setEmailValidated(true);
 
         // Create an unvalidated spectator user
-        unvalidatedUser = new SpectatorUser();
+        unvalidatedUser = new User();
         unvalidatedUser.setId(2L);
         unvalidatedUser.setEmail("unvalidated@example.com");
         unvalidatedUser.setFirstName("Unvalidated");
         unvalidatedUser.setLastName("User");
-        unvalidatedUser.setRole(UserRole.SPECTATOR);
         unvalidatedUser.setEmailValidated(false);
 
         // Create test structure
@@ -124,11 +125,11 @@ public class StructureServiceImplTest {
         when(structureMapper.toEntity(any(StructureCreationDto.class))).thenReturn(mockStructure);
         when(structureRepository.save(any(Structure.class))).thenReturn(mockStructure);
 
-        // Mock upgradeUserToStructureAdmin
-        doNothing().when(userRepository).upgradeUserToStructureAdmin(validatedUser.getId(), mockStructure.getId());
-
-        // Mock findById for the updated user
-        when(userRepository.findById(validatedUser.getId())).thenReturn(Optional.of(validatedUser));
+        // New membership-based checks: user must not have an ACTIVE membership
+        when(teamMemberRepository.findFirstByUserIdAndStatusOrderByJoinedAtDesc(eq(validatedUser.getId()), eq(TeamMemberStatus.ACTIVE)))
+                .thenReturn(Optional.empty());
+        // Persisting the TeamMember returns the same instance
+        when(teamMemberRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Mock JWT token generation
         when(jwtTokenProvider.generateAccessToken(validatedUser)).thenReturn("mock-jwt-token");
@@ -148,10 +149,9 @@ public class StructureServiceImplTest {
     void createStructure_WithUnvalidatedEmail_ShouldThrowException() {
         // Arrange
         // Create a user with a structure already assigned
-        User userWithStructure = new SpectatorUser();
+        User userWithStructure = new User();
         userWithStructure.setId(3L);
         userWithStructure.setEmail("user.with.structure@example.com");
-        userWithStructure.setRole(UserRole.STRUCTURE_ADMINISTRATOR);
 
         // Mock the repository to return this user
         when(userRepository.findByEmail("user.with.structure@example.com")).thenReturn(Optional.of(userWithStructure));

@@ -1,17 +1,11 @@
 package edu.cda.project.ticklybackend.models.user;
 
-import edu.cda.project.ticklybackend.enums.UserRole;
-import edu.cda.project.ticklybackend.models.structure.Structure;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
@@ -20,16 +14,11 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email") // Assure l'unicité de l'email
 })
-// Stratégie d'héritage : une seule table pour toutes les classes de la hiérarchie User
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-// Colonne utilisée pour différencier les types d'utilisateurs
-@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
-public abstract class User implements UserDetails { // Classe abstraite car on ne créera que des sous-classes
+public class User implements UserDetails { // Entité concrète d'identité (plus d'héritage, pas de rôle/structure)
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,17 +39,7 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean isEmailValidated = false;
 
-    // Rôle principal de l'utilisateur, utilisé comme discriminateur
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private UserRole role;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "structure_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    private Structure structure;
-
-    // Chemin vers le fichier avatar de l'utilisateur (sera géré plus tard)
+    // Chemin vers le fichier avatar de l'utilisateur
     private String avatarPath;
 
     @CreationTimestamp // Géré automatiquement par Hibernate
@@ -74,12 +53,19 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
     @Column(name = "consent_given_at")
     private Instant consentGivenAt;
 
+    // Constructeur de commodité pour la création d'un utilisateur identité-seulement
+    public User(String firstName, String lastName, String email, String password) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+    }
 
     // Implémentation des méthodes de UserDetails pour Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Retourne une collection d'autorisations basées sur le rôle de l'utilisateur
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        // Les autorisations spécifiques aux structures sont gérées via TeamMember; aucun rôle global ici
+        return List.of();
     }
 
     @Override
@@ -90,21 +76,21 @@ public abstract class User implements UserDetails { // Classe abstraite car on n
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Logique de compte expiré non implémentée pour le moment
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Logique de compte verrouillé non implémentée pour le moment
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Logique d'identifiants expirés non implémentée pour le moment
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // Logique de compte désactivé non implémentée pour le moment
+        return true;
     }
 }

@@ -45,7 +45,7 @@ public class TicketController {
 
     @GetMapping("/tickets/{ticketId}")
     // User must be the ticket owner
-    @PreAuthorize("@ticketSecurityService.isTicketOwner(#ticketId, authentication.principal)")
+    @PreAuthorize("@organizationalSecurityService.isTicketOwner(#ticketId, authentication)")
     @Operation(summary = "Get ticket details (authenticated)", description = "Retrieves the details of a specific ticket. The user must be the owner of the ticket.")
     public ResponseEntity<TicketResponseDto> getTicketDetails(@PathVariable UUID ticketId) {
         TicketResponseDto ticket = ticketService.getTicketDetails(ticketId);

@@ -37,3 +37,5 @@ public class StructureSpecification {
         };
     }
 }
+
+// TODO : Move to utils

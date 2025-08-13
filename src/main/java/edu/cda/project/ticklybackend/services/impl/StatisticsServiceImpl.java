@@ -9,8 +9,7 @@ import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.event.EventRepository;
 import edu.cda.project.ticklybackend.repositories.statistics.StatisticsRepository;
 import edu.cda.project.ticklybackend.repositories.ticket.TicketRepository;
-import edu.cda.project.ticklybackend.security.EventSecurityService;
-import edu.cda.project.ticklybackend.security.StructureSecurityService;
+import edu.cda.project.ticklybackend.security.OrganizationalSecurityService;
 import edu.cda.project.ticklybackend.services.interfaces.StatisticsService;
 import edu.cda.project.ticklybackend.utils.AuthUtils;
 import edu.cda.project.ticklybackend.utils.LoggingUtils;
@@ -37,8 +36,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final StatisticsRepository statisticsRepository;
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
-    private final StructureSecurityService structureSecurityService;
-    private final EventSecurityService eventSecurityService;
+    private final OrganizationalSecurityService organizationalSecurityService;
     private final AuthUtils authUtils;
 
     private static final int TOP_EVENTS_LIMIT = 5;
@@ -56,7 +54,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             // First check authorization before accessing user details
             log.debug("Vérification des autorisations pour l'accès aux statistiques de la structure ID: {}", structureId);
-            if (!structureSecurityService.isStructureStaff(structureId, authentication)) {
+            if (!organizationalSecurityService.canAccessStructure(structureId, authentication)) {
                 log.warn("Accès refusé aux statistiques pour la structure ID: {} - Utilisateur non autorisé", structureId);
                 throw new AccessDeniedException("You are not authorized to access statistics for this structure");
             }
@@ -102,7 +100,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             return result;
         } catch (Exception e) {
             LoggingUtils.logException(log, "Erreur lors de la récupération des statistiques pour la structure ID: " + structureId, e);
-            throw e;
+            throw new AccessDeniedException("You are not authorized to access statistics for this structure");
         } finally {
             LoggingUtils.clearContext();
         }
@@ -135,9 +133,9 @@ public class StatisticsServiceImpl implements StatisticsService {
             LoggingUtils.setUserId(currentUser.getId());
 
             log.debug("Vérification des autorisations pour l'accès aux statistiques de l'événement ID: {}", eventId);
-            if (!eventSecurityService.isOwner(eventId, currentUser)) {
-                log.warn("Accès refusé aux statistiques pour l'événement ID: {} - Utilisateur ID: {} non autorisé",
-                        eventId, currentUser.getId());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (!organizationalSecurityService.canAccessEventStatistics(eventId, authentication)) {
+                log.warn("Accès refusé aux statistiques pour l'événement ID: {} - Utilisateur non autorisé", eventId);
                 throw new AccessDeniedException("You are not authorized to access statistics for this event");
             }
             log.debug("Autorisation validée pour l'accès aux statistiques de l'événement ID: {}", eventId);
@@ -159,15 +157,15 @@ public class StatisticsServiceImpl implements StatisticsService {
             long uniqueReservationAmount = statisticsRepository.countUniqueReservationsByEventId(eventId);
             long attributedTicketsAmount = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.VALID);
             long scannedTicketsNumber = ticketRepository.countByEventIdAndStatus(eventId, TicketStatus.USED);
-            
+
             // Calculate total capacity from zone fill rates
             int totalCapacity = zoneFillRates.stream().mapToInt(ZoneFillRateDataPointDto::getCapacity).sum();
-            
+
             // Calculate fill percentage as the percentage of valid and used tickets on the total capacity
-            double fillPercentage = totalCapacity > 0 
-                ? (double) (attributedTicketsAmount + scannedTicketsNumber) / totalCapacity * 100 
-                : 0.0;
-                
+            double fillPercentage = totalCapacity > 0
+                    ? (double) (attributedTicketsAmount + scannedTicketsNumber) / totalCapacity * 100
+                    : 0.0;
+
             log.debug("KPIs calculés pour l'événement ID: {}: taux de remplissage={}%, réservations uniques={}, tickets attribués={}, tickets scannés={}",
                     eventId, fillPercentage, uniqueReservationAmount, attributedTicketsAmount, scannedTicketsNumber);
 

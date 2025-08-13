@@ -31,7 +31,7 @@ public class TeamController {
 
     @GetMapping("/structure/{structureId}")
     @Operation(summary = "Get team members of a structure")
-    @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal) or @teamSecurityService.isStructureOrganizationService(#structureId, authentication.principal) or @teamSecurityService.isStructureReservationService(#structureId, authentication.principal)")
+    @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<List<TeamMemberDto>> getTeamMembers(@PathVariable Long structureId) {
         log.info("Récupération des membres de l'équipe pour la structure ID: {}", structureId);
         try {
@@ -49,7 +49,7 @@ public class TeamController {
 
     @PostMapping("/structure/{structureId}/invite")
     @Operation(summary = "Invite a new member to the team")
-    @PreAuthorize("@teamSecurityService.isStructureAdmin(#structureId, authentication.principal)")
+    @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<List<TeamMemberDto>> inviteMember(@PathVariable Long structureId, @Valid @RequestBody InviteMemberRequestDto inviteDto) {
         log.info("Invitation d'un nouveau membre dans l'équipe de la structure ID: {}, email: {}", structureId, inviteDto.getEmail());
         try {
@@ -94,7 +94,7 @@ public class TeamController {
 
     @PutMapping("/members/{memberId}/role")
     @Operation(summary = "Update a team member's role")
-    @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
+    @PreAuthorize("@organizationalSecurityService.canManageTeamMember(#memberId, authentication)")
     public ResponseEntity<TeamMemberDto> updateMemberRole(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRoleDto roleDto) {
         log.info("Mise à jour du rôle du membre ID: {} vers le rôle: {}", memberId, roleDto.getRole());
         try {
@@ -115,7 +115,7 @@ public class TeamController {
 
     @DeleteMapping("/members/{memberId}")
     @Operation(summary = "Remove a team member")
-    @PreAuthorize("@teamSecurityService.isTeamManager(#memberId, authentication.principal)")
+    @PreAuthorize("@organizationalSecurityService.canManageTeamMember(#memberId, authentication)")
     public ResponseEntity<Void> removeMember(@PathVariable Long memberId) {
         log.info("Suppression du membre d'équipe ID: {}", memberId);
         try {

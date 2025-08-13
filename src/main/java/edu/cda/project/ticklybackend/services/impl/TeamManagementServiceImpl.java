@@ -14,12 +14,10 @@ import edu.cda.project.ticklybackend.exceptions.ResourceNotFoundException;
 import edu.cda.project.ticklybackend.mappers.team.TeamMemberMapper;
 import edu.cda.project.ticklybackend.models.mailing.VerificationToken;
 import edu.cda.project.ticklybackend.models.structure.Structure;
-import edu.cda.project.ticklybackend.models.team.Team;
 import edu.cda.project.ticklybackend.models.team.TeamMember;
 import edu.cda.project.ticklybackend.models.user.User;
 import edu.cda.project.ticklybackend.repositories.structure.StructureRepository;
 import edu.cda.project.ticklybackend.repositories.team.TeamMemberRepository;
-import edu.cda.project.ticklybackend.repositories.team.TeamRepository;
 import edu.cda.project.ticklybackend.repositories.user.UserRepository;
 import edu.cda.project.ticklybackend.security.JwtTokenProvider;
 import edu.cda.project.ticklybackend.services.interfaces.FileStorageService;
@@ -43,7 +41,6 @@ import java.util.List;
 @Slf4j
 public class TeamManagementServiceImpl implements TeamManagementService {
 
-    private final TeamRepository teamRepository;
     private final TeamMemberRepository memberRepository;
     private final StructureRepository structureRepository;
     private final UserRepository userRepository;
@@ -61,7 +58,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
         try {
             log.debug("Récupération des membres de l'équipe pour la structure ID: {}", structureId);
-            List<TeamMember> members = memberRepository.findByTeamStructureId(structureId);
+            List<TeamMember> members = memberRepository.findByStructureId(structureId);
             log.debug("Trouvé {} membres pour la structure ID: {}", members.size(), structureId);
 
             List<TeamMemberDto> result = memberMapper.toDtoList(members, fileStorageService);
@@ -90,14 +87,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                         return new ResourceNotFoundException("Structure", "id", structureId);
                     });
 
-            log.debug("Recherche ou création de l'équipe pour la structure ID: {}", structureId);
-            Team team = teamRepository.findByStructureId(structureId).orElseGet(() -> {
-                log.info("Création d'une nouvelle équipe pour la structure {}", structure.getName());
-                Team newTeam = new Team();
-                newTeam.setName("Équipe " + structure.getName());
-                newTeam.setStructure(structure);
-                return teamRepository.save(newTeam);
-            });
+            // Plus de modèle Team: on utilise directement la structure pour l'appartenance
 
             log.debug("Vérification de l'existence de l'utilisateur avec email: {}", inviteDto.getEmail());
             // First check if user exists (for test verification)
@@ -116,20 +106,27 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             User invitee = userOpt.get();
 
             log.debug("Vérification que l'utilisateur n'est pas déjà membre de l'équipe: {}", inviteDto.getEmail());
-            if (memberRepository.existsByTeamIdAndEmail(team.getId(), inviteDto.getEmail())) {
-                log.warn("Un membre avec l'email {} existe déjà dans l'équipe ID: {}", inviteDto.getEmail(), team.getId());
-                throw new BadRequestException("Un membre avec cet email existe déjà ou a déjà été invité dans cette équipe.");
+            if (memberRepository.existsByStructureIdAndEmail(structureId, inviteDto.getEmail())) {
+                log.warn("Un membre avec l'email {} existe déjà pour la structure ID: {}", inviteDto.getEmail(), structureId);
+                throw new BadRequestException("Un membre avec cet email existe déjà ou a déjà été invité pour cette structure.");
             }
 
-            log.debug("Vérification que l'utilisateur est un SPECTATOR: {}", inviteDto.getEmail());
-            if (!invitee.getRole().equals(UserRole.SPECTATOR)) {
-                log.warn("L'utilisateur avec l'email {} est déjà relié à une structure", inviteDto.getEmail());
-                throw new BadRequestException("L'utilisateur avec cet email est déja relié a une structrure");
+            // Additional guard: prevent inviting a user already ACTIVE in another structure
+            var activeMembershipOpt = memberRepository.findFirstByUserIdAndStatusOrderByJoinedAtDesc(invitee.getId(), TeamMemberStatus.ACTIVE);
+            if (activeMembershipOpt.isPresent()) {
+                Long existingStructureId = activeMembershipOpt.get().getStructure().getId();
+                if (!existingStructureId.equals(structureId)) {
+                    log.warn("Invitation refusée: l'utilisateur {} est déjà membre ACTIF de la structure {}", inviteDto.getEmail(), existingStructureId);
+                    throw new BadRequestException("Cet utilisateur est déjà membre actif d'une autre structure. Il doit d'abord quitter cette structure.");
+                }
             }
+
+            // Migration: no longer restrict invitations based on user's current discriminator/role.
+            // Team membership now governs organizational roles.
 
             log.debug("Création d'un nouveau membre d'équipe pour l'email: {}", inviteDto.getEmail());
             TeamMember newMember = new TeamMember();
-            newMember.setTeam(team);
+            newMember.setStructure(structure);
             newMember.setEmail(inviteDto.getEmail());
             newMember.setRole(inviteDto.getRole());
             newMember.setStatus(TeamMemberStatus.PENDING_INVITATION);
@@ -210,56 +207,34 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                 throw new BadRequestException("Cette invitation n'est pas destinée à votre adresse email.");
             }
 
-            // 6. Vérifier le statut de l'invitation - For testing, we'll temporarily skip this check
-            // This allows the test to pass while we investigate the actual issue
-            // In a real environment, we would want to keep this check
-            /*
+            // 6. Vérifier le statut de l'invitation
             if (invitation.getStatus() != TeamMemberStatus.PENDING_INVITATION) {
                 log.warn("Invitation avec statut invalide: {}", invitation.getStatus());
                 throw new BadRequestException("Cette invitation n'est plus valide ou a déjà été acceptée.");
             }
-            */
-            // Instead, we'll just log the status
-            if (invitation.getStatus() != TeamMemberStatus.PENDING_INVITATION) {
-                log.warn("Invitation avec statut non-PENDING: {} - Continuons quand même pour le test", invitation.getStatus());
+
+            // 6bis. Enforcer la règle: un seul statut ACTIVE par utilisateur (si actif ailleurs, refuser)
+            var existingActiveOpt = memberRepository.findFirstByUserIdAndStatusOrderByJoinedAtDesc(currentUser.getId(), TeamMemberStatus.ACTIVE);
+            if (existingActiveOpt.isPresent()) {
+                Long existingStructureId = existingActiveOpt.get().getStructure().getId();
+                Long targetStructureId = invitation.getStructure() != null ? invitation.getStructure().getId() : null;
+                if (!existingStructureId.equals(targetStructureId)) {
+                    log.warn("Utilisateur déjà membre ACTIF d'une autre structure ({}), refus de l'acceptation pour la structure {}", existingStructureId, targetStructureId);
+                    throw new BadRequestException("Vous êtes déjà membre actif d'une autre structure. Veuillez d'abord quitter cette structure avant d'en rejoindre une nouvelle.");
+                }
             }
 
             // 7. Récupérer les informations de la structure
-            Structure structure = invitation.getTeam().getStructure();
+            Structure structure = invitation.getStructure();
             UserRole newRole = invitation.getRole();
             log.debug("Structure trouvée: {} (ID: {}), nouveau rôle: {}",
                     structure.getName(), structure.getId(), newRole);
 
-            // 8. MISE À JOUR DIRECTE : Transformer l'utilisateur via requête native
-            String discriminatorValue = getDiscriminatorValueForRole(newRole);
-            log.debug("Mise à jour de l'utilisateur ID: {} vers discriminateur: {}, rôle: {}, structure: {}",
-                    currentUser.getId(), discriminatorValue, newRole.name(), structure.getId());
-
-            int updateCount = userRepository.updateUserTypeAndStructure(
-                    currentUser.getId(),
-                    discriminatorValue,
-                    newRole.name(),
-                    structure.getId()
-            );
-
-            if (updateCount != 1) {
-                log.error("Échec de la mise à jour de l'utilisateur ID: {}", currentUser.getId());
-                throw new RuntimeException("Erreur lors de la mise à jour de l'utilisateur.");
-            }
-
-            // 9. IMPORTANT : Recharger l'entité avec un fetch join pour éviter LazyInitializationException
-            userRepository.flush();
-            log.debug("Rechargement de l'utilisateur après mise à jour");
-
-            User updatedUser = userRepository.findUserWithStructureById(currentUser.getId())
-                    .orElseThrow(() -> {
-                        log.error("Utilisateur introuvable après mise à jour ID: {}", currentUser.getId());
-                        return new RuntimeException("Utilisateur introuvable après mise à jour.");
-                    });
+            // 8. Activer l'adhésion sans modifier la table users (migration vers les rôles basés sur TeamMember)
 
             // 10. Mettre à jour l'invitation
             log.debug("Mise à jour du statut de l'invitation ID: {}", invitation.getId());
-            invitation.setUser(updatedUser);
+            invitation.setUser(currentUser);
             invitation.setStatus(TeamMemberStatus.ACTIVE);
             invitation.setJoinedAt(Instant.now());
             memberRepository.save(invitation);
@@ -268,13 +243,12 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             log.debug("Marquage du token comme utilisé");
             verificationTokenService.markTokenAsUsed(invitationToken);
 
-            // 12. GÉNÉRER LE JWT AVEC L'UTILISATEUR TRANSFORMÉ
-            log.debug("Génération du nouveau JWT pour l'utilisateur ID: {}", updatedUser.getId());
-            String newJwtToken = jwtTokenProvider.generateAccessToken(updatedUser);
+            // 12. Générer un JWT identité-seulement (sans rôle ni structure)
+            log.debug("Génération du nouveau JWT pour l'utilisateur ID: {}", currentUser.getId());
+            String newJwtToken = jwtTokenProvider.generateAccessToken(currentUser);
 
-            log.info("Invitation acceptée pour {} dans la structure {} avec le rôle {}. Token généré avec structureId: {}",
-                    updatedUser.getEmail(), structure.getName(), newRole,
-                    updatedUser.getStructure() != null ? updatedUser.getStructure().getId() : "N/A");
+            log.info("Invitation acceptée pour {} dans la structure {} avec le rôle {}.",
+                    currentUser.getEmail(), structure.getName(), newRole);
 
             // 13. Retourner la réponse complète
             InvitationAcceptanceResponseDto result = new InvitationAcceptanceResponseDto(
@@ -321,11 +295,11 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
             // On vérifie si on essaie de rétrograder le dernier administrateur de la structure.
             if (member.getRole() == UserRole.STRUCTURE_ADMINISTRATOR && roleDto.getRole() != UserRole.STRUCTURE_ADMINISTRATOR) {
-                long adminCount = countAdminsForStructure(member.getTeam().getStructure().getId());
-                log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}", member.getTeam().getStructure().getId(), adminCount);
+                long adminCount = countAdminsForStructure(member.getStructure().getId());
+                log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}", member.getStructure().getId(), adminCount);
 
                 if (adminCount <= 1) {
-                    log.warn("Tentative de rétrograder le dernier administrateur de la structure ID: {}", member.getTeam().getStructure().getId());
+                    log.warn("Tentative de rétrograder le dernier administrateur de la structure ID: {}", member.getStructure().getId());
                     throw new BadRequestException("Impossible de rétrograder le dernier administrateur de la structure. " +
                             "Une structure doit toujours avoir au moins un administrateur. " +
                             "Veuillez d'abord promouvoir un autre membre au rôle d'administrateur.");
@@ -336,30 +310,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
             member.setRole(roleDto.getRole());
             log.debug("Changement de rôle pour le membre ID: {} de {} à {}", memberId, oldRole, roleDto.getRole());
 
-            if (member.getUser() != null) {
-                // MISE À JOUR DIRECTE : Mettre à jour le rôle ET le discriminateur via requête native
-                String discriminatorValue = getDiscriminatorValueForRole(roleDto.getRole());
-                log.debug("Mise à jour du type d'utilisateur ID: {} vers discriminateur: {}, rôle: {}",
-                        member.getUser().getId(), discriminatorValue, roleDto.getRole().name());
-
-                int updateCount = userRepository.updateUserTypeAndRole(
-                        member.getUser().getId(),
-                        discriminatorValue,
-                        roleDto.getRole().name()
-                );
-
-                // For testing, we'll temporarily skip this check
-                // This allows the test to pass while we investigate the actual issue
-                // In a real environment, we would want to keep this check
-                if (updateCount != 1) {
-                    log.warn("Mise à jour du rôle de l'utilisateur ID: {} a retourné un compte différent de 1: {} - Continuons quand même pour le test",
-                            member.getUser().getId(), updateCount);
-                }
-
-                userRepository.flush();
-                log.info("Rôle de l'utilisateur {} mis à jour : {} -> {}",
-                        member.getUser().getEmail(), oldRole, roleDto.getRole());
-            }
+            // Aucun changement dans la table users : le rôle organisationnel est désormais porté par TeamMember
 
             TeamMember updatedMember = memberRepository.save(member);
             log.debug("Membre d'équipe ID: {} mis à jour avec succès", memberId);
@@ -399,13 +350,13 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
             // Check if this is the last admin and explicitly throw BadRequestException
             if (member.getRole() == UserRole.STRUCTURE_ADMINISTRATOR) {
-                long adminCount = countAdminsForStructure(member.getTeam().getStructure().getId());
-                log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}",
-                        member.getTeam().getStructure().getId(), adminCount);
+                long adminCount = countAdminsForStructure(member.getStructure().getId());
+            log.debug("Vérification du nombre d'administrateurs pour la structure ID: {}: {}",
+                        member.getStructure().getId(), adminCount);
 
-                if (adminCount <= 1) {
-                    log.warn("Tentative de suppression du dernier administrateur de la structure ID: {}",
-                            member.getTeam().getStructure().getId());
+            if (adminCount <= 1) {
+                log.warn("Tentative de suppression du dernier administrateur de la structure ID: {}",
+                        member.getStructure().getId());
                     throw new BadRequestException("L'administrateur principal de la structure ne peut pas être supprimé de l'équipe. " +
                             "Si vous souhaitez quitter l'équipe, vous devez d'abord promouvoir un autre membre au rôle d'administrateur " +
                             "ou supprimer complètement la structure si elle n'est plus utilisée. " +
@@ -413,25 +364,8 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                 }
             }
 
-            if (member.getUser() != null) {
-                User user = member.getUser();
-                log.info("Conversion du membre {} (rôle: {}) en SPECTATOR", user.getEmail(), user.getRole());
-                try {
-                    int updateCount = userRepository.convertUserToSpectator(user.getId());
-
-                    // For testing, we'll skip this check
-                    if (updateCount != 1) {
-                        log.warn("La conversion de l'utilisateur ID: {} en SPECTATOR a retourné un compte différent de 1: {} - Continuons quand même pour le test",
-                                user.getId(), updateCount);
-                    }
-                    userRepository.flush();
-                    log.info("Utilisateur {} converti avec succès en SPECTATOR", user.getEmail());
-                } catch (Exception e) {
-                    // For testing, we'll just log the error and continue
-                    log.warn("Erreur lors de la conversion de l'utilisateur ID: {} en SPECTATOR: {} - Continuons quand même pour le test",
-                            user.getId(), e.getMessage());
-                }
-            }
+            // Pas de conversion de l'utilisateur : la relation d'appartenance gouverne désormais les droits.
+            // Suppression du membre uniquement.
 
             try {
                 memberRepository.delete(member);
@@ -458,7 +392,7 @@ public class TeamManagementServiceImpl implements TeamManagementService {
 
         try {
             log.debug("Comptage des administrateurs pour la structure ID: {}", structureId);
-            long count = memberRepository.countByTeamStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
+            long count = memberRepository.countByStructureIdAndRole(structureId, UserRole.STRUCTURE_ADMINISTRATOR);
             log.debug("Nombre d'administrateurs trouvés pour la structure ID {}: {}", structureId, count);
 
             LoggingUtils.logMethodExit(log, "countAdminsForStructure", count);
@@ -471,21 +405,6 @@ public class TeamManagementServiceImpl implements TeamManagementService {
         }
     }
 
-    /**
-     * Retourne la valeur du discriminateur JPA pour le rôle donné.
-     */
-    private String getDiscriminatorValueForRole(UserRole role) {
-        switch (role) {
-            case STRUCTURE_ADMINISTRATOR:
-                return "STRUCTURE_ADMINISTRATOR";
-            case ORGANIZATION_SERVICE:
-                return "ORGANIZATION_SERVICE";
-            case RESERVATION_SERVICE:
-                return "RESERVATION_SERVICE";
-            default:
-                throw new BadRequestException("Rôle d'équipe invalide : " + role);
-        }
-    }
 
     @Override
     @org.springframework.transaction.annotation.Transactional
@@ -501,29 +420,13 @@ public class TeamManagementServiceImpl implements TeamManagementService {
                 return;
             }
 
-            log.debug("Conversion de tous les utilisateurs de la structure en SPECTATOR");
-            int updatedUsers = userRepository.convertAllStructureUsersToSpectator(structureId);
-            if (updatedUsers > 0) {
-                log.info("{} utilisateurs de la structure ID {} ont été convertis en SPECTATOR.", updatedUsers, structureId);
-                userRepository.flush();
+            // Suppression basée uniquement sur les membres rattachés à la structure.
+            long deletedMembers = memberRepository.deleteByStructureId(structureId);
+            if (deletedMembers > 0) {
+                log.info("{} membres de la structure ID {} ont été supprimés.", deletedMembers, structureId);
             } else {
-                log.debug("Aucun utilisateur à convertir pour la structure ID: {}", structureId);
+                log.debug("Aucun membre à supprimer pour la structure ID: {}", structureId);
             }
-
-            log.debug("Recherche de l'équipe pour la structure ID: {}", structureId);
-            teamRepository.findByStructureId(structureId).ifPresent(team -> {
-                log.debug("Suppression des membres de l'équipe ID: {}", team.getId());
-                long deletedMembers = memberRepository.deleteByTeamId(team.getId());
-                if (deletedMembers > 0) {
-                    log.info("{} membres de l'équipe ID {} ont été supprimés.", deletedMembers, team.getId());
-                } else {
-                    log.debug("Aucun membre à supprimer pour l'équipe ID: {}", team.getId());
-                }
-
-                log.debug("Suppression de l'équipe ID: {}", team.getId());
-                teamRepository.delete(team);
-                log.info("L'équipe ID {} (pour structure ID {}) a été supprimée.", team.getId(), structureId);
-            });
 
             log.info("Dissolution de l'équipe pour la structure ID {} terminée.", structureId);
             LoggingUtils.logMethodExit(log, "dissolveTeam");
