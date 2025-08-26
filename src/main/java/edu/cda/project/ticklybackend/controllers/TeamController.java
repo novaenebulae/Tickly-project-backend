@@ -19,6 +19,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Endpoints to manage structure team members: list, invite, accept invitation,
+ * update roles, and remove members.
+ */
 @RestController
 @RequestMapping("/api/v1/team")
 @RequiredArgsConstructor
@@ -33,16 +37,16 @@ public class TeamController {
     @Operation(summary = "Get team members of a structure")
     @PreAuthorize("@organizationalSecurityService.canAccessStructure(#structureId, authentication)")
     public ResponseEntity<List<TeamMemberDto>> getTeamMembers(@PathVariable Long structureId) {
-        log.info("Récupération des membres de l'équipe pour la structure ID: {}", structureId);
+        log.info("Retrieving team members for structure ID: {}", structureId);
         try {
             List<TeamMemberDto> members = teamService.getTeamMembers(structureId);
-            log.info("Récupération réussie de {} membres pour la structure ID: {}", members.size(), structureId);
+            log.info("Successfully retrieved {} members for structure ID: {}", members.size(), structureId);
             return ResponseEntity.ok(members);
         } catch (ResourceNotFoundException e) {
-            log.error("Erreur lors de la récupération des membres de l'équipe pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.error("Error retrieving team members for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de la récupération des membres de l'équipe pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.error("Unexpected error while retrieving team members for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         }
     }
@@ -51,20 +55,20 @@ public class TeamController {
     @Operation(summary = "Invite a new member to the team")
     @PreAuthorize("@organizationalSecurityService.isStructureAdmin(#structureId, authentication)")
     public ResponseEntity<List<TeamMemberDto>> inviteMember(@PathVariable Long structureId, @Valid @RequestBody InviteMemberRequestDto inviteDto) {
-        log.info("Invitation d'un nouveau membre dans l'équipe de la structure ID: {}, email: {}", structureId, inviteDto.getEmail());
+        log.info("Inviting a new team member for structure ID: {}, email: {}", structureId, inviteDto.getEmail());
         try {
             teamService.inviteMember(structureId, inviteDto);
-            log.info("Invitation envoyée avec succès à {} pour la structure ID: {}", inviteDto.getEmail(), structureId);
+            log.info("Invitation successfully sent to {} for structure ID: {}", inviteDto.getEmail(), structureId);
             List<TeamMemberDto> updatedMembers = teamService.getTeamMembers(structureId);
             return ResponseEntity.ok(updatedMembers);
         } catch (ResourceNotFoundException e) {
-            log.error("Erreur lors de l'invitation d'un membre pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.error("Error inviting a member for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         } catch (BadRequestException e) {
-            log.warn("Requête invalide lors de l'invitation d'un membre pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.warn("Invalid request when inviting a member for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de l'invitation d'un membre pour la structure ID: {}: {}", structureId, e.getMessage());
+            log.error("Unexpected error while inviting a member for structure ID: {}: {}", structureId, e.getMessage());
             throw e;
         }
     }
@@ -75,19 +79,19 @@ public class TeamController {
             description = "Public endpoint to accept a team invitation. The invitation token is passed as a parameter. " +
                     "The user is automatically identified via the invitation token. " +
                     "Returns a new JWT token with updated permissions.",
-            security = {} // Removes the authentication requirement for this endpoint
+            security = {}
     )
     public ResponseEntity<InvitationAcceptanceResponseDto> acceptInvitation(@RequestParam String token) {
-        log.info("Tentative d'acceptation d'invitation d'équipe avec token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
+        log.info("Attempting to accept team invitation with token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
         try {
             InvitationAcceptanceResponseDto response = teamService.acceptInvitation(token);
-            log.info("Invitation acceptée avec succès pour la structure ID: {}, nom: {}", response.getStructureId(), response.getStructureName());
+            log.info("Invitation successfully accepted for structure ID: {}, name: {}", response.getStructureId(), response.getStructureName());
             return ResponseEntity.ok(response);
         } catch (BadRequestException e) {
-            log.warn("Requête invalide lors de l'acceptation d'invitation: {}", e.getMessage());
+            log.warn("Invalid request when accepting invitation: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur lors de l'acceptation d'invitation: {}", e.getMessage());
+            log.error("Error accepting invitation: {}", e.getMessage());
             throw e;
         }
     }
@@ -96,19 +100,19 @@ public class TeamController {
     @Operation(summary = "Update a team member's role")
     @PreAuthorize("@organizationalSecurityService.canManageTeamMember(#memberId, authentication)")
     public ResponseEntity<TeamMemberDto> updateMemberRole(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRoleDto roleDto) {
-        log.info("Mise à jour du rôle du membre ID: {} vers le rôle: {}", memberId, roleDto.getRole());
+        log.info("Updating role of member ID: {} to role: {}", memberId, roleDto.getRole());
         try {
             TeamMemberDto updatedMember = teamService.updateMemberRole(memberId, roleDto);
-            log.info("Rôle du membre ID: {} mis à jour avec succès vers: {}", memberId, roleDto.getRole());
+            log.info("Member ID: {} role successfully updated to: {}", memberId, roleDto.getRole());
             return ResponseEntity.ok(updatedMember);
         } catch (ResourceNotFoundException e) {
-            log.error("Membre d'équipe non trouvé - ID: {}: {}", memberId, e.getMessage());
+            log.error("Team member not found - ID: {}: {}", memberId, e.getMessage());
             throw e;
         } catch (BadRequestException e) {
-            log.warn("Requête invalide lors de la mise à jour du rôle du membre ID: {}: {}", memberId, e.getMessage());
+            log.warn("Invalid request when updating role of member ID: {}: {}", memberId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de la mise à jour du rôle du membre ID: {}: {}", memberId, e.getMessage());
+            log.error("Unexpected error while updating role of member ID: {}: {}", memberId, e.getMessage());
             throw e;
         }
     }
@@ -117,19 +121,19 @@ public class TeamController {
     @Operation(summary = "Remove a team member")
     @PreAuthorize("@organizationalSecurityService.canManageTeamMember(#memberId, authentication)")
     public ResponseEntity<Void> removeMember(@PathVariable Long memberId) {
-        log.info("Suppression du membre d'équipe ID: {}", memberId);
+        log.info("Removing team member ID: {}", memberId);
         try {
             teamService.removeMember(memberId);
-            log.info("Membre d'équipe ID: {} supprimé avec succès", memberId);
+            log.info("Team member ID: {} successfully removed", memberId);
             return ResponseEntity.noContent().build();
         } catch (ResourceNotFoundException e) {
-            log.error("Membre d'équipe non trouvé - ID: {}: {}", memberId, e.getMessage());
+            log.error("Team member not found - ID: {}: {}", memberId, e.getMessage());
             throw e;
         } catch (BadRequestException e) {
-            log.warn("Requête invalide lors de la suppression du membre ID: {}: {}", memberId, e.getMessage());
+            log.warn("Invalid request when removing member ID: {}: {}", memberId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Erreur inattendue lors de la suppression du membre ID: {}: {}", memberId, e.getMessage());
+            log.error("Unexpected error while removing member ID: {}: {}", memberId, e.getMessage());
             throw e;
         }
     }

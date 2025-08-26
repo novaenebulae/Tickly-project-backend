@@ -6,20 +6,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO pour la réponse suite à un upload de fichier.
+ * Response payload returned after a successful file upload.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO pour la réponse suite à un upload de fichier.")
+@Schema(description = "Response returned after a successful file upload.")
 public class FileUploadResponseDto {
 
-    @Schema(description = "Nom original du fichier uploadé.", example = "mon_logo.png")
+    @Schema(description = "Original file name.", example = "my_logo.png")
     private String fileName;
 
-    @Schema(description = "URL publique complète pour accéder au fichier uploadé.", example = "http://localhost/static/structures/logos/uuid-logo.png")
+    @Schema(description = "Public URL to access the uploaded file.", example = "http://localhost/static/structures/logos/uuid-logo.png")
     private String fileUrl;
 
-    @Schema(description = "Message confirmant le succès de l'upload.", example = "Fichier uploadé avec succès.")
+    @Schema(description = "Confirmation message.", example = "File uploaded successfully.")
     private String message;
 }

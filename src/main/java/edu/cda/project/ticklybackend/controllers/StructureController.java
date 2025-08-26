@@ -29,6 +29,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * Authenticated endpoints to manage structures and nested resources:
+ * areas and audience zone templates, including media operations.
+ */
 @RestController
 @RequestMapping("/api/v1/structures")
 @RequiredArgsConstructor
@@ -38,7 +42,6 @@ public class StructureController {
 
     private final StructureService structureService;
 
-    // ====== STRUCTURE CRUD ======
 
     @Operation(summary = "Create a new structure",
             description = "Allows a structure administrator (with 'needsStructureSetup' set to true) to create their structure. " +
@@ -119,7 +122,6 @@ public class StructureController {
         return ResponseEntity.noContent().build();
     }
 
-    // ====== FILE MANAGEMENT ======
 
     @Operation(summary = "Update a structure's logo",
             description = "Replaces the current logo of the structure. Requires being the owner.")
@@ -201,7 +203,6 @@ public class StructureController {
         return ResponseEntity.ok(structureService.getAllStructureTypes());
     }
 
-    // ====== NESTED: STRUCTURE AREA ======
 
     @Operation(summary = "Create an area for a structure",
             description = "Adds a new physical space (room, stage...) to a structure. Requires being the owner.")
@@ -244,7 +245,6 @@ public class StructureController {
         return ResponseEntity.noContent().build();
     }
 
-    // ====== NESTED: AUDIENCE ZONE TEMPLATE ======
 
     @Operation(summary = "Create an audience zone template",
             description = "Adds a new zone template (pit, balcony...) to a specific area. Requires being the owner of the structure.")

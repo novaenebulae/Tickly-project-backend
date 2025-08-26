@@ -9,41 +9,40 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
- * DTO représentant les paramètres de recherche pour les événements.
- * Utilisé pour capturer les query params de l'endpoint de recherche.
+ * Request parameters to filter event search results.
  */
 @Data
 public class EventSearchParamsDto {
-    @Parameter(description = "Recherche textuelle sur le nom, la description et les tags de l'événement.")
+    @Parameter(description = "Free text search on event name, description, and tags.")
     private String query;
 
-    @Parameter(description = "Liste d'IDs de catégories pour filtrer les événements.")
+    @Parameter(description = "Category IDs used to filter events.")
     private List<Long> categoryIds;
 
-    @Parameter(description = "Filtrer les événements commençant après cette date (format ISO 8601 UTC).")
+    @Parameter(description = "Filter events starting after this date (ISO 8601 UTC).")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private ZonedDateTime startDateAfter;
 
-    @Parameter(description = "Filtrer les événements commençant avant cette date (format ISO 8601 UTC).")
+    @Parameter(description = "Filter events starting before this date (ISO 8601 UTC).")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private ZonedDateTime startDateBefore;
 
-    @Parameter(description = "Filtrer par statut de l'événement.")
+    @Parameter(description = "Filter by event status.")
     private EventStatus status;
 
-    @Parameter(description = "Filtrer les événements affichés sur la page d'accueil.")
+    @Parameter(description = "Filter events displayed on the home page.")
     private Boolean displayOnHomepage;
 
-    @Parameter(description = "Filtrer les événements mis en avant.")
+    @Parameter(description = "Filter featured events.")
     private Boolean isFeatured;
 
-    @Parameter(description = "Filtrer par ID de la structure organisatrice.")
+    @Parameter(description = "Filter by organizer structure ID.")
     private Long structureId;
 
-    @Parameter(description = "Filtrer par ville de l'événement.")
+    @Parameter(description = "Filter by city.")
     private String city;
 
-    @Parameter(description = "Filtrer par tags (logique ET).")
+    @Parameter(description = "Filter by tags (AND logic).")
     private List<String> tags;
 
 }

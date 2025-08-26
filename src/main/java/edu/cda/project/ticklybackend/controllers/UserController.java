@@ -1,4 +1,4 @@
-package edu.cda.project.ticklybackend.controllers; // Adaptez si vous avez un sous-package 'user'
+package edu.cda.project.ticklybackend.controllers;
 
 import edu.cda.project.ticklybackend.dtos.file.FileUploadResponseDto;
 import edu.cda.project.ticklybackend.dtos.user.FavoriteStructureRequestDto;
@@ -24,6 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * User endpoints for profile management, avatar upload, favorite structures,
+ * and account deletion workflows.
+ */
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -44,7 +48,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "getMyProfile", profile);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la récupération du profil utilisateur", e);
+            LoggingUtils.logException(log, "Error retrieving user profile", e);
             throw e;
         }
     }
@@ -60,7 +64,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "updateMyProfile", updatedProfile);
             return ResponseEntity.ok(updatedProfile);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la mise à jour du profil utilisateur", e);
+            LoggingUtils.logException(log, "Error updating user profile", e);
             throw e;
         }
     }
@@ -73,18 +77,17 @@ public class UserController {
         LoggingUtils.logMethodEntry(log, "uploadMyAvatar", "fileName", file.getOriginalFilename());
         try {
             String fileUrl = userService.updateCurrentUserAvatar(file);
-            FileUploadResponseDto response = new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Avatar mis à jour avec succès.");
+            FileUploadResponseDto response = new FileUploadResponseDto(file.getOriginalFilename(), fileUrl, "Avatar updated successfully.");
             LoggingUtils.logMethodExit(log, "uploadMyAvatar", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de l'upload de l'avatar utilisateur", e);
+            LoggingUtils.logException(log, "Error uploading user avatar", e);
             throw e;
         }
     }
 
     @Operation(summary = "List the authenticated user's favorite structures")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = List.class)))
-    // List<UserFavoriteStructureDto>
     @GetMapping("/me/favorites/structures")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<UserFavoriteStructureDto>> getMyFavoriteStructures() {
@@ -94,7 +97,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "getMyFavoriteStructures", favorites);
             return ResponseEntity.ok(favorites);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la récupération des structures favorites", e);
+            LoggingUtils.logException(log, "Error retrieving favorite structures", e);
             throw e;
         }
     }
@@ -111,7 +114,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "addMyFavoriteStructure", favoriteDto);
             return new ResponseEntity<>(favoriteDto, HttpStatus.CREATED);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de l'ajout de la structure ID " + requestDto.getStructureId() + " aux favoris", e);
+            LoggingUtils.logException(log, "Error adding structure ID " + requestDto.getStructureId() + " to favorites", e);
             throw e;
         }
     }
@@ -128,7 +131,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "removeMyFavoriteStructure");
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la suppression de la structure ID " + structureId + " des favoris", e);
+            LoggingUtils.logException(log, "Error removing structure ID " + structureId + " from favorites", e);
             throw e;
         }
     }
@@ -143,7 +146,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "requestAccountDeletion");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la demande de suppression de compte", e);
+            LoggingUtils.logException(log, "Error requesting account deletion", e);
             throw e;
         }
     }
@@ -157,7 +160,7 @@ public class UserController {
             LoggingUtils.logMethodExit(log, "confirmAccountDeletion");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la confirmation de suppression de compte", e);
+            LoggingUtils.logException(log, "Error confirming account deletion", e);
             throw e;
         }
     }

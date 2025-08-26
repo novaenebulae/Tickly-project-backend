@@ -17,42 +17,42 @@ import java.util.List;
 @AllArgsConstructor
 public class EventUpdateDto {
 
-    @Schema(description = "Nouveau nom de l'événement.", example = "Concert de Rock Acoustique")
+    @Schema(description = "New event name.", example = "Acoustic Rock Concert")
     @Size(min = 3, max = 255, message = "Le nom doit contenir entre 3 et 255 caractères.")
     private String name;
 
-    @Schema(description = "Liste des IDs des catégories de l'événement.", example = "[1, 3, 5]")
+    @Schema(description = "Updated list of category IDs.", example = "[1, 3, 5]")
     @Size(min = 1, message = "Au moins une catégorie doit être sélectionnée.")
     private List<Long> categoryIds;
 
-    @Schema(description = "Nouvelle description courte.", example = "Une soirée intime et acoustique.")
+    @Schema(description = "Updated short description.", example = "An intimate acoustic evening.")
     @Size(max = 500, message = "La description courte ne doit pas dépasser 500 caractères.")
     private String shortDescription;
 
-    @Schema(description = "Nouvelle description complète.")
+    @Schema(description = "Updated full description.")
     private String fullDescription;
 
-    @Schema(description = "Nouvelle liste de mots-clés.", example = "[\"rock\", \"acoustique\"]")
+    @Schema(description = "Updated list of keywords.", example = "[\"rock\", \"acoustic\"]")
     private List<String> tags;
 
-    @Schema(description = "Nouvelle date de début (format ISO 8601 UTC).", example = "2025-07-16T19:00:00Z")
+    @Schema(description = "New start date/time (ISO 8601 UTC).", example = "2025-07-16T19:00:00Z")
     @Future(message = "La date de début doit être dans le futur.")
     private ZonedDateTime startDate;
 
-    @Schema(description = "Nouvelle date de fin (format ISO 8601 UTC).", example = "2025-07-16T22:00:00Z")
+    @Schema(description = "New end date/time (ISO 8601 UTC).", example = "2025-07-16T22:00:00Z")
     private ZonedDateTime endDate;
 
-    @Schema(description = "Nouvelle adresse spécifique à l'événement.")
+    @Schema(description = "Updated event-specific address.")
     @Valid
     private AddressDto address;
 
-    @Schema(description = "Nouvelle configuration des zones d'audience (remplace l'ancienne).")
+    @Schema(description = "Updated audience zone configuration (replaces the previous one).")
     @Valid
     private List<EventAudienceZoneConfigDto> audienceZones;
 
-    @Schema(description = "Mettre à jour l'affichage sur la page d'accueil.", example = "false")
+    @Schema(description = "Update whether to display on the home page.", example = "false")
     private Boolean displayOnHomepage;
 
-    @Schema(description = "Mettre à jour la mise en avant de l'événement.", example = "true")
+    @Schema(description = "Update whether the event is featured.", example = "true")
     private Boolean isFeaturedEvent;
 }

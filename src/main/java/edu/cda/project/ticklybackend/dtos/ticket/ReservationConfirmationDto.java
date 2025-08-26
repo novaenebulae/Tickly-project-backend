@@ -7,6 +7,9 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
+/**
+ * Confirmation returned after a successful reservation operation.
+ */
 @Schema(description = "Réponse de confirmation après une réservation réussie.")
 public class ReservationConfirmationDto {
 

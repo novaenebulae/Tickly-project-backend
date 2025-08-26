@@ -19,56 +19,56 @@ import java.util.List;
 @AllArgsConstructor
 public class EventCreationDto {
 
-    @Schema(description = "Nom de l'événement.", example = "Concert de Rock Symphonique")
+    @Schema(description = "Event name.", example = "Symphonic Rock Concert")
     @NotBlank(message = "Le nom de l'événement est requis.")
     @Size(min = 3, max = 255, message = "Le nom doit contenir entre 3 et 255 caractères.")
     private String name;
 
-    @Schema(description = "Liste des IDs des catégories de l'événement.", example = "[1, 3, 5]")
+    @Schema(description = "List of category IDs for the event.", example = "[1, 3, 5]")
     @NotNull(message = "Au moins une catégorie est requise.")
     @Size(min = 1, message = "Au moins une catégorie doit être sélectionnée.")
     private List<Long> categoryIds;
 
 
-    @Schema(description = "Description courte de l'événement pour les aperçus.", example = "Une fusion unique entre musique classique et rock.")
+    @Schema(description = "Short description for previews.", example = "A unique fusion of classical music and rock.")
     @Size(max = 500, message = "La description courte ne doit pas dépasser 500 caractères.")
     private String shortDescription;
 
-    @Schema(description = "Description complète et détaillée de l'événement.", example = "Vivez une soirée inoubliable avec l'orchestre philharmonique et le groupe 'The Unforgiven'...")
+    @Schema(description = "Full detailed description.", example = "Experience an unforgettable evening with the philharmonic orchestra and the band 'The Unforgiven'...")
     @NotBlank(message = "La description complète est requise.")
     private String fullDescription;
 
-    @Schema(description = "Liste de mots-clés pour la recherche.", example = "[\"rock\", \"symphonique\", \"concert\"]")
+    @Schema(description = "Search keywords.", example = "[\"rock\", \"symphonic\", \"concert\"]")
     private List<String> tags;
 
-    @Schema(description = "Date et heure de début de l'événement (format ISO 8601 UTC).", example = "2025-07-15T18:00:00Z")
+    @Schema(description = "Event start date/time (ISO 8601 UTC).", example = "2025-07-15T18:00:00Z")
     @NotNull(message = "La date de début est requise.")
     @Future(message = "La date de début doit être dans le futur.")
     private ZonedDateTime startDate;
 
-    @Schema(description = "Date et heure de fin de l'événement (format ISO 8601 UTC).", example = "2025-07-15T21:30:00Z")
+    @Schema(description = "Event end date/time (ISO 8601 UTC).", example = "2025-07-15T21:30:00Z")
     @NotNull(message = "La date de fin est requise.")
     private ZonedDateTime endDate;
 
-    @Schema(description = "Adresse spécifique à l'événement (peut différer de celle de la structure).")
+    @Schema(description = "Event-specific address (may differ from structure address).")
     @NotNull(message = "L'adresse de l'événement est requise.")
     @Valid
     private AddressDto address;
 
-    @Schema(description = "ID de la structure organisatrice.", example = "3")
+    @Schema(description = "Organizer structure ID.", example = "3")
     @NotNull(message = "L'ID de la structure est requis.")
     private Long structureId;
 
-    @Schema(description = "Configuration des zones d'audience pour l'événement.")
+    @Schema(description = "Audience zone configuration for the event.")
     @NotNull(message = "La configuration des zones d'audience est requise.")
     @Valid
     private List<EventAudienceZoneConfigDto> audienceZones;
 
-    @Schema(description = "Indique si l'événement doit être affiché sur la page d'accueil.", example = "true")
+    @Schema(description = "Whether to display the event on the home page.", example = "true")
     @NotNull(message = "Le champ 'displayOnHomepage' est requis.")
     private Boolean displayOnHomepage;
 
-    @Schema(description = "Indique si l'événement doit être mis en avant.", example = "false")
+    @Schema(description = "Whether the event is featured.", example = "false")
     @NotNull(message = "Le champ 'isFeaturedEvent' est requis.")
     private Boolean isFeaturedEvent;
 }

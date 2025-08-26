@@ -3,14 +3,14 @@ package edu.cda.project.ticklybackend.enums;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Énumération des types de placement pour les zones d'audience.
+ * Enumeration of seating types for audience zones.
  */
-@Schema(description = "Type de placement pour une zone d'audience.")
+@Schema(description = "Seating type for an audience zone.")
 public enum SeatingType {
-    @Schema(description = "Places assises numérotées ou non.")
+    @Schema(description = "Seated places, numbered or not.")
     SEATED,
-    @Schema(description = "Placement libre debout.")
+    @Schema(description = "Standing, free placement.")
     STANDING,
-    @Schema(description = "Combinaison de places assises et debout, ou non spécifié.")
+    @Schema(description = "Combination of seated and standing, or unspecified.")
     MIXED
 }

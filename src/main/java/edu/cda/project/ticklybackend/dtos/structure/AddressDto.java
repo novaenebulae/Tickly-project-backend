@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO pour les informations d'adresse.
- * Utilisé pour la création et la réponse des adresses de structure.
+ * Address information used for structure creation and responses.
  */
 @Data
 @NoArgsConstructor

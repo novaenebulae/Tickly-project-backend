@@ -12,14 +12,17 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+/**
+ * Profile data returned for the authenticated user.
+ */
 public class UserProfileResponseDto {
     private Long id;
     private String firstName;
     private String lastName;
     private String email;
     private UserRole role;
-    private Long structureId; // Si l'utilisateur est lié à une structure (ex: StaffUser)
-    private String avatarUrl; // URL complète de l'avatar
+    private Long structureId;
+    private String avatarUrl;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 }

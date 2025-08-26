@@ -3,19 +3,19 @@ package edu.cda.project.ticklybackend.enums;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Statut d'un membre au sein d'une équipe.
+ * Membership status within a team.
  */
-@Schema(description = "Statut d'un membre au sein d'une équipe.")
+@Schema(description = "Team membership status.")
 public enum TeamMemberStatus {
     /**
-     * Une invitation a été envoyée, mais pas encore acceptée par l'utilisateur.
+     * An invitation was sent but not yet accepted by the user.
      */
-    @Schema(description = "Invitation en attente d'acceptation.")
+    @Schema(description = "Pending invitation.")
     PENDING_INVITATION,
 
     /**
-     * L'utilisateur a accepté l'invitation et fait partie activement de l'équipe.
+     * The user accepted the invitation and is an active team member.
      */
-    @Schema(description = "Membre actif de l'équipe.")
+    @Schema(description = "Active team member.")
     ACTIVE
 }

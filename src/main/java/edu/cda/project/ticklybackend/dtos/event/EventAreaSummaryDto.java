@@ -5,8 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO représentant un résumé d'un espace (Area) utilisé dans un événement.
- * Utilisé dans EventDetailResponseDto pour lister les espaces physiques concernés.
+ * DTO representing a summary of a physical area used in an event.
+ * Used in EventDetailResponseDto to list the relevant physical areas.
  */
 @Data
 @NoArgsConstructor
@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 public class EventAreaSummaryDto {
 
     /**
-     * L'ID unique de l'espace physique (StructureArea).
+     * Unique ID of the physical area (StructureArea).
      */
     private Long id;
 
     /**
-     * Le nom de l'espace physique (e.g., "Grande Scène Park").
+     * Name of the physical area (e.g., "Grande Scène Park").
      */
     private String name;
 }

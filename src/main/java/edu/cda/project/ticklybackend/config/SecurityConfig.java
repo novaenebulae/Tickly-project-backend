@@ -20,6 +20,11 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Spring Security configuration.
+ * <p>
+ * Configures CORS, session policy, public endpoints, and integrates JWT authentication.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -57,6 +62,12 @@ public class SecurityConfig {
             "/webjars/**"
     };
 
+    /**
+     * Defines a global CORS filter allowing all origins with common headers and methods.
+     * Adjust patterns and origins for production as needed.
+     *
+     * @return a CorsFilter bean applied to all requests
+     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -69,6 +80,14 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
+    /**
+     * Builds the security filter chain with stateless session policy, CORS/CSRF settings,
+     * public route permissions, and JWT authentication filter integration.
+     *
+     * @param http the HttpSecurity to configure
+     * @return the built SecurityFilterChain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

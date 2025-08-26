@@ -9,26 +9,43 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Standardized error payload returned by API endpoints.
+ * Includes HTTP status code, message, request path, timestamp, and optional validation errors.
+ */
 @Getter
 @Setter
-@RequiredArgsConstructor // Crée un constructeur avec les champs finaux
-@JsonInclude(JsonInclude.Include.NON_NULL) // N'inclut pas les champs nuls dans le JSON
+@RequiredArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponseDto {
 
     private final int statusCode;
     private final String message;
-    private final ZonedDateTime timestamp = ZonedDateTime.now(); // Horodatage automatique
-    private String path; // Chemin de la requête ayant causé l'erreur
-    private List<Map<String, String>> errors; // Pour les erreurs de validation multiples
+    private final ZonedDateTime timestamp = ZonedDateTime.now();
+    private String path;
+    private List<Map<String, String>> errors;
 
-    // Constructeur pour les erreurs simples
+    /**
+     * Creates a simple error response without field-level validation errors.
+     *
+     * @param statusCode HTTP status code
+     * @param message    human-readable error message
+     * @param path       request path that caused the error
+     */
     public ErrorResponseDto(int statusCode, String message, String path) {
         this.statusCode = statusCode;
         this.message = message;
         this.path = path;
     }
 
-    // Constructeur pour les erreurs de validation
+    /**
+     * Creates an error response including validation details.
+     *
+     * @param statusCode HTTP status code
+     * @param message    human-readable error message
+     * @param path       request path that caused the error
+     * @param errors     list of validation errors (e.g., field -> message)
+     */
     public ErrorResponseDto(int statusCode, String message, String path, List<Map<String, String>> errors) {
         this.statusCode = statusCode;
         this.message = message;

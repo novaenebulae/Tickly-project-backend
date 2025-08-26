@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * DTO pour afficher une liste résumée de structures.
+ * Summary DTO for structures used in lists and search results.
  */
 @Data
 @NoArgsConstructor
@@ -28,7 +28,7 @@ public class StructureSummaryDto {
     private List<StructureTypeDto> types;
 
     @Schema(description = "Ville où se situe la structure.", example = "Paris")
-    private String city; // Extrait de l'adresse
+    private String city;
 
     @Schema(description = "URL complète du logo de la structure (optionnel).", example = "http://localhost/static/structures/logos/uuid-logo.jpg")
     private String logoUrl;
@@ -40,5 +40,5 @@ public class StructureSummaryDto {
     private boolean isActive;
 
     @Schema(description = "Nombre d'événements actifs ou à venir associés à cette structure (optionnel).", example = "15")
-    private Integer eventCount; // Optionnel, pourrait être calculé ou stocké
+    private Integer eventCount;
 }

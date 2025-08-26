@@ -42,7 +42,9 @@ public class EventStatisticsDto {
     @Schema(description = "Chart data for ticket status distribution")
     private ChartJsDataDto ticketStatusChart;
 
-    // Constructor that maintains backward compatibility
+    /**
+     * Convenience constructor that omits computed numeric fields while preserving chart data.
+     */
     public EventStatisticsDto(long eventId, String eventName, ChartJsDataDto zoneFillRateChart, 
                              ChartJsDataDto reservationsOverTimeChart, ChartJsDataDto ticketStatusChart) {
         this.eventId = eventId;

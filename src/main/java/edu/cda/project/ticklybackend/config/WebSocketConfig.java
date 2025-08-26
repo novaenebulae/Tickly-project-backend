@@ -6,6 +6,11 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * WebSocket/STOMP messaging configuration.
+ * <p>
+ * Exposes a STOMP endpoint and configures a simple in-memory message broker.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
@@ -13,16 +18,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
-
-        // Préfixe pour les destinations où les clients peuvent envoyer des messages
         registry.setApplicationDestinationPrefixes("/app");
     }
 
+    /**
+     * Registers the STOMP endpoint used by clients to connect (with SockJS fallback).
+     * Adjust allowed origins in production environments.
+     */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Endpoint WebSocket avec support SockJS pour les navigateurs qui ne supportent pas WebSocket
         registry.addEndpoint("/api/v1/ws-tickly")
-                .setAllowedOriginPatterns("*") // À ajuster en production pour limiter aux origines autorisées
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 }

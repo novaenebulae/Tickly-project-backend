@@ -9,20 +9,20 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@Schema(description = "Requête pour créer une nouvelle réservation pour un ou plusieurs billets.")
+@Schema(description = "Request to create a reservation for one or more tickets.")
 public class ReservationRequestDto {
 
     @NotNull(message = "L'ID de l'événement est requis.")
-    @Schema(description = "ID de l'événement pour lequel les billets sont réservés.", example = "1")
+    @Schema(description = "Event ID for which tickets are reserved.", example = "1")
     private Long eventId;
 
     @NotNull(message = "L'ID de la zone d'audience est requis.")
-    @Schema(description = "ID de la zone d'audience spécifique au sein de l'événement.", example = "1")
+    @Schema(description = "Audience zone ID within the event.", example = "1")
     private Long audienceZoneId;
 
     @Valid
     @NotNull
     @Size(min = 1, max = 4, message = "Vous pouvez réserver entre 1 et 4 billets à la fois.")
-    @Schema(description = "Liste des participants pour lesquels les billets sont réservés.")
+    @Schema(description = "List of participants for whom tickets are reserved.")
     private List<ParticipantInfoDto> participants;
 }

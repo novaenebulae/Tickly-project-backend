@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import edu.cda.project.ticklybackend.dtos.structure.AddressDto;
 import edu.cda.project.ticklybackend.dtos.structure.StructureSummaryDto;
 import edu.cda.project.ticklybackend.enums.EventStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,10 +13,14 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+/**
+ * Detailed event representation including structure, address, media, and zones.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Detailed event representation including structure, address, media, and zones.")
 public class EventDetailResponseDto {
     private Long id;
     private String name;
@@ -25,8 +30,8 @@ public class EventDetailResponseDto {
     private List<String> tags;
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;
-    private AddressDto address; // Adresse de la structure ou de l'événement
-    private StructureSummaryDto structure; // Informations sur la structure organisatrice
+    private AddressDto address;
+    private StructureSummaryDto structure;
     private String mainPhotoUrl;
     private List<String> eventPhotoUrls;
     private EventStatus status;

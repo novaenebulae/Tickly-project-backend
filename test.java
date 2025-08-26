@@ -1,19 +1,6 @@
 package edu.cda.project.ticklybackend.controllers;
 
-import edu.cda.project.ticklybackend.dtos.auth.*;
-import edu.cda.project.ticklybackend.services.interfaces.AuthService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+// ...imports
 
 /**
  * Authentication REST endpoints for registration, login, email validation,

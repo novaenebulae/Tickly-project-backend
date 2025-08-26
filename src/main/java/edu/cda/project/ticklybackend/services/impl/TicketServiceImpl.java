@@ -363,14 +363,14 @@ public class TicketServiceImpl implements TicketService {
             Ticket ticket = ticketRepository.findById(ticketId)
                     .orElseThrow(() -> new ResourceNotFoundException("Billet avec ID " + ticketId + " non trouvé."));
 
+            ParticipantInfoDto participantInfo = new ParticipantInfoDto();
+            participantInfo.setFirstName(ticket.getParticipantFirstName());
+            participantInfo.setLastName(ticket.getParticipantLastName());
+            participantInfo.setEmail(ticket.getParticipantEmail());
+
             // Vérification que le billet est valide
             if (ticket.getStatus() != TicketStatus.VALID) {
                 log.warn("Tentative de validation d'un billet {} avec statut {}", ticketId, ticket.getStatus());
-
-                ParticipantInfoDto participantInfo = new ParticipantInfoDto();
-                participantInfo.setFirstName(ticket.getParticipantFirstName());
-                participantInfo.setLastName(ticket.getParticipantLastName());
-                participantInfo.setEmail(ticket.getParticipantEmail());
 
                 return new TicketValidationResponseDto(
                         ticket.getId(),
@@ -386,11 +386,6 @@ public class TicketServiceImpl implements TicketService {
             Instant eventEnd = ticket.getEvent().getEndDate();
             if (now.isAfter(eventEnd)) {
                 log.warn("Tentative de validation d'un billet {} pour un événement terminé", ticketId);
-
-                ParticipantInfoDto participantInfo = new ParticipantInfoDto();
-                participantInfo.setFirstName(ticket.getParticipantFirstName());
-                participantInfo.setLastName(ticket.getParticipantLastName());
-                participantInfo.setEmail(ticket.getParticipantEmail());
 
                 return new TicketValidationResponseDto(
                         ticket.getId(),
@@ -429,13 +424,7 @@ public class TicketServiceImpl implements TicketService {
                 );
             } catch (Exception e) {
                 log.error("Error getting or broadcasting ticket statistics for event ID: {}", eventId, e);
-                // Continue execution even if statistics broadcasting fails
             }
-
-            ParticipantInfoDto participantInfo = new ParticipantInfoDto();
-            participantInfo.setFirstName(ticket.getParticipantFirstName());
-            participantInfo.setLastName(ticket.getParticipantLastName());
-            participantInfo.setEmail(ticket.getParticipantEmail());
 
             TicketValidationResponseDto result = new TicketValidationResponseDto(
                     ticket.getId(),

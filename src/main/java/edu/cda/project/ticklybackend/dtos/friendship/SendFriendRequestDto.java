@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-@Schema(description = "DTO pour envoyer une demande d'ami via l'email de l'utilisateur.")
+@Schema(description = "Payload to send a friend request using a user's email.")
 public class SendFriendRequestDto {
     @NotBlank(message = "L'email ne peut pas être vide.")
     @Email(message = "Le format de l'email est invalide.")
-    @Schema(description = "Email de l'utilisateur à qui envoyer la demande.", requiredMode = Schema.RequiredMode.REQUIRED, example = "ami@example.com")
+    @Schema(description = "Email of the user to whom the request is sent.", requiredMode = Schema.RequiredMode.REQUIRED, example = "friend@example.com")
     private String email;
 }

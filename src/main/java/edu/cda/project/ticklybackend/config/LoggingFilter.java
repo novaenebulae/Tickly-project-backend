@@ -14,44 +14,52 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Filter that sets up MDC context for each request.
- * This ensures that all log messages within a request have the same context information.
+ * Servlet filter that initializes and clears per-request logging context (MDC).
+ * <p>
+ * For each HTTP request, a unique request ID is generated and exposed via the
+ * "X-Request-ID" response header. If the user is authenticated and the principal
+ * is the application's User type, the user ID is also stored in the logging context.
+ * The context is cleared after the request is processed.
  */
 @Component
 public class LoggingFilter extends OncePerRequestFilter {
 
+    /**
+     * Populates the logging context with a unique request ID and, when available,
+     * the authenticated user's ID. The request ID is also added to the response header.
+     * The logging context is cleared once the filter chain completes.
+     *
+     * @param request  the incoming HTTP servlet request
+     * @param response the HTTP servlet response
+     * @param filterChain the filter chain to continue processing
+     * @throws ServletException if an exception occurs during filtering
+     * @throws IOException if an I/O error occurs during filtering
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            // Generate a unique request ID
             String requestId = UUID.randomUUID().toString();
             LoggingUtils.setRequestId(requestId);
 
-            // Add the request ID to the response headers for debugging
             response.addHeader("X-Request-ID", requestId);
 
-            // Set the user ID in the MDC if a user is authenticated
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated() && 
+            if (authentication != null && authentication.isAuthenticated() &&
                     !"anonymousUser".equals(authentication.getPrincipal().toString())) {
                 try {
-                    // Try to get the user ID from the principal
                     Object principal = authentication.getPrincipal();
                     if (principal instanceof edu.cda.project.ticklybackend.models.user.User) {
                         Long userId = ((edu.cda.project.ticklybackend.models.user.User) principal).getId();
                         LoggingUtils.setUserId(userId);
                     }
                 } catch (Exception e) {
-                    // Log the exception but continue processing the request
                     logger.warn("Error setting user ID in MDC: " + e.getMessage());
                 }
             }
 
-            // Continue with the filter chain
             filterChain.doFilter(request, response);
         } finally {
-            // Clear the MDC context after the request is processed
             LoggingUtils.clearContext();
         }
     }

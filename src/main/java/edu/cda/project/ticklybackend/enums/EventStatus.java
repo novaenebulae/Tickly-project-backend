@@ -1,9 +1,9 @@
 package edu.cda.project.ticklybackend.enums;
 
 public enum EventStatus {
-    DRAFT, // Événement en préparation, non visible publiquement
-    PUBLISHED, // Événement publié et visible
-    CANCELLED, // Événement annulé
-    COMPLETED, // Événement terminé
-    ARCHIVED // Événement archivé, non visible dans les listes actives
+    DRAFT, // Event in preparation, not publicly visible
+    PUBLISHED, // Event published and visible
+    CANCELLED, // Event cancelled
+    COMPLETED, // Event completed
+    ARCHIVED // Event archived, not visible in active listings
 }

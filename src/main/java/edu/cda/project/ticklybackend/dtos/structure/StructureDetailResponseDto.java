@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
- * DTO pour afficher les détails complets d'une structure.
+ * Detailed DTO for a structure, including contact, media, and metadata.
  */
 @Data
 @NoArgsConstructor
@@ -63,7 +63,4 @@ public class StructureDetailResponseDto {
 
     @Schema(description = "Date et heure de la dernière modification de l'enregistrement de la structure.", example = "2024-07-16T14:45:00Z")
     private ZonedDateTime updatedAt;
-
-    // On pourrait ajouter des informations sur l'administrateur si nécessaire
-    // private UserSummaryDto administrator;
 }

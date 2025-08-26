@@ -3,37 +3,37 @@ package edu.cda.project.ticklybackend.enums;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Énumération représentant les différents statuts d'une relation d'amitié.
+ * Enumeration of possible friendship relationship statuses.
  */
-@Schema(description = "Statut d'une relation d'amitié.")
+@Schema(description = "Friendship relationship status.")
 public enum FriendshipStatus {
     /**
-     * [cite_start]Une demande d'ami a été envoyée mais n'a pas encore été acceptée ou refusée. [cite: 359]
+     * A friend request was sent and is awaiting a decision.
      */
-    @Schema(description = "Demande en attente.")
+    @Schema(description = "Pending request.")
     PENDING,
 
     /**
-     * [cite_start]La demande d'ami a été acceptée. [cite: 359]
+     * The friend request was accepted.
      */
-    @Schema(description = "Amis.")
+    @Schema(description = "Accepted.")
     ACCEPTED,
 
     /**
-     * [cite_start]La demande d'ami a été refusée par le destinataire. [cite: 359]
+     * The friend request was rejected by the receiver.
      */
-    @Schema(description = "Demande rejetée.")
+    @Schema(description = "Rejected.")
     REJECTED,
 
     /**
-     * [cite_start]L'un des utilisateurs a bloqué l'autre, empêchant toute interaction. [cite: 359]
+     * One user has blocked the other, preventing interactions.
      */
-    @Schema(description = "Utilisateur bloqué.")
+    @Schema(description = "Blocked.")
     BLOCKED,
 
     /**
-     * [cite_start]La demande d'ami a été annulée par l'émetteur avant d'être acceptée ou refusée. [cite: 359]
+     * The request was cancelled by the sender before a decision was made.
      */
-    @Schema(description = "Demande annulée par l'émetteur.")
+    @Schema(description = "Cancelled by sender.")
     CANCELLED_BY_SENDER
 }

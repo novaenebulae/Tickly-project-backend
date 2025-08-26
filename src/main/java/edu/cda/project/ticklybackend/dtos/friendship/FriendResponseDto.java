@@ -11,15 +11,15 @@ import java.time.ZonedDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO représentant un ami accepté.")
+@Schema(description = "DTO representing an accepted friend.")
 public class FriendResponseDto {
 
-    @Schema(description = "ID de la relation d'amitié.", example = "42")
+    @Schema(description = "Friendship relation ID.", example = "42")
     private Long friendshipId;
 
-    @Schema(description = "Informations sur l'utilisateur qui est l'ami.")
+    @Schema(description = "Information about the user who is the friend.")
     private UserSummaryDto friend;
 
-    @Schema(description = "Date à laquelle l'amitié a été acceptée (devenue effective).", example = "2025-06-25T10:30:00Z")
+    @Schema(description = "Date when the friendship became effective.", example = "2025-06-25T10:30:00Z")
     private ZonedDateTime since;
 }

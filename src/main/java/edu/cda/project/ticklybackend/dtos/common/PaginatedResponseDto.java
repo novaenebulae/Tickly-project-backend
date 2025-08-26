@@ -7,6 +7,12 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+/**
+ * Generic wrapper for paginated results returned by API endpoints.
+ * Contains items and page metadata.
+ *
+ * @param <T> item type
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +23,11 @@ public class PaginatedResponseDto<T> {
     private int pageSize;
     private int totalPages;
 
+    /**
+     * Builds a PaginatedResponseDto from a Spring Data Page.
+     *
+     * @param page the source Page
+     */
     public PaginatedResponseDto(Page<T> page) {
         this.items = page.getContent();
         this.totalItems = page.getTotalElements();

@@ -77,18 +77,13 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
     List<Ticket> findAllByEventId(Long eventId);
 
-    // --- Voici les méthodes corrigées ---
 
-    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.structure.id = ?1 AND t.status IN (?2)
     long countByEventStructureIdAndStatusIn(Long structureId, Collection<TicketStatus> statuses);
 
-    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.structure.id = ?1 AND t.event.startDate > ?2 AND t.status = ?3
     long countByEventStructureIdAndEventStartDateAfterAndStatus(Long structureId, Instant startDate, TicketStatus status);
 
-    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.id = ?1 AND t.status = ?2
     long countByEventIdAndStatus(Long eventId, TicketStatus status);
 
-    // Spring générera : SELECT COUNT(t) FROM Ticket t WHERE t.event.id = ?1 AND t.status IN (?2)
     long countByEventIdAndStatusIn(Long eventId, Collection<TicketStatus> statuses);
 
 }

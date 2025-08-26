@@ -2,28 +2,53 @@ package edu.cda.project.ticklybackend.dtos.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import edu.cda.project.ticklybackend.enums.UserRole;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Authentication response payload containing tokens and user information.
+ */
 @Data
-@Builder // Pour une construction facile de l'objet
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL) // N'inclut pas les champs nuls dans le JSON
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Authentication response payload containing tokens and user information.")
 public class AuthResponseDto {
 
+    @Schema(description = "JWT access token.")
     private String accessToken;
-    private String tokenType = "Bearer"; // Toujours "Bearer"
-    private Long expiresIn; // Durée de validité en millisecondes
-    private String refreshToken; // Token de rafraîchissement pour obtenir un nouveau accessToken
 
+    @Schema(description = "Token type.", example = "Bearer")
+    private String tokenType = "Bearer";
+
+    @Schema(description = "Access token time-to-live in seconds.")
+    private Long expiresIn;
+
+    @Schema(description = "Refresh token to obtain a new access token.")
+    private String refreshToken;
+
+    @Schema(description = "Authenticated user identifier.")
     private Long userId;
+
+    @Schema(description = "Authenticated user email.")
     private String email;
+
+    @Schema(description = "Authenticated user first name.")
     private String firstName;
+
+    @Schema(description = "Authenticated user last name.")
     private String lastName;
+
+    @Schema(description = "Authenticated user role.")
     private UserRole role;
-    private Long structureId; // ID de la structure associée (pour StaffUser)
-    private String avatarUrl; // URL complète de l'avatar
+
+    @Schema(description = "Associated structure ID when applicable.")
+    private Long structureId;
+
+    @Schema(description = "URL of the user's avatar image.")
+    private String avatarUrl;
 }

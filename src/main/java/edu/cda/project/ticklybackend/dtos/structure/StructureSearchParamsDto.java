@@ -5,13 +5,16 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * Request parameters to filter structure search results.
+ */
 @Data
 public class StructureSearchParamsDto {
 
-    @Parameter(description = "Recherche textuelle sur le nom de la structure.")
+    @Parameter(description = "Free text search on structure name.")
     private String query;
 
-    @Parameter(description = "Filtrer par type de structure (ex: 'Théâtre', 'Salle de concert').")
+    @Parameter(description = "Filter by structure type IDs.")
     private List<Long> typeIds;
 
 }

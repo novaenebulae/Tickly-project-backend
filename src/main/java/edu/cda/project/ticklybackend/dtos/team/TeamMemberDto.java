@@ -8,32 +8,32 @@ import lombok.Data;
 import java.time.ZonedDateTime;
 
 @Data
-@Schema(description = "DTO représentant un membre d'une équipe.")
+@Schema(description = "Team member representation.")
 public class TeamMemberDto {
-    @Schema(description = "ID de l'enregistrement de l'adhésion.")
+    @Schema(description = "Membership record ID.")
     private Long id;
 
-    @Schema(description = "ID de l'utilisateur (si le compte est lié).")
+    @Schema(description = "User ID (if the account is linked).")
     private Long userId;
 
-    @Schema(description = "Prénom de l'utilisateur.")
+    @Schema(description = "User first name.")
     private String firstName;
 
-    @Schema(description = "Nom de l'utilisateur.")
+    @Schema(description = "User last name.")
     private String lastName;
 
-    @Schema(description = "Email du membre.")
+    @Schema(description = "Member email.")
     private String email;
 
-    @Schema(description = "URL de l'avatar de l'utilisateur.")
+    @Schema(description = "User avatar URL.")
     private String avatarUrl;
 
-    @Schema(description = "Rôle du membre dans l'équipe.")
+    @Schema(description = "Member role in the team.")
     private UserRole role;
 
-    @Schema(description = "Statut de l'adhésion (ex: PENDING_INVITATION, ACTIVE).")
+    @Schema(description = "Membership status (e.g., PENDING_INVITATION, ACTIVE).")
     private TeamMemberStatus status;
 
-    @Schema(description = "Date à laquelle le membre a rejoint l'équipe.")
+    @Schema(description = "Date when the member joined the team.")
     private ZonedDateTime joinedAt;
 }

@@ -10,15 +10,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO complet contenant toutes les informations d'amitié d'un utilisateur.")
+@Schema(description = "Aggregated friendship data for a user.")
 public class FriendsDataResponseDto {
 
-    @Schema(description = "Liste des amis acceptés.")
+    @Schema(description = "List of accepted friends.")
     private List<FriendResponseDto> friends;
 
-    @Schema(description = "Liste des demandes d'ami reçues et en attente.")
+    @Schema(description = "List of received and pending friend requests.")
     private List<ReceivedFriendRequestResponseDto> pendingRequests;
 
-    @Schema(description = "Liste des demandes d'ami envoyées et en attente.")
+    @Schema(description = "List of sent and pending friend requests.")
     private List<SentFriendRequestResponseDto> sentRequests;
 }

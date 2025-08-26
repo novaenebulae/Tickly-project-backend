@@ -6,9 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-@Schema(description = "DTO pour mettre à jour le statut d'une demande d'ami.")
+@Schema(description = "Payload to update the status of a friend request.")
 public class UpdateFriendshipStatusDto {
     @NotNull
-    @Schema(description = "Nouveau statut de la relation (ex: ACCEPTED, REJECTED, CANCELLED_BY_SENDER).", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "New friendship status (e.g., ACCEPTED, REJECTED, CANCELLED_BY_SENDER).", requiredMode = Schema.RequiredMode.REQUIRED)
     private FriendshipStatus status;
 }

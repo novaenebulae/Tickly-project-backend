@@ -11,14 +11,14 @@ import java.time.ZonedDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO représentant une demande d'ami reçue.")
+@Schema(description = "DTO representing a received friend request.")
 public class ReceivedFriendRequestResponseDto {
-    @Schema(description = "ID de la demande d'amitié.")
+    @Schema(description = "Friend request ID.")
     private Long friendshipId;
 
-    @Schema(description = "Informations sur l'utilisateur qui a envoyé la demande.")
+    @Schema(description = "Information about the user who sent the request.")
     private UserSummaryDto sender;
 
-    @Schema(description = "Date à laquelle la demande a été envoyée.")
+    @Schema(description = "Date when the request was sent.")
     private ZonedDateTime requestedAt;
 }

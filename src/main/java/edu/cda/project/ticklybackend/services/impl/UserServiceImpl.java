@@ -144,43 +144,43 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserFavoriteStructureDto addFavoriteStructure(Long userId, Long structureId) {
-        log.info("Ajout de la structure ID: {} aux favoris de l'utilisateur ID: {}", structureId, userId);
+        log.info("Adding structure ID: {} to favorites of user ID: {}", structureId, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Structure", "id", structureId));
 
         if (favoriteRepository.existsByUserIdAndStructureId(userId, structureId)) {
-            log.warn("La structure ID: {} est déjà dans les favoris de l'utilisateur ID: {}", structureId, userId);
-            throw new BadRequestException("Cette structure est déjà dans vos favoris.");
+            log.warn("Structure ID: {} is already in favorites of user ID: {}", structureId, userId);
+            throw new BadRequestException("This structure is already in your favorites.");
         }
 
         UserFavoriteStructure favorite = new UserFavoriteStructure();
         favorite.setUser(user);
         favorite.setStructure(structure);
         UserFavoriteStructure savedFavorite = favoriteRepository.save(favorite);
-        log.info("Structure ID: {} ajoutée aux favoris de l'utilisateur ID: {} avec succès", structureId, userId);
+        log.info("Structure ID: {} successfully added to favorites of user ID: {}", structureId, userId);
         return userMapper.userFavoriteStructureToUserFavoriteStructureDto(savedFavorite, fileStorageService);
     }
 
     @Override
     @Transactional
     public void removeFavoriteStructure(Long userId, Long structureId) {
-        log.info("Suppression de la structure ID: {} des favoris de l'utilisateur ID: {}", structureId, userId);
+        log.info("Removing structure ID: {} from favorites of user ID: {}", structureId, userId);
         if (!userRepository.existsById(userId)) {
-            log.warn("Utilisateur ID: {} non trouvé lors de la suppression des favoris", userId);
+            log.warn("User ID: {} not found while removing favorite", userId);
             throw new ResourceNotFoundException("User", "id", userId);
         }
         if (!structureRepository.existsById(structureId)) {
-            log.warn("Structure ID: {} non trouvée lors de la suppression des favoris", structureId);
+            log.warn("Structure ID: {} not found while removing favorite", structureId);
             throw new ResourceNotFoundException("Structure", "id", structureId);
         }
         if (!favoriteRepository.existsByUserIdAndStructureId(userId, structureId)) {
-            log.warn("Favori non trouvé pour l'utilisateur ID: {} et la structure ID: {}", userId, structureId);
+            log.warn("Favorite not found for user ID: {} and structure ID: {}", userId, structureId);
             throw new ResourceNotFoundException("FavoriteStructure", "userId/structureId", userId + "/" + structureId);
         }
         favoriteRepository.deleteByUserIdAndStructureId(userId, structureId);
-        log.info("Structure ID: {} supprimée des favoris de l'utilisateur ID: {} avec succès", structureId, userId);
+        log.info("Structure ID: {} successfully removed from favorites of user ID: {}", structureId, userId);
     }
 
     // Méthodes pour l'utilisateur courant

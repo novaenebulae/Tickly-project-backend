@@ -1,26 +1,26 @@
 package edu.cda.project.ticklybackend.enums;
 
 /**
- * Définit les statuts possibles pour un billet.
+ * Defines the possible statuses for a ticket.
  */
 public enum TicketStatus {
     /**
-     * Le billet est valide et peut être utilisé pour entrer.
+     * The ticket is valid and can be used for entry.
      */
     VALID,
 
     /**
-     * Le billet a été scanné et utilisé.
+     * The ticket has been scanned and used.
      */
     USED,
 
     /**
-     * Le billet a été annulé (ex: événement annulé, annulation par l'utilisateur).
+     * The ticket was cancelled (e.g., event cancelled, user cancellation).
      */
     CANCELLED,
 
     /**
-     * Le billet concerne un événement passé et est donc expiré.
+     * The ticket concerns a past event and is therefore expired.
      */
     EXPIRED
 }

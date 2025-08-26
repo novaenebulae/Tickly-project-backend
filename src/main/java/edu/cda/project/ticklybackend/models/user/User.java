@@ -13,8 +13,8 @@ import java.util.Collection;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @Entity
+@NoArgsConstructor
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email") // Assure l'unicité de l'email
 })

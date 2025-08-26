@@ -33,6 +33,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST endpoints for public event discovery and authenticated event management.
+ * Includes creation, updates, media management, ticket administration, and validation.
+ */
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -213,16 +217,16 @@ public class EventController {
     }
 
     @Operation(
-            summary = "Uploader ou mettre à jour la photo principale d'un événement",
-            description = "Remplace la photo principale existante. Seul le propriétaire peut effectuer cette action.",
+            summary = "Upload or replace an event's main photo",
+            description = "Replaces the current main photo of the event. Only the event owner can perform this action.",
             security = @SecurityRequirement(name = "bearerAuth"),
-            responses = @ApiResponse(responseCode = "200", description = "Photo mise à jour", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
+            responses = @ApiResponse(responseCode = "200", description = "Main photo updated", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
     )
     @PostMapping(value = "/events/{eventId}/main-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<FileUploadResponseDto> uploadMainPhoto(
-            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
-            @Parameter(description = "Fichier image à uploader") @RequestParam("file") MultipartFile file) {
+            @Parameter(description = "ID of the event") @PathVariable Long eventId,
+            @Parameter(description = "Image file to upload") @RequestParam("file") MultipartFile file) {
         LoggingUtils.logMethodEntry(log, "uploadMainPhoto", "eventId", eventId, "fileName", file.getOriginalFilename());
         try {
             String fileUrl = eventService.updateEventMainPhoto(eventId, file);
@@ -230,16 +234,16 @@ public class EventController {
             LoggingUtils.logMethodExit(log, "uploadMainPhoto", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de l'upload de la photo principale pour l'événement ID " + eventId, e);
+            LoggingUtils.logException(log, "Error while uploading main photo for event ID " + eventId, e);
             throw e;
         }
     }
 
     @Operation(
-            summary = "Ajouter des images à la galerie d'un événement",
-            description = "Ajoute de nouvelles images à la galerie.",
+            summary = "Add images to an event's gallery",
+            description = "Adds one or more images to the event's gallery.",
             security = @SecurityRequirement(name = "bearerAuth"),
-            responses = @ApiResponse(responseCode = "200", description = "Image ajoutée", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
+            responses = @ApiResponse(responseCode = "200", description = "Images added", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDto.class)))
     )
     @PostMapping(value = "/events/{eventId}/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
@@ -252,37 +256,37 @@ public class EventController {
             LoggingUtils.logMethodExit(log, "addGalleryImages", responses);
             return ResponseEntity.ok(responses);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de l'ajout d'images à la galerie de l'événement ID " + eventId, e);
+            LoggingUtils.logException(log, "Error while adding images to the gallery for event ID " + eventId, e);
             throw e;
         }
     }
 
     @Operation(
-            summary = "Supprimer une image de la galerie d'un événement",
-            description = "Supprime une image spécifique de la galerie. Seul le propriétaire peut effectuer cette action.",
+            summary = "Remove an image from an event's gallery",
+            description = "Deletes a specific image from the gallery. Only the event owner can perform this action.",
             security = @SecurityRequirement(name = "bearerAuth"),
-            responses = @ApiResponse(responseCode = "204", description = "Image supprimée")
+            responses = @ApiResponse(responseCode = "204", description = "Image deleted")
     )
     @DeleteMapping("/events/{eventId}/gallery")
     @PreAuthorize("@organizationalSecurityService.canModifyEvent(#eventId, authentication)")
     public ResponseEntity<Void> removeGalleryImage(
-            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
-            @Parameter(description = "Chemin/nom du fichier image à supprimer (tel que retourné par l'API)") @RequestParam String imagePath) {
+            @Parameter(description = "ID of the event") @PathVariable Long eventId,
+            @Parameter(description = "Path/name of the image file to delete (as returned by the API)") @RequestParam String imagePath) {
         LoggingUtils.logMethodEntry(log, "removeGalleryImage", "eventId", eventId, "imagePath", imagePath);
         try {
             eventService.removeEventGalleryImage(eventId, imagePath);
             LoggingUtils.logMethodExit(log, "removeGalleryImage");
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la suppression de l'image '" + imagePath + "' de la galerie de l'événement ID " + eventId, e);
+            LoggingUtils.logException(log, "Error while deleting image '" + imagePath + "' from the gallery of event ID " + eventId, e);
             throw e;
         }
     }
 
     @Operation(
-            summary = "Récupérer toutes les catégories d'événements disponibles",
-            description = "Accessible publiquement.",
-            responses = @ApiResponse(responseCode = "200", description = "Liste des catégories", content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class)))
+            summary = "Get all available event categories",
+            description = "Publicly accessible.",
+            responses = @ApiResponse(responseCode = "200", description = "List of categories", content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class)))
     )
     @GetMapping("/event-categories")
     public ResponseEntity<List<EventCategoryDto>> getAllCategories() {
@@ -292,27 +296,27 @@ public class EventController {
             LoggingUtils.logMethodExit(log, "getAllCategories", categories);
             return ResponseEntity.ok(categories);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la récupération des catégories d'événements", e);
+            LoggingUtils.logException(log, "Error retrieving event categories", e);
             throw e;
         }
     }
 
     @Operation(
-            summary = "Récupérer les billets d'un événement pour la gestion",
-            description = "Récupère une liste paginée et filtrée de tous les billets pour un événement spécifique, conçue pour la gestion par le personnel.",
+            summary = "Retrieve event tickets for management",
+            description = "Returns a paginated and filterable list of all tickets for a specific event, intended for staff management.",
             security = @SecurityRequirement(name = "bearerAuth"),
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Liste des billets récupérée", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponseDto.class))),
-                    @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
-                    @ApiResponse(responseCode = "404", description = "Événement non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
+                    @ApiResponse(responseCode = "200", description = "Ticket list retrieved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedResponseDto.class))),
+                    @ApiResponse(responseCode = "403", description = "Access denied", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Event not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
             }
     )
     @GetMapping("/events/{eventId}/management/tickets")
     @PreAuthorize("@organizationalSecurityService.canValidateEventTickets(#eventId, authentication)")
     public ResponseEntity<PaginatedResponseDto<TicketResponseDto>> getEventTickets(
-            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
-            @Parameter(description = "Statut des billets à filtrer (optionnel)") @RequestParam(required = false) TicketStatus status,
-            @Parameter(description = "Terme de recherche pour filtrer les billets (optionnel)") @RequestParam(required = false) String search,
+            @Parameter(description = "ID of the event") @PathVariable Long eventId,
+            @Parameter(description = "Ticket status to filter by (optional)") @RequestParam(required = false) TicketStatus status,
+            @Parameter(description = "Search term to filter tickets (optional)") @RequestParam(required = false) String search,
             @ParameterObject Pageable pageable) {
         LoggingUtils.logMethodEntry(log, "getEventTickets", "eventId", eventId, "status", status, "search", search, "pageable", pageable);
         try {
@@ -320,33 +324,33 @@ public class EventController {
             LoggingUtils.logMethodExit(log, "getEventTickets", tickets);
             return ResponseEntity.ok(tickets);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la récupération des billets pour l'événement ID " + eventId, e);
+            LoggingUtils.logException(log, "Error retrieving tickets for event ID " + eventId, e);
             throw e;
         }
     }
 
     @Operation(
-            summary = "Valider un billet",
-            description = "Marque un billet spécifique comme UTILISÉ. Cet endpoint est conçu pour la validation manuelle depuis le panneau du personnel.",
+            summary = "Validate a ticket",
+            description = "Marks a specific ticket as USED. This endpoint is intended for manual validation from the staff panel.",
             security = @SecurityRequirement(name = "bearerAuth"),
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Billet validé avec succès", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TicketValidationResponseDto.class))),
-                    @ApiResponse(responseCode = "403", description = "Accès refusé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
-                    @ApiResponse(responseCode = "404", description = "Billet non trouvé", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
+                    @ApiResponse(responseCode = "200", description = "Ticket validated successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TicketValidationResponseDto.class))),
+                    @ApiResponse(responseCode = "403", description = "Access denied", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDto.class)))
             }
     )
     @PostMapping("/events/{eventId}/management/tickets/{ticketId}/validate")
     @PreAuthorize("@organizationalSecurityService.canValidateEventTickets(#eventId, authentication)")
     public ResponseEntity<TicketValidationResponseDto> validateTicket(
-            @Parameter(description = "ID de l'événement") @PathVariable Long eventId,
-            @Parameter(description = "ID du billet à valider") @PathVariable UUID ticketId) {
+            @Parameter(description = "ID of the event") @PathVariable Long eventId,
+            @Parameter(description = "ID of the ticket to validate") @PathVariable UUID ticketId) {
         LoggingUtils.logMethodEntry(log, "validateTicket", "eventId", eventId, "ticketId", ticketId);
         try {
             TicketValidationResponseDto result = ticketService.validateTicket(ticketId);
             LoggingUtils.logMethodExit(log, "validateTicket", result);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            LoggingUtils.logException(log, "Erreur lors de la validation du billet ID " + ticketId + " pour l'événement ID " + eventId, e);
+            LoggingUtils.logException(log, "Error validating ticket ID " + ticketId + " for event ID " + eventId, e);
             throw e;
         }
     }

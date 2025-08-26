@@ -9,13 +9,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+/**
+ * Jackson JSON configuration.
+ * <p>
+ * Customizes the ObjectMapper to handle Java time types, omit nulls, and be tolerant to
+ * unknown properties and empty beans.
+ */
 @Configuration
 public class JacksonConfig {
+    /**
+     * Builds the primary ObjectMapper used by the application.
+     *
+     * @return a configured ObjectMapper instance
+     */
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        // Polymorphic subtype registrations removed as part of User refactor (composition over inheritance)
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);

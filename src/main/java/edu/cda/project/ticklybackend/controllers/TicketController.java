@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Ticketing endpoints for creating/canceling reservations and retrieving
+ * ticket details for both authenticated and public flows.
+ */
 @RestController
 @RequestMapping("/api/v1/ticketing")
 @Tag(name = "Ticketing API", description = "Endpoints for ticket reservation, viewing, and validation.")
@@ -44,7 +48,6 @@ public class TicketController {
 
 
     @GetMapping("/tickets/{ticketId}")
-    // User must be the ticket owner
     @PreAuthorize("@organizationalSecurityService.isTicketOwner(#ticketId, authentication)")
     @Operation(summary = "Get ticket details (authenticated)", description = "Retrieves the details of a specific ticket. The user must be the owner of the ticket.")
     public ResponseEntity<TicketResponseDto> getTicketDetails(@PathVariable UUID ticketId) {

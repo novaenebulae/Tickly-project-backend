@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * DTO pour la mise à jour du statut d'un événement.
+ * Payload to update an event status.
  */
 @Data
 public class EventStatusUpdateDto {
-    @Schema(description = "Le nouveau statut de l'événement.", example = "PUBLISHED")
+    @Schema(description = "New event status.", example = "PUBLISHED")
     @NotNull(message = "Le statut ne peut pas être nul.")
     private EventStatus status;
 }

@@ -1,27 +1,27 @@
 package edu.cda.project.ticklybackend.enums;
 
 /**
- * Énumération des différents types de tokens de vérification utilisés dans l'application.
- * Chaque type correspond à une action utilisateur spécifique.
+ * Enumeration of verification token types used in the application.
+ * Each type corresponds to a specific user action.
  */
 public enum TokenType {
     /**
-     * Token envoyé pour valider l'adresse e-mail d'un nouvel utilisateur.
+     * Token sent to validate a new user's email address.
      */
     EMAIL_VALIDATION,
 
     /**
-     * Token envoyé pour permettre la réinitialisation d'un mot de passe oublié.
+     * Token sent to allow resetting a forgotten password.
      */
     PASSWORD_RESET,
 
     /**
-     * Token envoyé pour inviter un utilisateur à rejoindre une équipe.
+     * Token sent to invite a user to join a team.
      */
     TEAM_INVITATION,
 
     /**
-     * Token envoyé pour confirmer la suppression d'un compte.
+     * Token sent to confirm account deletion.
      */
     ACCOUNT_DELETION_CONFIRMATION
 }

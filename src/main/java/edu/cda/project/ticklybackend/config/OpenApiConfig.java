@@ -8,35 +8,43 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 
+/**
+ * OpenAPI/Swagger configuration for the Tickly backend.
+ * <p>
+ * Declares API metadata, server definitions, and the JWT bearer authentication scheme.
+ */
 @OpenAPIDefinition(
         info = @Info(
                 contact = @Contact(
-                        name = "Support Tickly",
+                        name = "Tickly Support",
                         email = "contact@tickly.com",
                         url = "https://tickly.com"
                 ),
-                description = "Documentation de l'API RESTful pour le backend du système de billetterie Tickly.",
-                title = "API Tickly v1.0",
+                description = "RESTful API documentation for the Tickly ticketing backend.",
+                title = "Tickly API v1.0",
                 version = "1.0"
         ),
         servers = {
                 @Server(
-                        description = "Environnement Local",
+                        description = "Local Environment",
                         url = "/"
                 ),
                 @Server(
-                        description = "Environnement de Production",
+                        description = "Production Environment",
                         url = "https://api.tickly.com"
                 )
         }
 )
 @SecurityScheme(
         name = "bearerAuth",
-        description = "Authentification par token JWT",
+        description = "JWT bearer token authentication",
         scheme = "bearer",
         type = SecuritySchemeType.HTTP,
         bearerFormat = "JWT",
         in = SecuritySchemeIn.HEADER
 )
+/**
+ * Holds OpenAPI annotations; no additional logic is required here.
+ */
 public class OpenApiConfig {
 }

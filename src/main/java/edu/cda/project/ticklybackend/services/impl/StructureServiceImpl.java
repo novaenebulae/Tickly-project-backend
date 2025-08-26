@@ -263,7 +263,7 @@ public class StructureServiceImpl implements StructureService {
 
             // 1. Dissolution des relations
             log.info("Suppression des favoris pour la structure ID: {}", structureId);
-            favoriteRepository.deleteByStructureId(structureId);
+            favoriteRepository.deleteByStructure_Id(structureId);
 
             // Dissolution de l'équipe - convertit tous les membres (y compris les admins) en SPECTATOR
             log.info("Dissolution de l'équipe pour la structure ID: {}", structureId);
