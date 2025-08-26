@@ -133,7 +133,7 @@ class UserControllerTest {
         assertNotNull(response.getBody());
         assertEquals(fileUrl, response.getBody().getFileUrl());
         assertEquals("avatar.jpg", response.getBody().getFileName());
-        assertEquals("Avatar mis à jour avec succès.", response.getBody().getMessage());
+        assertEquals("Avatar updated successfully.", response.getBody().getMessage());
 
         // Verify
         verify(userService, times(1)).updateCurrentUserAvatar(mockFile);
